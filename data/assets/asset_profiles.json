@@ -1,0 +1,93 @@
+{
+  "CNC-07-LEI": {
+    "machine_id": "CNC-07-LEI",
+    "name": "CNC Machining Center #7",
+    "plant_id": "LEI",
+    "plant_name": "Titan Leipzig (Plant 7)",
+    "asset_class": "cnc_machining_center",
+    "manufacturer": "DMG MORI",
+    "model": "DMU 85 monoBLOCK",
+    "year_installed": 2019,
+    "production_value_per_day_eur": 162000,
+    "oem_speed_reduction_safe_limit_pct": 60,
+    "equivalent_machines": ["CNC-05-LEI", "CNC-08-LEI"],
+    "spindle_assembly": {
+      "rated_speed_rpm": 18000,
+      "safe_reduced_speed_rpm": 10800,
+      "vibration_threshold_warning_mm_s": 5.0,
+      "vibration_threshold_critical_mm_s": 6.0,
+      "bearing_temp_max_celsius": 85
+    },
+    "failure_modes": {
+      "spindle_bearing_failure": {
+        "description": "Progressive bearing wear leading to seizure. Presents as rising vibration + temp + current spikes.",
+        "bom": [
+          {
+            "part_id": "P-4421",
+            "description": "Spindle bearing kit (FAG B7015-C-T-P4S matched pair)",
+            "qty_required": 1,
+            "unit": "kit"
+          },
+          {
+            "part_id": "P-7803",
+            "description": "Hydraulic seal set (spindle nose + drawbar)",
+            "qty_required": 2,
+            "unit": "set"
+          }
+        ],
+        "estimated_repair_hours": 6,
+        "technicians_required": 2,
+        "technician_roles": ["spindle_specialist", "hydraulics_certified"],
+        "available_technicians": ["Müller", "Becker"],
+        "speed_reduction_rul_extension_hours": 18
+      },
+      "coolant_pump_failure": {
+        "description": "Coolant pump cavitation or seal failure.",
+        "bom": [
+          {"part_id": "P-2201", "description": "Coolant pump assembly", "qty_required": 1, "unit": "unit"}
+        ],
+        "estimated_repair_hours": 2,
+        "technicians_required": 1,
+        "technician_roles": ["general_maintenance"]
+      }
+    },
+    "last_maintenance": "2026-03-18T07:00:00Z",
+    "maintenance_interval_days": 90
+  },
+  "CNC-05-LEI": {
+    "machine_id": "CNC-05-LEI",
+    "name": "CNC Machining Center #5",
+    "plant_id": "LEI",
+    "asset_class": "cnc_machining_center",
+    "manufacturer": "DMG MORI",
+    "model": "DMU 85 monoBLOCK",
+    "year_installed": 2018,
+    "production_value_per_day_eur": 155000,
+    "available_capacity_pct": 35,
+    "status": "operational"
+  },
+  "CNC-08-LEI": {
+    "machine_id": "CNC-08-LEI",
+    "name": "CNC Machining Center #8",
+    "plant_id": "LEI",
+    "asset_class": "cnc_machining_center",
+    "manufacturer": "DMG MORI",
+    "model": "DMU 85 monoBLOCK",
+    "year_installed": 2021,
+    "production_value_per_day_eur": 162000,
+    "available_capacity_pct": 40,
+    "status": "operational"
+  },
+  "CNC-02-AMS": {
+    "machine_id": "CNC-02-AMS",
+    "name": "CNC Machining Center #2",
+    "plant_id": "AMS",
+    "plant_name": "Titan Amsterdam",
+    "asset_class": "cnc_machining_center",
+    "local_inventory": {
+      "P-4421": {"qty": 2},
+      "P-7803": {"qty": 1}
+    },
+    "note": "Sister plant — cross-plant transfer feasible in 24h if primary procurement fails"
+  }
+}

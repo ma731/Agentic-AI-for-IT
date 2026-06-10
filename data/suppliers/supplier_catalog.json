@@ -1,0 +1,102 @@
+{
+  "catalog_timestamp": "2026-06-12T06:00:00Z",
+  "P-4421": {
+    "part_id": "P-4421",
+    "description": "Spindle bearing kit (FAG B7015-C-T-P4S matched pair)",
+    "suppliers": [
+      {
+        "supplier_id": "SUP-SCHAEFFLER-DE",
+        "name": "Schaeffler Group",
+        "tier": "primary",
+        "location": "Herzogenaurach, Germany",
+        "standard_lead_time_days": 8,
+        "standard_lead_time_hours": 192,
+        "standard_unit_price_eur": 1840,
+        "expedite_available": true,
+        "expedite_lead_time_hours": 18,
+        "expedite_cost_premium_eur": 3200,
+        "expedite_total_cost_eur": 5040,
+        "expedite_notes": "Emergency stock held at Frankfurt depot. Courier to Leipzig: 18h confirmed.",
+        "reliability_score": 0.97,
+        "contact": "industrial-emergency@schaeffler.com"
+      },
+      {
+        "supplier_id": "SUP-SKF-NL",
+        "name": "SKF Industrial",
+        "tier": "secondary",
+        "location": "Gothenburg (NL depot: Eindhoven)",
+        "standard_lead_time_days": 10,
+        "standard_lead_time_hours": 240,
+        "standard_unit_price_eur": 1950,
+        "expedite_available": true,
+        "expedite_lead_time_hours": 32,
+        "expedite_cost_premium_eur": 2100,
+        "expedite_total_cost_eur": 4050,
+        "expedite_notes": "NL depot stock. 32h includes cross-border courier.",
+        "reliability_score": 0.94
+      }
+    ],
+    "warehouse_transfer_option": {
+      "label": "Warehouse transfer — Amsterdam → Leipzig",
+      "from": "AMS Central Warehouse",
+      "to": "LEI Plant 7",
+      "qty_available": 3,
+      "lead_time_hours": 36,
+      "cost_eur": 420,
+      "method": "courier",
+      "risk": "MEDIUM — 36h lead time cuts close to 52h RUL minimum"
+    }
+  },
+  "P-7803": {
+    "part_id": "P-7803",
+    "description": "Hydraulic seal set (spindle nose + drawbar)",
+    "suppliers": [
+      {
+        "supplier_id": "SUP-SCHAEFFLER-DE",
+        "name": "Schaeffler Group",
+        "tier": "primary",
+        "location": "Herzogenaurach, Germany",
+        "standard_lead_time_days": 8,
+        "standard_lead_time_hours": 192,
+        "standard_unit_price_eur": 310,
+        "expedite_available": true,
+        "expedite_lead_time_hours": 18,
+        "expedite_cost_premium_eur": 0,
+        "expedite_total_cost_eur": 310,
+        "expedite_notes": "Bundled with P-4421 expedite order at no extra premium. Included in the €3,200 Schaeffler expedite fee.",
+        "reliability_score": 0.97
+      }
+    ],
+    "warehouse_transfer_option": {
+      "label": "Warehouse transfer — Amsterdam → Leipzig",
+      "from": "AMS Central Warehouse",
+      "to": "LEI Plant 7",
+      "qty_available": 4,
+      "qty_shortage_to_cover": 1,
+      "lead_time_hours": 36,
+      "cost_eur": 0,
+      "cost_note": "P-7803 transfer bundled with P-4421 courier — no additional cost",
+      "method": "courier (bundled)",
+      "risk": "MEDIUM — same 36h window as P-4421 transfer"
+    }
+  },
+  "combined_options": {
+    "note": "Pre-calculated combined options for expedite_cost tool",
+    "option_a_warehouse_transfer": {
+      "label": "Option A — Warehouse transfer (Amsterdam → Leipzig)",
+      "parts_covered": ["P-4421", "P-7803"],
+      "lead_time_hours": 36,
+      "total_cost_eur": 420,
+      "risk_level": "MEDIUM",
+      "risk_note": "36h lead time vs 52h RUL minimum leaves only 16h buffer. Any delay = missed window."
+    },
+    "option_b_schaeffler_expedite": {
+      "label": "Option B — Schaeffler emergency expedite",
+      "parts_covered": ["P-4421", "P-7803"],
+      "lead_time_hours": 18,
+      "total_cost_eur": 3200,
+      "risk_level": "LOW",
+      "risk_note": "18h delivery leaves 34h buffer before RUL minimum. Recommended."
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "machine_id": "CNC-03-LEI",
+  "plant_id": "LEI",
+  "event_type": "historical_failure",
+  "failure_event": {
+    "event_id": "FAIL-2023-09-LEI-03",
+    "failure_date": "2023-09-14T06:15:00Z",
+    "failure_mode": "spindle_bearing_failure",
+    "precursor_window_hours": 68,
+    "downtime_hours": 9.5,
+    "repair_cost_eur": 4200,
+    "parts_replaced": ["P-4421", "P-7803"],
+    "technicians": ["Müller", "Fischer"],
+    "notes": "Vibration rose from 2.9 to 8.5 mm/s over 68h. Bearing temp +16°C. Spindle current spikes from h+40 onward. Bearing seized at 06:15 local. Pattern: gradual rise weeks 1-2, exponential acceleration final 12h.",
+    "pre_failure_readings": {
+      "vibration_at_h_minus_72": 2.9,
+      "vibration_at_h_minus_48": 3.8,
+      "vibration_at_h_minus_24": 5.6,
+      "vibration_at_h_minus_12": 7.1,
+      "vibration_at_failure":    8.5,
+      "bearing_temp_delta_celsius": 16,
+      "current_spike_onset_hours_before_failure": 28
+    },
+    "pattern_match_confidence": 0.95,
+    "similarity_to_CNC_07_LEI": "HIGH — vibration trajectory, temp delta, and current spike pattern are consistent. CNC-07-LEI currently at h-minus-60 equivalent position on the CNC-03-LEI curve."
+  }
+}

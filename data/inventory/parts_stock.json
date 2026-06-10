@@ -1,0 +1,81 @@
+{
+  "data_timestamp": "2026-06-12T10:15:00Z",
+  "P-4421": {
+    "part_id": "P-4421",
+    "description": "Spindle bearing kit (FAG B7015-C-T-P4S matched pair)",
+    "part_class": "spindle_consumable",
+    "plants": {
+      "LEI": {
+        "qty": 0,
+        "last_updated": "2026-06-12T10:15:00Z",
+        "note": "Last unit consumed 2026-06-01 for CNC-01-LEI scheduled maintenance. Reorder not yet placed."
+      },
+      "AMS": {
+        "qty": 2,
+        "last_updated": "2026-06-12T09:00:00Z"
+      },
+      "MUC": {
+        "qty": 1,
+        "last_updated": "2026-06-11T16:00:00Z"
+      }
+    },
+    "warehouse": {
+      "location": "AMS",
+      "location_name": "Central Warehouse Amsterdam",
+      "qty": 3,
+      "transit_days": 4,
+      "transit_hours_standard": 96,
+      "transit_hours_courier": 36,
+      "courier_cost_eur": 420,
+      "last_updated": "2026-06-12T08:00:00Z"
+    }
+  },
+  "P-7803": {
+    "part_id": "P-7803",
+    "description": "Hydraulic seal set (spindle nose + drawbar)",
+    "part_class": "hydraulic_consumable",
+    "plants": {
+      "LEI": {
+        "qty": 1,
+        "last_updated": "2026-06-12T10:15:00Z",
+        "note": "1 unit available. Repair requires 2. Shortage: 1 unit."
+      },
+      "AMS": {
+        "qty": 1,
+        "last_updated": "2026-06-12T09:00:00Z"
+      },
+      "MUC": {
+        "qty": 3,
+        "last_updated": "2026-06-11T16:00:00Z"
+      }
+    },
+    "warehouse": {
+      "location": "AMS",
+      "location_name": "Central Warehouse Amsterdam",
+      "qty": 4,
+      "transit_days": 4,
+      "transit_hours_standard": 96,
+      "transit_hours_courier": 36,
+      "courier_cost_eur": 420,
+      "last_updated": "2026-06-12T08:00:00Z"
+    }
+  },
+  "P-2201": {
+    "part_id": "P-2201",
+    "description": "Coolant pump assembly",
+    "part_class": "hydraulic_assembly",
+    "plants": {
+      "LEI": {"qty": 2, "last_updated": "2026-06-10T08:00:00Z"},
+      "AMS": {"qty": 1, "last_updated": "2026-06-10T08:00:00Z"}
+    },
+    "warehouse": {
+      "location": "AMS",
+      "qty": 5,
+      "transit_days": 4,
+      "transit_hours_standard": 96,
+      "transit_hours_courier": 36,
+      "courier_cost_eur": 280,
+      "last_updated": "2026-06-10T08:00:00Z"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "LEI": {
+    "plant_id": "LEI",
+    "plant_name": "Titan Leipzig (Plant 7)",
+    "data_timestamp": "2026-06-12T14:00:00Z",
+    "windows": [
+      {
+        "window_id": "MW-LEI-2026-06-21",
+        "start": "2026-06-21T07:00:00Z",
+        "end": "2026-06-21T15:00:00Z",
+        "duration_hours": 8,
+        "type": "scheduled_preventive",
+        "machines_assigned": ["CNC-02-LEI", "CNC-04-LEI"],
+        "technicians_available": ["Müller", "Becker", "Schmidt", "Hoffmann"],
+        "status": "confirmed"
+      },
+      {
+        "window_id": "MW-LEI-2026-06-28",
+        "start": "2026-06-28T07:00:00Z",
+        "end": "2026-06-28T15:00:00Z",
+        "duration_hours": 8,
+        "type": "scheduled_preventive",
+        "machines_assigned": ["CNC-06-LEI", "CNC-09-LEI"],
+        "technicians_available": ["Müller", "Fischer"],
+        "status": "confirmed"
+      }
+    ],
+    "next_available": {
+      "window_id": "MW-LEI-2026-06-21",
+      "start": "2026-06-21T07:00:00Z",
+      "days_from_now": 9,
+      "note": "No maintenance window available for 9 days. Predicted failure for CNC-07-LEI within 52-76h — emergency window required."
+    },
+    "emergency_window_slots": [
+      {
+        "earliest_possible": "2026-06-13T06:00:00Z",
+        "label": "Saturday 06:00",
+        "duration_available_hours": 8,
+        "technicians_available": ["Müller", "Becker"],
+        "production_impact": "Shifts J4421-J4428 must be rerouted to CNC-05-LEI and CNC-08-LEI",
+        "requires_approval": true,
+        "approval_authority": "plant_manager"
+      }
+    ]
+  },
+  "AMS": {
+    "plant_id": "AMS",
+    "plant_name": "Titan Amsterdam",
+    "data_timestamp": "2026-06-12T14:00:00Z",
+    "windows": [
+      {
+        "window_id": "MW-AMS-2026-06-14",
+        "start": "2026-06-14T08:00:00Z",
+        "end": "2026-06-14T16:00:00Z",
+        "duration_hours": 8,
+        "status": "confirmed"
+      }
+    ]
+  }
+}
