@@ -34,5 +34,6 @@ def maintenance_schedule(plant_id: str, horizon: str = "7d") -> dict:
         "horizon": horizon,
         "existing_windows": plant_schedule.get("windows", []),
         "next_available_slot": plant_schedule.get("next_available"),
+        "emergency_window_slots": plant_schedule.get("emergency_window_slots", []),
         "data_timestamp": plant_schedule.get("data_timestamp"),
     }

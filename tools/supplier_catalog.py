@@ -4,19 +4,24 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent.parent / "data" / "suppliers"
 
 
-def supplier_catalog(part_ids: list[str]) -> dict:
+def supplier_catalog(part_ids: list[str], scenario: str = "default") -> dict:
     """
     Returns supplier options, lead times, and expedite availability for part IDs.
 
     Tool catalog:
-      Input:  part_ids (list of part IDs)
+      Input:  part_ids (list of part IDs), scenario ("default" | "edge")
       Output: per-part: suppliers list with standard/expedite lead time + cost premium
       Use when: on-site stock insufficient, need to source from external supplier
       Do NOT use: before confirming stock gap via parts_inventory
       Fallback: if catalog stale (>24h), flag and present last known with caveat
       Risk tier: READ (autonomous)
+
+    scenario="edge" loads supplier_catalog_edge.json — a real disruption snapshot in
+    which no external supplier or warehouse transfer fits the failure window, forcing
+    the agent to adapt (cross-plant transfer). Same schema, different data.
     """
-    catalog_file = DATA_DIR / "supplier_catalog.json"
+    filename = "supplier_catalog_edge.json" if scenario == "edge" else "supplier_catalog.json"
+    catalog_file = DATA_DIR / filename
     if not catalog_file.exists():
         return {"error": "catalog_unavailable"}
 
@@ -31,4 +36,9 @@ def supplier_catalog(part_ids: list[str]) -> dict:
             continue
         results[part_id] = part_data
 
-    return {"parts": results, "catalog_timestamp": catalog.get("catalog_timestamp")}
+    return {
+        "parts": results,
+        "combined_options": catalog.get("combined_options", {}),
+        "catalog_timestamp": catalog.get("catalog_timestamp"),
+        "scenario_note": catalog.get("scenario_note"),
+    }

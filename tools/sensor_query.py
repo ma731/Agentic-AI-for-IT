@@ -30,4 +30,8 @@ def sensor_query(machine_id: str, window: str, sensors: list[str]) -> dict:
         "readings": filtered,
         "summary": raw.get("summary", {}),
         "data_timestamp": raw.get("data_timestamp"),
+        # sensor_status surfaces telemetry health. "INTERRUPTED" means the feed
+        # dropped mid-window — the agent must NOT predict on partial data (escalation path).
+        "sensor_status": raw.get("sensor_status", "OK"),
+        "sensor_status_detail": raw.get("sensor_status_detail"),
     }
