@@ -45,6 +45,14 @@ JOBS = ["J4421", "J4422", "J4423", "J4424", "J4425"]
 CORE_AGENTS = ["supply_chain", "production", "quality"]
 MAX_VISITS = 2          # cap re-engagement per agent so follow-ups can't loop forever
 
+# Token budget: the 6-agent transcript is re-sent to every later agent and on every routing
+# call, so its size drives cost on the Groq free tier (~100k tokens/day). These caps bound
+# that growth while leaving normal-length assessments fully intact.
+PEER_REPORT_CHARS = 1400    # how much of each prior agent's report the next agent sees
+ROUTE_DIGEST_CHARS = 180    # the supervisor only needs a glance to pick the next agent
+REPORT_STORE_CHARS = 2000   # cap a single agent's stored report so one runaway reply
+                            # can't bloat the context for everyone downstream
+
 
 def _prompt(name: str) -> str:
     p = PROMPTS / name
@@ -127,8 +135,16 @@ def _detect_followup(report: str, sender: str) -> str | None:
 # --------------------------------------------------------------------------- #
 # Task prompts: each agent sees the FULL shared transcript + its own instruction.
 # --------------------------------------------------------------------------- #
-def _conversation(state: OpsState) -> str:
-    lines = [f"[{t['agent']}]: {t['message']}" for t in state.get("transcript", [])]
+def _clip(text: str, limit: int | None) -> str:
+    text = text or ""
+    if limit and len(text) > limit:
+        return text[:limit].rstrip() + " …[trimmed]"
+    return text
+
+
+def _conversation(state: OpsState, per_msg: int | None = None) -> str:
+    lines = [f"[{t['agent']}]: {_clip(t['message'], per_msg)}"
+             for t in state.get("transcript", [])]
     return "\n\n".join(lines) if lines else "(no messages yet — you are first)"
 
 
@@ -171,7 +187,7 @@ def _instruction(name: str, state: OpsState) -> str:
 
 def _task_for(name: str, state: OpsState) -> str:
     return (f"CONVERSATION SO FAR (what the other agents have reported):\n"
-            f"{_conversation(state)}\n\n"
+            f"{_conversation(state, per_msg=PEER_REPORT_CHARS)}\n\n"
             f"YOUR TASK:\n{_instruction(name, state)}\n\n"
             f"If you need input from another specialist, end your reply with a line: "
             f"`FOLLOWUP: <agent_name> — <your question>` (agents: {', '.join(AGENT_NAMES)}).")
@@ -210,9 +226,10 @@ def _make_worker(name: str):
             return update
 
         events, blob = _tool_events(msgs, name, rid)
-        report = _agent_report(msgs)
+        full_report = _agent_report(msgs)
+        followup = _detect_followup(full_report, name)   # detect on FULL text first…
+        report = _clip(full_report, REPORT_STORE_CHARS)  # …then cap what we store/forward
         events.append(_ev(rid, "agent_report", name, report=report))
-        followup = _detect_followup(report, name)
         update: dict = {"ops_context": {name: report}, "visited": [name],
                         "transcript": [{"agent": name, "message": report}],
                         "pending_followup": followup or "",
@@ -262,7 +279,7 @@ def _llm_route(state: OpsState, allowed: list[str]) -> str:
     resp = llm.complete(
         _prompt("supervisor_system.md"),
         f"Alert: {json.dumps(state['alert'])}\nAgents already done: {state.get('visited', [])}\n"
-        f"Conversation so far:\n{_conversation(state)}\n\nChoose the NEXT agent to run. "
+        f"Conversation so far:\n{_conversation(state, per_msg=ROUTE_DIGEST_CHARS)}\n\nChoose the NEXT agent to run. "
         f"Respond with exactly one of: {allowed}",
     ).lower()
     for a in allowed:
