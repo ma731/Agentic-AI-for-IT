@@ -18,11 +18,16 @@ Detects early failure signals in CNC machines, reasons across maintenance + supp
 
 ```
 Alert → Orchestrator (claude-sonnet-4-6)
+           │  tools: [maintenance_agent, supply_chain_agent]  ← specialists exposed AS tools
            ├── Maintenance Agent → [sensor_query, rul_predictor, asset_profile, maintenance_schedule]
            └── Supply Chain Agent → [parts_inventory, supplier_catalog, expedite_cost, work_order_draft, notify]
 ```
 
-**Pattern:** Hierarchical orchestrator + specialist sub-agents. Direct Anthropic SDK `tool_use` — no LangChain, no LangGraph. Every reasoning step is explicit in `response.content`.
+**Pattern:** Hierarchical orchestrator + specialist sub-agents, using the **agents-as-tools** pattern. The orchestrator is itself an LLM `tool_use` loop: the two specialists are tools it chooses to call, in the order its own reasoning dictates — routing is **not** hardcoded in Python. Its reasoning between delegations is the visible "agentic thinking" for the 25-point rubric dimension.
+
+Direct Anthropic SDK `tool_use` — no LangChain, no LangGraph. Every reasoning step is explicit in `response.content`.
+
+**Prompt wiring (load-bearing):** `guardrails.md` is composed onto every agent's system prompt at load time (`_compose_system_prompt`), and `self_eval.md` runs as a self-evaluation pass over the draft action plan before it is returned. All four prompt types (system, task, guardrail, self-eval) are live in the running system, not just files in `prompts/`.
 
 **Why direct SDK:** The 25-point "Agentic Thinking" grading dimension requires showing perception → reasoning → action live. Direct SDK makes chain-of-thought renderable in Streamlit with zero abstraction.
 
@@ -144,9 +149,9 @@ streamlit run app.py         # demo UI
 |-----------|--------|
 | Directory structure | Done |
 | Tool functions (8) | Done |
-| Agent stubs (3) | Done |
-| Data files (JSON) | TODO |
-| System prompts (3) | Done |
+| Agents (3) | Done — orchestrator is agentic (agents-as-tools); guardrails + self-eval wired |
+| Data files (JSON) | Done — Friday Cascade scenario present |
+| System prompts (5) | Done — all four prompt types live in the runtime |
 | Streamlit UI | TODO |
-| Tests | TODO |
+| Tests | Agent-flow tests passing (`tests/test_agent_flow.py`); tool unit tests TODO |
 | Slides | TODO |
