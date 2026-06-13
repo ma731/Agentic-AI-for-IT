@@ -20,7 +20,7 @@ def parts_inventory(parts: list[str], plant_id: str) -> dict:
     if not inventory_file.exists():
         return {"error": "inventory_unavailable"}
 
-    with open(inventory_file) as f:
+    with open(inventory_file, encoding="utf-8") as f:
         stock = json.load(f)
 
     results = {}

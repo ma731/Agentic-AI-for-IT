@@ -20,7 +20,7 @@ def sensor_query(machine_id: str, window: str, sensors: list[str]) -> dict:
     if not filename.exists():
         return {"error": "data_unavailable", "machine_id": machine_id, "window": window}
 
-    with open(filename) as f:
+    with open(filename, encoding="utf-8") as f:
         raw = json.load(f)
 
     filtered = {k: v for k, v in raw["readings"].items() if k in sensors}
