@@ -301,8 +301,35 @@ def approval_gate(state: OpsState) -> dict:
             "trace": [_ev(rid, "human_decision", "human", decision=decision)]}
 
 
+def _escalation_plan(state: OpsState) -> str:
+    """Crisp, deterministic human-review handoff for the escalation path.
+
+    On escalation the Reliability agent could not establish a confident assessment
+    (interrupted / low-confidence telemetry), so there is nothing to act on. We must
+    NOT synthesise an [AUTO]/[APPROVE] action plan from data we don't trust -- that is
+    exactly the failure mode the escalation path exists to prevent. Building this in
+    Python (no LLM call) keeps the message unambiguous and spends zero tokens on the
+    one path where the model has nothing reliable to reason over.
+    """
+    alert = state["alert"]
+    reliability = str(state.get("ops_context", {}).get("reliability", "")).strip()
+    return (
+        "INSUFFICIENT DATA - HUMAN REVIEW REQUIRED\n\n"
+        f"Machine: {alert.get('machine_id', 'unknown')} (plant {state.get('plant_id', 'LEI')})\n"
+        "The Reliability agent could not establish a confident failure assessment from the "
+        "available telemetry, so the orchestrator stopped before recommending any action.\n\n"
+        "[ESCALATE] Route to the on-call reliability engineer for manual inspection.\n"
+        "[MONITOR]  Keep the alert open; re-run automatically once a clean sensor window exists.\n\n"
+        f"Reliability findings on file:\n{reliability or '(none captured)'}"
+    )
+
+
 def synthesize(state: OpsState) -> dict:
     rid = state["run_id"]
+    if state.get("escalate"):
+        plan = _escalation_plan(state)
+        ev = _ev(rid, "plan", "orchestrator", plan=plan)
+        return {"final_plan": plan, "status": "escalated", "trace": [ev]}
     plan = llm.complete(
         _prompt("orchestrator_system.md"),
         f"Synthesise the FINAL action plan in your exact [AUTO]/[APPROVE]/[MONITOR] format, "
@@ -311,8 +338,7 @@ def synthesize(state: OpsState) -> dict:
         f"{state.get('approval', 'N/A')}.\n\nALERT: {json.dumps(state['alert'])}\n\n"
         f"FULL AGENT CONVERSATION:\n{_conversation(state)}",
     )
-    status = "halted" if state.get("halt") else ("escalated" if state.get("escalate")
-                                                 else "complete")
+    status = "halted" if state.get("halt") else "complete"
     ev = _ev(rid, "plan", "orchestrator", plan=plan)
     return {"final_plan": plan, "status": status, "trace": [ev]}
 
