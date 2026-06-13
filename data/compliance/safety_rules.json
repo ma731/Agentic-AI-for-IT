@@ -1,0 +1,34 @@
+{
+  "data_timestamp": "2026-06-12T00:00:00Z",
+  "note": "Challenge 5 — OT and safety systems are siloed today. These are the rules the Compliance & Safety agent gates actions against.",
+  "rules": [
+    {
+      "rule_id": "SAFE-01",
+      "keywords": ["safety", "interlock", "guard", "shutdown", "lockout", "e-stop"],
+      "verdict": "HALT",
+      "authority": "safety_officer",
+      "basis": "OSHA 1910.147 (lockout/tagout) + machine guarding",
+      "detail": "Any action that disables, bypasses, or modifies a safety interlock or guard is HALTED and escalated to the safety officer."
+    },
+    {
+      "rule_id": "SAFE-02",
+      "keywords": ["emergency maintenance", "bearing replacement", "lockout/tagout", "open machine", "open the machine", "maintenance window"],
+      "verdict": "ESCALATE",
+      "authority": "safety_officer",
+      "basis": "OSHA 1910.147",
+      "detail": "Emergency maintenance opening a machine requires a lockout/tagout procedure and a logged safety sign-off before the window opens. Permitted with sign-off."
+    },
+    {
+      "rule_id": "SAFE-03",
+      "keywords": ["reduce speed", "throttle", "reroute", "update log", "draft"],
+      "verdict": "OK",
+      "authority": "none",
+      "basis": "within OEM operating envelope",
+      "detail": "Speed reduction within OEM limits, job rerouting, and log updates carry no incremental safety risk."
+    }
+  ],
+  "audit_requirements": {
+    "osha_log_fields": ["timestamp", "machine_id", "action", "approver", "lockout_tagout_ref", "operators_present"],
+    "note": "Audits currently require manual cross-referencing of 20+ systems; the agent assembles this from the run audit log automatically."
+  }
+}

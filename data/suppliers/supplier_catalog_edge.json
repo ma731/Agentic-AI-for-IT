@@ -1,0 +1,98 @@
+{
+  "catalog_timestamp": "2026-06-12T13:30:00Z",
+  "scenario_note": "EDGE-CASE SNAPSHOT — a supplier disruption has occurred. Schaeffler's Frankfurt emergency depot is OUT OF STOCK on P-4421; SKF can only expedite in 60h; the Amsterdam warehouse courier slot is full until standard transit (96h). NO external option fits the 52h RUL window. The agent must adapt via cross-plant transfer.",
+  "P-4421": {
+    "part_id": "P-4421",
+    "description": "Spindle bearing kit (FAG B7015-C-T-P4S matched pair)",
+    "suppliers": [
+      {
+        "supplier_id": "SUP-SCHAEFFLER-DE",
+        "name": "Schaeffler Group",
+        "tier": "primary",
+        "location": "Herzogenaurach, Germany",
+        "standard_lead_time_days": 8,
+        "standard_lead_time_hours": 192,
+        "standard_unit_price_eur": 1840,
+        "expedite_available": false,
+        "expedite_notes": "Frankfurt emergency depot OUT OF STOCK on P-4421. Next restock 2026-06-15.",
+        "reliability_score": 0.97
+      },
+      {
+        "supplier_id": "SUP-SKF-NL",
+        "name": "SKF Industrial",
+        "tier": "secondary",
+        "location": "Gothenburg (NL depot: Eindhoven)",
+        "standard_lead_time_days": 10,
+        "standard_lead_time_hours": 240,
+        "standard_unit_price_eur": 1950,
+        "expedite_available": true,
+        "expedite_lead_time_hours": 60,
+        "expedite_cost_premium_eur": 2100,
+        "expedite_total_cost_eur": 4050,
+        "expedite_notes": "60h includes cross-border courier — does NOT fit 52h failure window.",
+        "reliability_score": 0.94
+      }
+    ],
+    "warehouse_transfer_option": {
+      "label": "Warehouse transfer — Amsterdam → Leipzig",
+      "from": "AMS Central Warehouse",
+      "to": "LEI Plant 7",
+      "qty_available": 3,
+      "lead_time_hours": 96,
+      "cost_eur": 420,
+      "method": "standard (courier slots full until 96h)",
+      "risk": "HIGH — 96h lead time vs 52h RUL minimum. Does not fit."
+    }
+  },
+  "P-7803": {
+    "part_id": "P-7803",
+    "description": "Hydraulic seal set (spindle nose + drawbar)",
+    "suppliers": [
+      {
+        "supplier_id": "SUP-SKF-NL",
+        "name": "SKF Industrial",
+        "tier": "secondary",
+        "location": "Eindhoven, NL",
+        "standard_lead_time_days": 10,
+        "standard_lead_time_hours": 240,
+        "standard_unit_price_eur": 330,
+        "expedite_available": true,
+        "expedite_lead_time_hours": 60,
+        "expedite_cost_premium_eur": 0,
+        "expedite_total_cost_eur": 330,
+        "expedite_notes": "Bundled with P-4421 SKF order. Still 60h — does not fit window.",
+        "reliability_score": 0.94
+      }
+    ],
+    "warehouse_transfer_option": {
+      "label": "Warehouse transfer — Amsterdam → Leipzig",
+      "from": "AMS Central Warehouse",
+      "to": "LEI Plant 7",
+      "qty_available": 4,
+      "lead_time_hours": 96,
+      "cost_eur": 0,
+      "cost_note": "bundled with P-4421 transfer",
+      "method": "standard (courier slots full)",
+      "risk": "HIGH — 96h, does not fit"
+    }
+  },
+  "combined_options": {
+    "note": "Pre-built options for expedite_cost. NONE fit the 52h RUL window — this is the edge case.",
+    "option_a_warehouse_transfer": {
+      "label": "Option A — Warehouse transfer (Amsterdam → Leipzig, standard)",
+      "parts_covered": ["P-4421", "P-7803"],
+      "lead_time_hours": 96,
+      "total_cost_eur": 420,
+      "risk_level": "HIGH",
+      "risk_note": "96h lead time vs 52h RUL minimum. Misses window by 44h."
+    },
+    "option_b_skf_expedite": {
+      "label": "Option B — SKF expedite (Eindhoven → Leipzig)",
+      "parts_covered": ["P-4421", "P-7803"],
+      "lead_time_hours": 60,
+      "total_cost_eur": 2100,
+      "risk_level": "HIGH",
+      "risk_note": "60h lead time vs 52h RUL minimum. Misses window by 8h."
+    }
+  }
+}

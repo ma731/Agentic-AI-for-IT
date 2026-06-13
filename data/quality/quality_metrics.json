@@ -1,0 +1,29 @@
+{
+  "data_timestamp": "2026-06-12T14:32:00Z",
+  "note": "Challenge 4 — MES/QMS data, normally NOT integrated with robot telemetry. Linking it is the agent's job.",
+  "CNC-07-LEI": {
+    "machine_id": "CNC-07-LEI",
+    "quality_escape_rate_ppm": 1850,
+    "baseline_escape_rate_ppm": 600,
+    "trend": "rising",
+    "recent_defects": [
+      {"defect_id": "Q-9921", "ts": "2026-06-11T22:00:00Z", "type": "dimensional_tolerance", "feature": "spindle-bore diameter", "lot": "LOT-J4421"},
+      {"defect_id": "Q-9930", "ts": "2026-06-12T09:00:00Z", "type": "surface_finish", "feature": "Ra roughness", "lot": "LOT-J4423"}
+    ],
+    "note": "Dimensional defects began climbing as vibration crossed ~5.5 mm/s — a likely link between the bearing degradation and quality escapes."
+  },
+  "CNC-05-LEI": {
+    "machine_id": "CNC-05-LEI",
+    "quality_escape_rate_ppm": 540,
+    "baseline_escape_rate_ppm": 600,
+    "trend": "stable",
+    "recent_defects": []
+  },
+  "CNC-08-LEI": {
+    "machine_id": "CNC-08-LEI",
+    "quality_escape_rate_ppm": 520,
+    "baseline_escape_rate_ppm": 600,
+    "trend": "stable",
+    "recent_defects": []
+  }
+}
