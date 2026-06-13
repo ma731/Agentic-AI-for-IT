@@ -1,0 +1,42 @@
+{
+  "plant_id": "LEI",
+  "data_timestamp": "2026-06-12T14:32:00Z",
+  "total_alerts_today": 22431,
+  "by_severity": {"info": 19880, "warning": 2496, "critical": 55},
+  "deduplicated_critical": 3,
+  "note": "22,431 raw alerts today across LEI. After dedup/correlation, 3 are genuinely actionable. This is the alert-noise problem from challenge 1.",
+  "critical": [
+    {
+      "alert_id": "ALT-22847",
+      "machine_id": "CNC-07-LEI",
+      "sensor": "vibration",
+      "value": 7.2,
+      "unit": "mm/s_RMS",
+      "threshold": 6.0,
+      "trend": "rising",
+      "priority_score": 0.96,
+      "reason": "Vibration above critical threshold, rising 6h, pattern matches a prior bearing failure."
+    },
+    {
+      "alert_id": "ALT-21903",
+      "machine_id": "CNC-11-LEI",
+      "sensor": "coolant_flow",
+      "value": 12.0,
+      "unit": "l/min",
+      "threshold": 15.0,
+      "trend": "stable",
+      "priority_score": 0.41,
+      "reason": "Below nominal but stable; monitor, not urgent."
+    },
+    {
+      "alert_id": "ALT-22010",
+      "machine_id": "ROB-03-LEI",
+      "sensor": "safety_interlock",
+      "value": "nominal",
+      "unit": "state",
+      "trend": "stable",
+      "priority_score": 0.38,
+      "reason": "Interlock cycled twice during shift handover; within normal range."
+    }
+  ]
+}

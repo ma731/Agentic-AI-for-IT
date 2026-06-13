@@ -16,59 +16,79 @@ Detects early failure signals in CNC machines, reasons across maintenance + supp
 
 ## 2. Architecture
 
+A **multi-agent operations brain** — six agents that solve all five TMC challenges by
+sharing one operational context and being routed by an LLM orchestrator.
+
 ```
-Alert → Orchestrator (claude-sonnet-4-6)
-           │  tools: [maintenance_agent, supply_chain_agent]  ← specialists exposed AS tools
-           ├── Maintenance Agent → [sensor_query, rul_predictor, asset_profile, maintenance_schedule]
-           └── Supply Chain Agent → [parts_inventory, supplier_catalog, expedite_cost, work_order_draft, notify]
+perceive → SUPERVISOR ⇄ { reliability        (challenge 1)
+                          supply_chain        (challenge 2)
+                          production           (challenge 3)
+                          quality              (challenge 4)
+                          compliance_safety }  (challenge 5)  → finalize(⏸ approval) → synthesize
 ```
 
-**Pattern:** Hierarchical orchestrator + specialist sub-agents, using the **agents-as-tools** pattern. The orchestrator is itself an LLM `tool_use` loop: the two specialists are tools it chooses to call, in the order its own reasoning dictates — routing is **not** hardcoded in Python. Its reasoning between delegations is the visible "agentic thinking" for the 25-point rubric dimension.
+**Pattern:** Orchestrator/supervisor + 5 autonomous specialist agents, as a LangGraph `StateGraph`.
 
-Direct Anthropic SDK `tool_use` — no LangChain, no LangGraph. Every reasoning step is explicit in `response.content`.
+**Agents are real ReAct agents** (`agents.py`, `create_react_agent`): each specialist's LLM
+**chooses its own tools** and loops until done. The **orchestrator controls routing** between
+agents (`supervisor` node) — "autonomous tools, guided handoffs".
 
-**Prompt wiring (load-bearing):** `guardrails.md` is composed onto every agent's system prompt at load time (`_compose_system_prompt`), and `self_eval.md` runs as a self-evaluation pass over the draft action plan before it is returned. All four prompt types (system, task, guardrail, self-eval) are live in the running system, not just files in `prompts/`.
+**Routing = guided autonomy:** a policy in `_allowed_next()` guarantees coverage (on HIGH risk,
+all of supply_chain/production/quality run) and termination (compliance_safety always gates
+before FINISH). When ≥2 agents are allowed, the LLM picks the order; when 1 is allowed it's
+deterministic. This is the "deterministic vs model-driven" split for the rubric.
 
-**Why direct SDK:** The 25-point "Agentic Thinking" grading dimension requires showing perception → reasoning → action live. Direct SDK makes chain-of-thought renderable in Streamlit with zero abstraction.
+**Natural-language communication:** every agent appends its full report to a shared `transcript`
+that all later agents read; an agent may end with `FOLLOWUP: <agent> — <q>` to ask another
+specialist directly (honoured by the supervisor, capped at `MAX_VISITS` to prevent loops).
+`ops_context` keeps the latest report per agent for quick lookup.
+**Safety override:** `compliance_safety` can return HALT, which stops the whole plan.
+**Human-in-the-loop:** the approval gate uses `interrupt()` + `MemorySaver` checkpointer — the
+graph pauses for a human approve/reject. Checkpointer also = **episodic memory**.
 
-**Model:** `claude-sonnet-4-6` for all agents.
+**Framework:** LangGraph (NOT direct Anthropic SDK). Migrated 2026-06-13; expanded to 6 agents 2026-06-13.
+**Model:** Groq / `llama-3.3-70b-versatile` (free tier) via `init_chat_model`, set by `TOS_MODEL`;
+one-line swap to `ollama:...` offline. `llm.complete()` (used for routing/synthesis only) degrades
+to a templated stub with no provider; the ReAct agents need a real tool-calling model (`get_chat_model`).
 
 ---
 
 ## 3. Repo structure
 
+Flat layout (run everything from the repo root):
+
 ```
+graph.py                 # orchestration: supervisor + workers + transcript + approval gate
 agents/
-  orchestrator.py          # main loop — routes to sub-agents, synthesizes final plan
-  maintenance_agent.py     # sensor analysis, RUL, asset profile, schedule check
-  supply_chain_agent.py    # parts, suppliers, ROI, draft WO, draft notification
+  __init__.py            # exports build_agents, AGENT_NAMES, AGENT_SPECS
+  factory.py             # builds the 5 ReAct agents (create_react_agent)
 tools/
-  sensor_query.py          # reads data/sensors/<machine_id>_<window>.json
-  rul_predictor.py         # heuristic RUL from sensor readings + historical match
-  asset_profile.py         # reads data/assets/asset_profiles.json
-  maintenance_schedule.py  # reads data/assets/maintenance_schedule.json
-  parts_inventory.py       # reads data/inventory/parts_stock.json
-  supplier_catalog.py      # reads data/suppliers/supplier_catalog.json
-  expedite_cost.py         # pure calculation — no file I/O
-  work_order_draft.py      # generates draft WO dict — not committed until approved
-  notify.py                # generates draft notification dict — not sent until approved
-data/
-  sensors/CNC-07-LEI_72h.json      # Friday Cascade scenario — the anomaly
-  sensors/CNC-03-LEI_hist.json     # historical bearing failure — RUL comparison
-  assets/asset_profiles.json       # machine specs, BOM, failure modes
-  assets/maintenance_schedule.json # scheduled windows per plant
-  inventory/parts_stock.json       # on-site + warehouse stock
-  suppliers/supplier_catalog.json  # lead times, expedite options, costs
-prompts/
-  orchestrator_system.md
-  maintenance_agent_system.md
-  supply_chain_agent_system.md
-app.py                   # Streamlit demo UI
-demo_scenario.py         # terminal runner — Friday Cascade end-to-end
+  lc.py                  # LangChain @tool wrappers (grouped per agent)
+  alert_triage, sensor_query, rul_predictor, asset_profile          # reliability (1)
+  parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk  # supply chain (2)
+  job_reroute, robot_cell_status, shift_conflict_check              # production/human-robot (3)
+  quality_history, telemetry_correlate                              # quality (4)
+  safety_gate, audit_assemble                                       # compliance & safety (5)
+  maintenance_schedule, work_order_draft, notify                    # shared / scheduling
+prompts/                 # supervisor + orchestrator + 5 agent prompts + guardrails + self_eval
+data/                    # scenario data: alerts/ sensors/ assets/ inventory/ suppliers/ production/ quality/ compliance/
+llm.py                   # model factory: get_chat_model() for agents; complete() for routing/synthesis
+audit_log.py             # JSONL audit trail → logs/tos_audit.jsonl (read by audit_assemble)
+scripts/
+  run_demo.py            # terminal runner — happy / edge / escalation
+  view_run.py            # replay a recorded run from the audit log (no tokens)
+streamlit_app/
+  app.py                 # Streamlit UI — live multi-agent trace + human approval gate
 tests/
-  test_tools.py
-  test_agent_flow.py
+  test_tools.py          # 17 tool unit tests (offline)
+  test_agent_flow.py     # 3 multi-agent flow tests (skip without GROQ_API_KEY)
+docs/                    # brief, brainstorm, case study, PROGRESS.md, tool_catalog.md, architecture.mmd
 ```
+
+**Imports:** top-level modules use absolute imports (`import llm`, `from agents import build_agents`,
+`from tools.X import ...`). `agents/` and `tools/` are packages (have `__init__.py`); within them use
+relative imports (`from .factory import ...`, `from .alert_triage import ...`). Entrypoints in
+`scripts/` and `streamlit_app/` add the repo root to `sys.path`, so run them from the repo root.
 
 ---
 
@@ -96,28 +116,36 @@ tests/
 
 ---
 
-## 6. Tool ordering policy (enforced in system prompts)
+## 6. Tool ordering policy (recommended in system prompts, not hard-enforced)
+
+Agents are autonomous (ReAct) — they choose tool order. The recommended order lives in each
+agent's prompt:
 
 ```
-Maintenance Agent:  sensor_query → rul_predictor → asset_profile → maintenance_schedule
-Supply Chain Agent: parts_inventory → supplier_catalog → expedite_cost → work_order_draft → notify
+reliability:  alert_triage → sensor_query → rul_predictor → asset_profile
+supply_chain: parts_inventory → supplier_catalog → expedite_cost (→ tier2_supplier_risk)
 ```
 
-Never call `rul_predictor` before `sensor_query`. Never call `expedite_cost` before knowing the parts gap. Never draft WO before parts plan is confirmed. Violations produce hallucinated plans.
+If you need strict ordering for a tool, state it firmly in that agent's prompt. Don't rely on
+graph edges to order within-agent calls anymore — that's the agent's job now.
 
 ---
 
-## 7. stream_callback contract
+## 7. Trace event contract (graph state `trace`, rendered by demo + Streamlit)
 
-All agent functions accept `stream_callback(event: dict)`. The Streamlit UI subscribes to this. Event types:
+Each node appends typed events to `state["trace"]` (reducer = list add); they are also written
+to the audit log. Event types:
 
 ```python
-{"type": "orchestrator_start",   "alert": dict, "message": str}
-{"type": "tool_call",            "agent": str, "tool": str, "input": dict, "result": dict}
-{"type": "agent_response",       "agent": str, "content": list}   # raw response.content blocks
-{"type": "orchestrator_decision","message": str}
-{"type": "orchestrator_synthesis","message": str}
-{"type": "final_plan",           "plan": str}
+{"type": "perception",   "alert": dict, "message": str}
+{"type": "route",        "agent": "orchestrator", "allowed": list, "message": str}
+{"type": "tool_call",    "agent": str, "tool": str, "input": dict, "result": any}
+{"type": "agent_report", "agent": str, "report": str}
+{"type": "agent_error",  "agent": str, "error": str}     # degraded — run continues
+{"type": "decision" | "escalation", "agent": str, "message": str}
+{"type": "approval_request", "question": str, "ceiling_eur": int}
+{"type": "human_decision",   "decision": dict}
+{"type": "plan",             "plan": str}
 ```
 
 ---
@@ -125,21 +153,33 @@ All agent functions accept `stream_callback(event: dict)`. The Streamlit UI subs
 ## 8. Environment
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env         # add ANTHROPIC_API_KEY
-python demo_scenario.py      # terminal run — Friday Cascade
-streamlit run app.py         # demo UI
+pip install -r requirements.txt        # install dependencies
+cp .env.example .env                   # add GROQ_API_KEY (free, console.groq.com)
+python scripts/run_demo.py             # happy path (auto-approves)
+python scripts/run_demo.py edge        # cross-plant adaptation path
+python scripts/run_demo.py escalation  # telemetry dropout → stops after reliability
+python scripts/view_run.py             # replay last recorded run (no tokens) — also --list, RUN-id
+python -m pytest tests/test_tools.py   # 17 tool tests, offline, no key needed
+python -m pytest tests/                # also runs flow tests (need GROQ_API_KEY; else skipped)
+streamlit run streamlit_app/app.py     # demo UI with live multi-agent trace + approval gate
 ```
+
+The 5 ReAct agents need a real tool-calling model (GROQ_API_KEY in `.env`, or `TOS_MODEL=ollama:…`).
+Only the routing/synthesis `llm.complete()` calls can fall back to the offline stub.
 
 ---
 
 ## 9. What to avoid
 
-- Do not call tools out of order (see §6).
-- Do not add new tools without updating TOOLS list in the relevant agent file AND this CLAUDE.md.
-- Do not change autonomy tier definitions without updating §5 here and all 3 system prompts.
-- Do not use `git add -A` or `git add .` — stage explicit paths to avoid committing `.env`.
-- Do not hardcode machine IDs or part numbers in agent code — they come from alerts and tool outputs.
+- Do not add a new tool without: writing the pure function in `tools/`, a `@tool` wrapper in
+  `tools_lc.py`, adding it to the right agent group, and updating `docs/tool_catalog.md`.
+- Do not add an agent without a prompt in `prompts/`, an entry in `AGENT_SPECS`, a worker node +
+  edges in `graph.py`, and a routing-policy update in `_allowed_next()`.
+- Pass numeric tool args as plain numbers in prompts — Llama emits arithmetic expressions
+  otherwise and Groq rejects the tool call (see `SHARED_FOOTER` in agents.py).
+- Do not change autonomy tiers / the €500 ceiling without updating §5 and the agent prompts.
+- Do not use `git add -A`/`git add .` — stage explicit paths to avoid committing `.env`.
+- Do not hardcode machine IDs or part numbers in agent code — they come from alerts/tool outputs.
 
 ---
 
@@ -147,11 +187,15 @@ streamlit run app.py         # demo UI
 
 | Component | Status |
 |-----------|--------|
-| Directory structure | Done |
-| Tool functions (8) | Done |
-| Agents (3) | Done — orchestrator is agentic (agents-as-tools); guardrails + self-eval wired |
-| Data files (JSON) | Done — Friday Cascade scenario present |
-| System prompts (5) | Done — all four prompt types live in the runtime |
-| Streamlit UI | TODO |
-| Tests | Agent-flow tests passing (`tests/test_agent_flow.py`); tool unit tests TODO |
+| 6-agent architecture (orchestrator + 5 ReAct specialists) | Done |
+| All 5 TMC challenges covered (1–5) | Done |
+| Tool functions (18) + `@tool` wrappers | Done |
+| Data files incl. challenge 3/4/5 + edge + dropout | Done |
+| Agent prompts (5) + supervisor + guardrails + self-eval | Done |
+| Shared blackboard, guided routing, safety HALT, interrupt approval | Done |
+| Audit log + `audit_assemble` reconstruction | Done |
+| Streamlit UI (live multi-agent trace + approval) | Done |
+| Tool tests (17, offline) | Done |
+| Live Groq run verified (happy path end-to-end) | Done |
+| Full flow tests (happy/edge/escalation) live | In progress / verify |
 | Slides | TODO |

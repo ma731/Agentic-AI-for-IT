@@ -1,0 +1,35 @@
+{
+  "plant_id": "LEI",
+  "data_timestamp": "2026-06-12T14:32:00Z",
+  "note": "Challenge 3 — human-robot coordination. Cells feeding CNC-05/08 (the reroute candidates) share operators with CNC-07's cell.",
+  "cells": [
+    {
+      "cell_id": "CELL-07-LEI",
+      "serves_machine": "CNC-07-LEI",
+      "robots": ["ROB-07A-LEI"],
+      "operators_assigned": ["op_Keller"],
+      "mode": "collaborative",
+      "safety_state": "nominal",
+      "safety_shutdowns_last_30d": 2
+    },
+    {
+      "cell_id": "CELL-05-LEI",
+      "serves_machine": "CNC-05-LEI",
+      "robots": ["ROB-05A-LEI"],
+      "operators_assigned": ["op_Keller"],
+      "mode": "collaborative",
+      "safety_state": "nominal",
+      "safety_shutdowns_last_30d": 4,
+      "note": "Shares operator op_Keller with CELL-07. Rerouting CNC-07 jobs here creates a single-operator conflict during overlap."
+    },
+    {
+      "cell_id": "CELL-08-LEI",
+      "serves_machine": "CNC-08-LEI",
+      "robots": ["ROB-08A-LEI"],
+      "operators_assigned": ["op_Wagner"],
+      "mode": "collaborative",
+      "safety_state": "nominal",
+      "safety_shutdowns_last_30d": 1
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "data_timestamp": "2026-06-12T06:00:00Z",
+  "note": "Tier-2 dependency map. Challenge 2: Titan has no visibility beyond Tier-1. This exposes the hidden risk.",
+  "SUP-SCHAEFFLER-DE": {
+    "tier1_name": "Schaeffler Group",
+    "supplies_parts": ["P-4421", "P-7803"],
+    "tier2_dependencies": [
+      {
+        "tier2_id": "T2-OVAKO-SE",
+        "name": "Ovako (bearing steel)",
+        "material": "100Cr6 bearing-grade steel",
+        "risk_flag": "ELEVATED",
+        "risk_note": "Ovako reported a furnace outage 2026-06-08; bearing-steel lead times up 19%. Could delay Schaeffler restock of P-4421 beyond the quoted window.",
+        "single_source": true
+      }
+    ],
+    "overall_tier2_risk": "ELEVATED"
+  },
+  "SUP-SKF-NL": {
+    "tier1_name": "SKF Industrial",
+    "supplies_parts": ["P-4421", "P-7803"],
+    "tier2_dependencies": [
+      {
+        "tier2_id": "T2-LKAB-SE",
+        "name": "LKAB (iron ore)",
+        "material": "iron ore pellets",
+        "risk_flag": "LOW",
+        "single_source": false
+      }
+    ],
+    "overall_tier2_risk": "LOW"
+  }
+}

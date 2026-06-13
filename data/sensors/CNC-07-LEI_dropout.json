@@ -1,0 +1,44 @@
+{
+  "machine_id": "CNC-07-LEI",
+  "plant_id": "LEI",
+  "window": "dropout",
+  "data_timestamp": "2026-06-12T15:14:00Z",
+  "sensor_status": "INTERRUPTED",
+  "sensor_status_detail": "Vibration and bearing-temp telemetry for CNC-07-LEI stopped at 15:14 local (network segment LEI-OT-7 unreachable). Only 4 readings captured this window before the feed dropped. RUL assessment cannot be completed on partial data.",
+  "summary": {
+    "vibration": {
+      "current": 7.0,
+      "baseline": 3.1,
+      "unit": "mm/s_RMS",
+      "trend": "rising",
+      "last_reading_ts": "2026-06-12T14:32:00Z",
+      "note": "feed lost after this point"
+    },
+    "bearing_temp": {
+      "current": 71,
+      "baseline": 58,
+      "unit": "celsius",
+      "trend": "rising",
+      "last_reading_ts": "2026-06-12T14:32:00Z"
+    },
+    "spindle_current": {
+      "current": "unknown",
+      "note": "no readings — sensor offline"
+    }
+  },
+  "readings": {
+    "vibration": [
+      {"ts": "2026-06-12T08:32:00Z", "v": 6.8},
+      {"ts": "2026-06-12T10:32:00Z", "v": 6.9},
+      {"ts": "2026-06-12T12:32:00Z", "v": 7.0},
+      {"ts": "2026-06-12T14:32:00Z", "v": 7.0}
+    ],
+    "bearing_temp": [
+      {"ts": "2026-06-12T08:32:00Z", "v": 71},
+      {"ts": "2026-06-12T10:32:00Z", "v": 71},
+      {"ts": "2026-06-12T12:32:00Z", "v": 72},
+      {"ts": "2026-06-12T14:32:00Z", "v": 71}
+    ],
+    "spindle_current": []
+  }
+}

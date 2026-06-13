@@ -1,0 +1,22 @@
+{
+  "plant_id": "LEI",
+  "data_timestamp": "2026-06-12T14:32:00Z",
+  "note": "Challenge 3 — schedulers operate offline/manually today. This is the shift roster the Production agent reasons over.",
+  "shifts": [
+    {"shift_id": "SAT-EARLY", "start": "2026-06-13T06:00:00Z", "end": "2026-06-13T14:00:00Z",
+     "operators": ["op_Keller", "op_Wagner"], "technicians": ["Müller", "Becker"],
+     "machines_staffed": ["CNC-05-LEI", "CNC-08-LEI"]},
+    {"shift_id": "SAT-LATE", "start": "2026-06-13T14:00:00Z", "end": "2026-06-13T22:00:00Z",
+     "operators": ["op_Schmidt"], "technicians": ["Fischer"],
+     "machines_staffed": ["CNC-05-LEI"]}
+  ],
+  "known_conflicts": [
+    {
+      "conflict_id": "CONF-SAT-01",
+      "type": "single_operator_overlap",
+      "operator": "op_Keller",
+      "detail": "op_Keller is the only operator certified on both CELL-05 and CELL-07. If CNC-07 jobs reroute to CNC-05 during SAT-EARLY while CNC-07 is also being serviced, op_Keller is double-booked.",
+      "resolution_hint": "Move CNC-07 job batch to CNC-08 (op_Wagner) instead of CNC-05, OR stagger by 2h."
+    }
+  ]
+}

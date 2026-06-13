@@ -1,3 +1,66 @@
+# Build Progress — Session 3 (June 13, 2026): 6-agent brain, all 5 challenges
+
+**Goal change:** make the specialists *real autonomous agents that talk to each other*, and
+cover **all five** TMC challenges (not just maintenance + supply chain).
+
+**What changed**
+- 2 deterministic nodes → **6 agents**: orchestrator + 5 ReAct specialists (`agents.py`,
+  `create_react_agent`), one per challenge. Each agent's LLM picks its own tools; the
+  orchestrator (`supervisor` node) controls routing — "autonomous tools, guided handoffs".
+- **+9 tools** (18 total) and `tools_lc.py` `@tool` wrappers; +6 data files for challenges 3/4/5.
+- **Shared blackboard** (`ops_context`) so agents read each other's findings.
+- **Routing policy** (`_allowed_next`) guarantees coverage on HIGH risk and termination
+  (compliance_safety always gates before FINISH); LLM picks order when ≥2 agents are allowed.
+- **Safety override:** compliance_safety can HALT. **HITL:** `interrupt()` approval gate kept.
+- New prompts: production / quality / compliance agents + supervisor.
+- Resilience: per-agent try/except (a flaky Llama tool call degrades, doesn't crash the run);
+  `SHARED_FOOTER` tells agents to pass plain numeric args (Llama emits `162000/24` otherwise).
+
+**Verified LIVE on Groq:** happy path end-to-end through all 5 agents — reliability (RISK:HIGH)
+→ supply_chain → production (autonomously rerouted to CNC-08 to dodge the op_Keller conflict)
+→ quality (vibration↔defect correlation) → compliance (VERDICT: SIGN-OFF) → ⏸ approval → complete.
+`pytest` flow tests: **happy ✅, edge ✅** live.
+
+**Known limitation found:** Groq free tier = **100k tokens/day**. The 6-agent system is
+token-heavy; three full scenarios exhaust it (the escalation flow test failed only because the
+quota ran out mid-run, not a logic bug). For rehearsals use Ollama (`TOS_MODEL=ollama:…`) or the
+Groq Dev tier; consider trimming agent context. **TODO:** re-verify escalation once quota resets.
+
+---
+
+# Build Progress — Session 2 (June 13, 2026): LangGraph + Groq reframe
+
+**Why:** assignment §14 forbids paid API keys; we have no Anthropic key. Migrated off
+the direct Anthropic SDK to **LangGraph** orchestration on **Groq / Llama 3.3 70B**
+(free tier), and closed the rubric gaps flagged in the compliance audit.
+
+**What changed**
+- `agents/*.py` (Anthropic SDK) **removed** → replaced by `graph.py` (LangGraph `StateGraph`).
+- New `llm.py` — provider-agnostic model factory (`TOS_MODEL`), Groq primary, Ollama
+  offline fallback, templated stub if no provider (so tools/tests run with no network).
+- New `audit_log.py` → `logs/tos_audit.jsonl` (logging/monitoring component, §6).
+- Tools reused unchanged except 3 small extensions: `supplier_catalog(scenario=)`,
+  `sensor_query` status passthrough, `maintenance_schedule` emergency slots.
+- New scenario data: `data/sensors/CNC-07-LEI_dropout.json` (escalation),
+  `data/suppliers/supplier_catalog_edge.json` (edge / cross-plant).
+- `app.py` rebuilt: live trace + real Approve/Reject buttons wired to `interrupt()`.
+- `demo_scenario.py` rebuilt: streams the graph, handles the interrupt; 3 scenarios.
+- Tests rewritten — 14 offline tests (tools + all 3 graph paths). **All passing.**
+- `docs/tool_catalog.md` added (pre-submission deliverable, §8 format).
+
+**Gaps closed vs the compliance audit**
+- Edge path (cross-plant adaptation) + escalation path (telemetry dropout) — now real, demoable.
+- Logging/monitoring — JSONL audit log per run.
+- HITL — `interrupt()` pauses the graph for human approve/reject (live, not described).
+- Memory — `MemorySaver` checkpointer = episodic; labelled deterministic vs model-driven.
+
+**Verified offline (no key):** `pytest` 14/14 green; happy → approval → complete;
+edge → adapts to cross-plant MUC (ROI 290.8) → complete; escalation → escalated, no supply.
+
+**Still TODO:** add a real `GROQ_API_KEY` and rehearse the live on-stage run; slides.
+
+---
+
 # Build Progress — Session 1 (June 10, 2026)
 
 Skeleton complete. Agent loop is wired end-to-end. All tools tested and passing. Next person picks up from **Step 1** below.

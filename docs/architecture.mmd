@@ -1,0 +1,33 @@
+%% Titan Operations Sentinel — agent graph (auto-generated from graph.build_graph()).
+%% View it: paste into https://mermaid.live, or open with the VS Code "Markdown Preview
+%% Mermaid Support" / "Mermaid Editor" extension.
+graph TD;
+	__start__([__start__]):::first
+	perceive(perceive)
+	supervisor{{"supervisor / orchestrator<br/>(LLM routing)"}}
+	reliability("reliability<br/>challenge 1")
+	supply_chain("supply_chain<br/>challenge 2")
+	production("production & human-robot<br/>challenge 3")
+	quality("quality & traceability<br/>challenge 4")
+	compliance_safety("compliance & safety<br/>challenge 5")
+	finalize("finalize<br/>⏸ human approval")
+	synthesize("synthesize<br/>final action plan")
+	__end__([__end__]):::last
+	__start__ --> perceive;
+	perceive --> supervisor;
+	supervisor -.-> reliability;
+	supervisor -.-> supply_chain;
+	supervisor -.-> production;
+	supervisor -.-> quality;
+	supervisor -.-> compliance_safety;
+	supervisor -.-> finalize;
+	reliability --> supervisor;
+	supply_chain --> supervisor;
+	production --> supervisor;
+	quality --> supervisor;
+	compliance_safety --> supervisor;
+	finalize --> synthesize;
+	synthesize --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
