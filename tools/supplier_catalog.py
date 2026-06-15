@@ -25,7 +25,7 @@ def supplier_catalog(part_ids: list[str], scenario: str = "default") -> dict:
     if not catalog_file.exists():
         return {"error": "catalog_unavailable"}
 
-    with open(catalog_file) as f:
+    with open(catalog_file, encoding="utf-8") as f:
         catalog = json.load(f)
 
     results = {}

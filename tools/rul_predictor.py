@@ -21,7 +21,7 @@ def rul_predictor(machine_id: str, current_readings: dict) -> dict:
     hist_file = HIST_DIR / "CNC-03-LEI_hist.json"
     historical_match = None
     if hist_file.exists():
-        with open(hist_file) as f:
+        with open(hist_file, encoding="utf-8") as f:
             historical_match = json.load(f).get("failure_event")
 
     vibration = current_readings.get("vibration", 0)

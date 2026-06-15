@@ -20,7 +20,7 @@ def asset_profile(machine_id: str) -> dict:
     if not profile_file.exists():
         return {"error": "asset_db_unavailable"}
 
-    with open(profile_file) as f:
+    with open(profile_file, encoding="utf-8") as f:
         profiles = json.load(f)
 
     profile = profiles.get(machine_id)

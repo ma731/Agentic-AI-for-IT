@@ -25,7 +25,7 @@ def maintenance_schedule(plant_id: str, horizon: str = "7d") -> dict:
             "staleness_flag": True,
         }
 
-    with open(schedule_file) as f:
+    with open(schedule_file, encoding="utf-8") as f:
         schedules = json.load(f)
 
     plant_schedule = schedules.get(plant_id, {})
