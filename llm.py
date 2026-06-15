@@ -1,15 +1,21 @@
 """
 LLM factory for Titan Operations Sentinel.
 
-Provider-agnostic on purpose: the demo runs on Groq (Llama 3.3 70B, free tier) but
+Provider-agnostic on purpose: the demo runs on Gemini (free tier / pay-as-you-go) but
 the model is a one-line swap via TOS_MODEL. If no provider is reachable (no key,
 offline, no Ollama), we fall back to a deterministic templated stub so the graph,
 tools, and tests still run end-to-end without a network — important for development
 and CI. The stub is clearly labelled in its output so it is never mistaken for a
 real model response.
 
-    TOS_MODEL=groq:llama-3.3-70b-versatile   (default)
-    TOS_MODEL=ollama:llama3.1:8b             (offline fallback)
+    TOS_MODEL=google_genai:gemini-2.5-flash       (default)
+    TOS_MODEL=google_genai:gemini-2.5-flash-lite  (cheapest + highest free RPM)
+    TOS_MODEL=groq:llama-3.3-70b-versatile        (fast alternative)
+    TOS_MODEL=ollama:llama3.1:8b                  (offline fallback)
+
+Rate-limit resilience: free tiers cap requests-per-minute, and the 6-agent system fires
+a burst of calls per run. We pass max_retries so the provider client retries 429s with
+exponential backoff instead of crashing a run mid-demo.
 """
 from __future__ import annotations
 
@@ -20,7 +26,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DEFAULT_MODEL = "groq:llama-3.3-70b-versatile"
+DEFAULT_MODEL = "google_genai:gemini-2.5-flash"
+
+# Per-provider env var that must be present for that provider to work.
+_PROVIDER_KEYS = {"groq:": "GROQ_API_KEY", "google_genai:": "GOOGLE_API_KEY"}
+
+# Survive free-tier RPM spikes: retry rate-limited calls with backoff (provider client handles it).
+MAX_RETRIES = 6
 
 
 class _StubLLM:
@@ -60,8 +72,9 @@ def get_llm():
     try:
         from langchain.chat_models import init_chat_model
 
-        # init_chat_model accepts "provider:model"; temperature 0 for reproducible demos.
-        model = init_chat_model(model_str, temperature=0)
+        # init_chat_model accepts "provider:model"; temperature 0 for reproducible demos;
+        # max_retries lets the client back off on free-tier 429s instead of failing.
+        model = init_chat_model(model_str, temperature=0, max_retries=MAX_RETRIES)
         # Probe lazily — construction does not call the API, so a bad key only
         # surfaces on first invoke. We catch that at call sites and degrade.
         return _ChatLLM(model)
@@ -78,13 +91,16 @@ def get_chat_model():
     model_str = os.getenv("TOS_MODEL", DEFAULT_MODEL)
     from langchain.chat_models import init_chat_model
 
-    if model_str.startswith("groq:") and not os.getenv("GROQ_API_KEY"):
-        raise RuntimeError(
-            "GROQ_API_KEY is not set. Add it to .env (free key at console.groq.com) "
-            "or set TOS_MODEL=ollama:<model> for a local model. The multi-agent ReAct "
-            "graph needs a real tool-calling model — it cannot run on the offline stub."
-        )
-    return init_chat_model(model_str, temperature=0)
+    for prefix, env_var in _PROVIDER_KEYS.items():
+        if model_str.startswith(prefix) and not os.getenv(env_var):
+            hint = ("free key at https://aistudio.google.com/apikey"
+                    if env_var == "GOOGLE_API_KEY" else "free key at console.groq.com")
+            raise RuntimeError(
+                f"{env_var} is not set. Add it to .env ({hint}) or set "
+                "TOS_MODEL=ollama:<model> for a local model. The multi-agent ReAct graph "
+                "needs a real tool-calling model — it cannot run on the offline stub."
+            )
+    return init_chat_model(model_str, temperature=0, max_retries=MAX_RETRIES)
 
 
 def complete(system: str, user: str) -> str:
