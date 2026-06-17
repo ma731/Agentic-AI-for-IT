@@ -292,7 +292,7 @@ def supervisor(state: OpsState) -> dict:
     allowed = _allowed_next(state)
     choice = allowed[0] if len(allowed) == 1 else _llm_route(state, allowed)
     ev = _ev(state["run_id"], "route", "orchestrator",
-             message=f"Orchestrator routes → {choice}", allowed=allowed)
+             message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice)
     return {"next_agent": choice, "trace": [ev]}
 
 
