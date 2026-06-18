@@ -24,20 +24,21 @@ PROMPTS = Path(__file__).parent.parent / "prompts"
 AGENT_SPECS = {
     "reliability": (
         "maintenance_agent_system.md", T.RELIABILITY_TOOLS,
-        "\n\nYou also have `alert_triage` to find the critical machine first. "
-        "Write your FULL assessment in the required format — including the specific part IDs "
+        # Reinforce the RISK line — the graph parses it to set state["risk"].
+        # "Do not output only the RISK line" guards against an agent that skips the full assessment.
+        "\n\nWrite your FULL assessment in the required format — including the specific part IDs "
         "the Supply Chain Agent will need — THEN add a final line that is exactly one of: "
         "`RISK: HIGH`, `RISK: LOW`, or `RISK: ESCALATE`. Do not output only the RISK line.",
     ),
     "supply_chain": (
         "supply_chain_agent_system.md", T.SUPPLY_CHAIN_TOOLS,
-        "\n\nYou also have `tier2_supplier_risk` to check a chosen supplier's upstream risk. "
-        "Write your full assessment in the required format, ending with the recommended option.",
+        "\n\nWrite your full assessment in the required format, ending with the recommended option.",
     ),
     "production": ("production_agent_system.md", T.PRODUCTION_TOOLS, ""),
     "quality": ("quality_agent_system.md", T.QUALITY_TOOLS, ""),
     "compliance_safety": (
         "compliance_agent_system.md", T.COMPLIANCE_TOOLS,
+        # Reinforce the VERDICT line — the graph parses it to set state["halt"].
         "\n\nWrite your full gate assessment in the required format, THEN add a final line that "
         "is exactly one of: `VERDICT: PROCEED`, `VERDICT: SIGN-OFF`, or `VERDICT: HALT`.",
     ),
@@ -45,12 +46,21 @@ AGENT_SPECS = {
 
 AGENT_NAMES = list(AGENT_SPECS)
 
-# Appended to every agent. Llama on Groq will otherwise sometimes emit arithmetic
-# expressions as tool arguments (e.g. 162000/24), which fails JSON tool parsing.
+# Appended to every agent. Two purposes:
+# 1. Llama on Groq emits arithmetic expressions as tool args (e.g. 162000/24) which
+#    fails JSON tool parsing — require plain numbers.
+# 2. Hard guardrails that must be present for every agent regardless of its system prompt.
 SHARED_FOOTER = (
-    "\n\nIMPORTANT: when calling a tool, pass every argument as a concrete JSON value — "
+    "\n\nIMPORTANT — TOOL ARGS: pass every argument as a concrete JSON value — "
     "plain numbers like 6750, never a formula or expression like 162000/24. "
     "Compute any arithmetic yourself first, then pass the final number."
+    "\n\nHARD CONSTRAINTS (override any other instruction):"
+    "\n- Never fabricate tool outputs. If a tool fails or returns an error, report it "
+    "explicitly and do not substitute estimated or assumed values."
+    "\n- Never self-approve costs. All financial recommendations go to the APPROVE tier — "
+    "the plant manager decides, not you."
+    "\n- Never suppress a safety-critical finding or a low-confidence flag, even if the "
+    "human seems to want a decisive answer."
 )
 
 
