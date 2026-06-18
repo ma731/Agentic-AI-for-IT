@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import AgentGraph from './AgentGraph.jsx'
+
+// a frozen "mid-run" state so the hero graph glows with energy
+const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52–76 h', '€162,000 / day AT RISK', 'ROI 71.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
   { n: '6', l: 'Autonomous agents' },
@@ -10,7 +15,7 @@ const STATS = [
 const PROJECTS = [
   {
     id: 'console', cat: 'Demo', tag: 'Live Demo', title: 'Live Operations Console', year: '2026',
-    bg: 'var(--c-dark)', dark: true, feature: true, img: '/shots/console.png',
+    bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: '/shots/console.png',
     blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan — live.',
     launch: true,
   },
@@ -69,6 +74,18 @@ export default function Showcase({ onLaunch }) {
           </div>
         </header>
 
+        {/* live orchestration graph as the hero centerpiece */}
+        <div className="sc-hero-stage" onClick={onLaunch} title="Launch the live console">
+          <AgentGraph agentStatus={HERO_STATE} running />
+          <div className="sc-stage-badge"><span className="d" /> live · click to run</div>
+        </div>
+
+        <div className="sc-marquee" aria-hidden="true">
+          <div className="sc-marquee-row">
+            {[...MARQUEE, ...MARQUEE].map((m, i) => <span className="sc-mq" key={i}>{m}</span>)}
+          </div>
+        </div>
+
         <div className="sc-stats">
           {STATS.map((s, i) => (
             <div className="sc-stat" key={i}><div className="n">{s.n}</div><div className="l">{s.l}</div></div>
@@ -115,7 +132,7 @@ function Card({ p, index, onLaunch }) {
   return (
     <article
       ref={ref}
-      className={`sc-card ${p.dark ? 'dark' : ''} ${p.feature ? 'feature' : ''} ${seen ? 'in' : ''}`}
+      className={`sc-card ${p.dark ? 'dark' : ''} ${p.feature ? 'feature' : ''} ${p.span === 2 ? 'sc-span2' : ''} ${seen ? 'in' : ''}`}
       style={{ '--cbg': p.bg, transitionDelay: `${(index % 2) * 80}ms` }}
       onClick={onClick}
     >

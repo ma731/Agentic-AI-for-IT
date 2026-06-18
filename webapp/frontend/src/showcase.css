@@ -25,6 +25,8 @@
   --d-mono:    'JetBrains Mono', ui-monospace, monospace;
   --ease-out:  cubic-bezier(0.25, 1, 0.5, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  /* aliases so the embedded AgentGraph (.ag-*) resolves its fonts here too */
+  --d-head: 'Schibsted Grotesk', sans-serif; --d-ui: 'Schibsted Grotesk', sans-serif;
 
   font-family: var(--d-display);
   background: var(--paper);
@@ -72,8 +74,8 @@
 .sc-hero { text-align: center; padding: 92px 0 46px; }
 .sc-eyebrow { font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-bottom: 26px; }
 .sc-hero h1 {
-  font-weight: 600; font-size: clamp(2.3rem, 5.2vw, 4.4rem); line-height: 1.04; letter-spacing: -0.025em;
-  max-width: 16ch; margin: 0 auto;
+  font-weight: 600; font-size: clamp(2.6rem, 6.4vw, 5.4rem); line-height: 1.0; letter-spacing: -0.035em;
+  max-width: 15ch; margin: 0 auto; text-wrap: balance;
 }
 .sc-hero h1 .g { color: var(--brand); }
 .sc-hero p { margin: 26px auto 0; max-width: 52ch; color: var(--ink-2); font-size: 16px; line-height: 1.6; font-weight: 400; }
@@ -91,6 +93,28 @@
 }
 @media (hover: hover) and (pointer: fine) { .sc-btn-ghost:hover { background: var(--ink); color: var(--paper); } }
 .sc-btn-ghost:active { transform: scale(0.97); }
+
+/* ------------------------------------------------- hero graph stage ------- */
+.sc-hero-stage {
+  position: relative; margin: 8px auto 0; max-width: 1000px; border-radius: 22px; overflow: hidden;
+  cursor: pointer; box-shadow: 0 40px 90px -50px rgba(10,30,22,0.7), 0 0 0 1px rgba(14,15,18,0.06);
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  animation: sc-stage-in 0.9s var(--ease-expo) both;
+}
+@keyframes sc-stage-in { from { opacity: 0; transform: translateY(40px) scale(0.97); } to { opacity: 1; transform: none; } }
+@media (hover: hover) and (pointer: fine) { .sc-hero-stage:hover { transform: translateY(-4px); box-shadow: 0 50px 100px -50px rgba(10,30,22,0.75); } }
+.sc-hero-stage .ag-stage { height: 420px; border-radius: 22px; margin: 0; }
+.sc-stage-badge { position: absolute; top: 16px; right: 18px; z-index: 3; display: inline-flex; align-items: center; gap: 7px; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #bdf3dc; background: rgba(8,14,12,0.6); border: 1px solid rgba(20,232,160,0.3); border-radius: 999px; padding: 6px 12px; backdrop-filter: blur(8px); }
+.sc-stage-badge .d { width: 7px; height: 7px; border-radius: 50%; background: #14e8a0; box-shadow: 0 0 8px #14e8a0; }
+
+/* ------------------------------------------------------------ marquee ----- */
+.sc-marquee { overflow: hidden; margin: 40px 0 8px; border-top: 1px solid var(--card-line); border-bottom: 1px solid var(--card-line); padding: 0; }
+.sc-marquee-row { display: inline-flex; white-space: nowrap; animation: sc-mq 32s linear infinite; will-change: transform; }
+@media (hover: hover) { .sc-marquee:hover .sc-marquee-row { animation-play-state: paused; } }
+@keyframes sc-mq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.sc-mq { font-family: var(--d-display); font-weight: 600; font-size: clamp(1.1rem, 2vw, 1.7rem); letter-spacing: -0.01em; color: var(--ink); padding: 16px 0; display: inline-flex; align-items: center; }
+.sc-mq::after { content: '✦'; color: var(--brand); font-size: 0.6em; margin: 0 28px; }
+@media (prefers-reduced-motion: reduce) { .sc-marquee-row { animation: none; } .sc-hero-stage { animation: none; } }
 
 /* -------------------------------------------------------- stat strip ------ */
 .sc-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 0; margin: 48px 0 8px; border-top: 1px solid var(--card-line); border-bottom: 1px solid var(--card-line); }
@@ -115,6 +139,8 @@
 
 /* ----------------------------------------------------------- grid --------- */
 .sc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; padding-bottom: 40px; }
+.sc-card.sc-span2 { grid-column: 1 / -1; min-height: 440px; }
+.sc-card.sc-span2 .sc-shot { min-height: 300px; }
 .sc-card {
   border-radius: 24px; overflow: hidden; cursor: pointer; position: relative;
   background: var(--cbg, var(--paper-2)); border: 1px solid var(--card-line);
