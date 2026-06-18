@@ -12,6 +12,12 @@ const AGENT_MAP = Object.fromEntries(AGENTS.map((a) => [a.id, a]))
 const RATE_PER_S = 162000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
+const TICKER = [
+  'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52–76 h',
+  'DOWNTIME €162,000 / day', 'RECOMMENDED ROI 71.7:1', '5 TMC CHALLENGES',
+  'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
+]
+
 const CHIPS = [
   'CNC-07 vibration spiking — handle it',
   'Sensor feed on CNC-07 dropped out',
@@ -169,6 +175,8 @@ export default function App() {
       <Topbar scenario={scenario} setScenario={setScenario} mode={mode} setMode={setMode}
         running={running} onRun={() => run()} clock={clock} />
 
+      <Ticker />
+
       <div className="main">
         {/* ---- left: agent spine ---- */}
         <div className="col">
@@ -236,6 +244,17 @@ export default function App() {
       </div>
 
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
+    </div>
+  )
+}
+
+function Ticker() {
+  const row = [...TICKER, ...TICKER]
+  return (
+    <div className="ticker" aria-hidden="true">
+      <div className="ticker-track">
+        {row.map((t, i) => <span className="tk" key={i}>{t}</span>)}
+      </div>
     </div>
   )
 }
