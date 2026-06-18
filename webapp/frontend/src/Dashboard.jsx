@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 import AgentGraph from './AgentGraph.jsx'
+import ProviderBar from './ProviderBar.jsx'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
 const NAV = [
@@ -24,7 +25,7 @@ const SCENARIOS = [
 
 export default function Dashboard(props) {
   const {
-    scenario, setScenario, running, completed, timeline, agentStatus, runStatus, risk,
+    scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
     plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT,
   } = props
   const [nav, setNav] = useState('dashboard')
@@ -38,7 +39,7 @@ export default function Dashboard(props) {
       <header className="dash-top">
         <div className="dash-brand"><span className="logo" onClick={onBack} title="Back to showcase">✦</span> Operations Sentinel</div>
         <span className="sp" />
-        <span className="status-pill"><i />{running ? 'Running' : 'Online'}</span>
+        <ProviderBar mode={mode} setMode={setMode} />
         <button className="icon-btn" title="Notifications">◔</button>
         <span className="avatar" />
       </header>

@@ -156,6 +156,32 @@
 
 /* the engine's approval modal still renders; give it a light skin under .dash via .scrim override is global — leave as accent */
 
+/* -------------------------------------------------- provider/key picker --- */
+.pb { position: relative; }
+.pb-trigger { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; color: var(--ink-2); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-family: var(--d-ui); }
+.pb-trigger:hover { border-color: #cfd5de; }
+.pb-dot { width: 8px; height: 8px; border-radius: 50%; }
+.pb-caret { color: var(--muted); font-size: 10px; }
+.pb-pop { position: absolute; top: 44px; right: 0; z-index: 60; width: 320px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 24px 60px -20px rgba(0,0,0,0.35); padding: 16px; }
+.pb-h { font-family: var(--d-head); font-weight: 600; font-size: 13px; margin-bottom: 10px; }
+.pb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 14px; }
+.pb-prov { position: relative; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 6px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--ink-2); font-family: var(--d-ui); }
+.pb-prov:hover { border-color: #cfd5de; }
+.pb-prov.on { border-color: var(--accent); color: var(--ink); box-shadow: 0 0 0 1px var(--accent); }
+.pb-free { display: block; font-family: var(--d-mono); font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--green); margin-top: 3px; }
+.pb-l { display: block; font-size: 11px; color: var(--ink-2); font-weight: 500; margin: 10px 0 5px; }
+.pb-hint { color: var(--muted); font-weight: 400; font-family: var(--d-mono); font-size: 9.5px; }
+.pb-sel, .pb-key { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; font-size: 12.5px; font-family: var(--d-ui); background: #fff; color: var(--ink); outline: none; }
+.pb-sel:focus, .pb-key:focus { border-color: var(--accent); }
+.pb-remember { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ink-2); margin-top: 9px; cursor: pointer; }
+.pb-err { margin-top: 10px; font-size: 11.5px; color: var(--red); background: var(--red-bg); border-radius: 8px; padding: 8px 10px; line-height: 1.4; }
+.pb-actions { display: flex; gap: 8px; margin-top: 14px; }
+.pb-connect { flex: 2; background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 11px; font-weight: 600; font-size: 12.5px; cursor: pointer; font-family: var(--d-ui); }
+.pb-connect:disabled { opacity: 0.5; cursor: not-allowed; }
+.pb-replay { flex: 1; background: var(--bg); color: var(--ink-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px; font-weight: 600; font-size: 12.5px; cursor: pointer; font-family: var(--d-ui); }
+.pb-note { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 11px; }
+.pb-note b { color: var(--green); }
+
 /* ============================================================================
    Live Orchestration graph — a cinematic DARK viewport set inside the light dash
    ========================================================================== */

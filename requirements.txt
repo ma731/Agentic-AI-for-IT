@@ -2,8 +2,12 @@
 langgraph>=0.2.0
 langchain>=0.3.0
 langchain-core>=0.3.0
-langchain-google-genai>=2.0.0    # Gemini (free tier / pay-as-you-go) — primary provider
-langchain-groq>=0.2.0            # Groq (Llama, free tier) — fast alternative
-langchain-ollama>=0.2.0          # offline demo-day fallback
+# --- model providers: swap any time via TOS_MODEL or by dropping a different key in .env ---
+langchain-google-genai>=2.0.0    # Gemini (free tier)
+langchain-groq>=0.2.0            # Groq / Llama (free tier, fast)
+langchain-openai>=0.2.0          # OpenAI  AND  OpenRouter (one key → many free models)
+langchain-anthropic>=0.2.0       # Claude
+langchain-mistralai>=0.2.0       # Mistral (free tier)
+langchain-ollama>=0.2.0          # local / offline (no key)
 streamlit>=1.35.0
 python-dotenv>=1.0.0
