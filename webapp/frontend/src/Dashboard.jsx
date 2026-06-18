@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 import AgentGraph from './AgentGraph.jsx'
 import ProviderBar from './ProviderBar.jsx'
+import Logo from './Logo.jsx'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
 const NAV = [
@@ -39,7 +40,7 @@ export default function Dashboard(props) {
   return (
     <div className="dash">
       <header className="dash-top">
-        <div className="dash-brand"><span className="logo" onClick={onBack} title="Back to showcase">✦</span> Operations Sentinel</div>
+        <div className="dash-brand"><span className="logo-svg" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer', display: 'flex' }}><Logo size={28} accent="#f97316" /></span> Operations Sentinel</div>
         <span className="sp" />
         <ProviderBar mode={mode} setMode={setMode} />
         <button className="icon-btn" title="Notifications">◔</button>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
 import Showcase from './Showcase.jsx'
 import Dashboard from './Dashboard.jsx'
+import SignIn from './SignIn.jsx'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 
 const RATE_PER_S = 162000 / 86400
@@ -26,7 +27,7 @@ const scenarioFor = (text) => {
 }
 
 export default function App() {
-  const [view, setView] = useState('showcase')   // 'showcase' | 'console'
+  const [view, setView] = useState('signin')   // 'signin' | 'showcase' | 'console'
   const [scenario, setScenario] = useState('happy')
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
@@ -166,6 +167,7 @@ export default function App() {
   const neutralized = completed && plan?.status === 'complete'
   const showStream = timeline.length > 0 || running
 
+  if (view === 'signin') return <SignIn onEnter={() => setView('showcase')} />
   if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} />
 
   return (

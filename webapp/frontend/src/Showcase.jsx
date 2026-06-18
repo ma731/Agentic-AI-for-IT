@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import AgentGraph from './AgentGraph.jsx'
+import Logo from './Logo.jsx'
 
 // a frozen "mid-run" state so the hero graph glows with energy
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
@@ -71,7 +72,7 @@ export default function Showcase({ onLaunch }) {
     <div className="showcase">
       <nav className="sc-nav">
         <div className="sc-nav-inner">
-          <div className="sc-logo"><span className="dot">T</span> Titan Operations Sentinel</div>
+          <div className="sc-logo"><Logo size={24} accent="#0fbe85" /> Titan Operations Sentinel</div>
           <div className="links">
             <a onClick={onLaunch}>Live demo</a>
             <a href="#work">Work</a>
