@@ -90,5 +90,41 @@ const escalation = [
   ] },
 ]
 
-export const SCENARIOS = { happy, edge: happy, escalation }
+// --- Edge variant: primary supply DISRUPTED → cross-plant transfer UNDER the €500
+//     ceiling → fully autonomous, NO human gate (shows the autonomy-tier logic) ---
+const edge = [
+  { t: 350, type: 'perception', message: 'Alert ALT-22847 received — CNC-07-LEI. Primary supplier is flagged DISRUPTED today; orchestrator engaging the team.' },
+
+  { t: 650, type: 'route', to: 'reliability', allowed: ['reliability'] },
+  { t: 600, type: 'tool_call', agent: 'reliability', tool: 'alert_triage', input: { plant: 'LEI' }, result: { critical: 'CNC-07-LEI' } },
+  { t: 600, type: 'tool_call', agent: 'reliability', tool: 'rul_predictor', input: {}, result: { rul: '52–76h' } },
+  { t: 900, type: 'agent_report', agent: 'reliability', risk: 'HIGH', report: 'CNC-07-LEI confirmed — spindle-bearing failure, RUL 52–76h. Parts P-4421, P-7803 required. Same failure call as the base case.' },
+
+  { t: 700, type: 'route', to: 'supply_chain', allowed: ['supply_chain', 'production', 'quality'] },
+  { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'supplier_catalog', input: { scenario: 'edge' }, result: { primary: 'DISRUPTED' } },
+  { t: 600, type: 'tool_call', agent: 'supply_chain', tool: 'parts_inventory', input: { sister_plants: ['AMS', 'MUC'] }, result: { MUC: 'P-4421 in stock' } },
+  { t: 550, type: 'tool_call', agent: 'supply_chain', tool: 'expedite_cost', input: { option: 'cross-plant MUC' }, result: { cost: 420, eta: '36h', roi: '290.8:1' } },
+  { t: 950, type: 'agent_report', agent: 'supply_chain', report: 'Primary supplier DISRUPTED today — no expedite fits the 52h window. Adapted: cross-plant transfer from sister plant MUC, P-4421 in stock, 36h, €420. That is UNDER the €500 autonomy ceiling, so no human approval is required. ROI 290.8:1.' },
+
+  { t: 650, type: 'route', to: 'production', allowed: ['production', 'quality'] },
+  { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
+  { t: 900, type: 'agent_report', agent: 'production', report: 'Rerouted jobs J4421–J4425 to CNC-08-LEI (idle, no shift/robot conflict) to cover the 36h transfer window.' },
+
+  { t: 650, type: 'route', to: 'quality', allowed: ['quality'] },
+  { t: 600, type: 'tool_call', agent: 'quality', tool: 'quality_history', input: { target: 'CNC-08-LEI' }, result: { ppm: 'within spec' } },
+  { t: 850, type: 'agent_report', agent: 'quality', report: 'CNC-08 is quality-safe for the extra load; the MUC part is the same OEM spec — no traceability concern.' },
+
+  { t: 650, type: 'route', to: 'compliance_safety', allowed: ['compliance_safety'] },
+  { t: 600, type: 'tool_call', agent: 'compliance_safety', tool: 'safety_gate', input: { actions: 3 }, result: { verdict: 'SIGN-OFF' } },
+  { t: 900, type: 'agent_report', agent: 'compliance_safety', report: 'All actions within OSHA/OEM limits and under the spend ceiling. VERDICT: SIGN-OFF. No human gate needed — the plan can execute autonomously.' },
+
+  { t: 800, type: 'plan', status: 'complete', roi: '290.8:1', lines: [
+    { tier: 'AUTO', txt: 'Throttle CNC-07-LEI spindle to 60% within OEM limits.' },
+    { tier: 'AUTO', txt: 'Cross-plant transfer P-4421 from MUC — €420, 36h (under the €500 ceiling, no approval needed).' },
+    { tier: 'AUTO', txt: 'Reroute jobs J4421–J4425 to CNC-08-LEI for the transfer window.' },
+    { tier: 'MONITOR', txt: 'Track the inbound transfer + vibration hourly; escalate if RUL shortens.' },
+  ] },
+]
+
+export const SCENARIOS = { happy, edge, escalation }
 export const RESOLUTIONS = { approve: HUMAN_APPROVED, reject: HUMAN_REJECTED }
