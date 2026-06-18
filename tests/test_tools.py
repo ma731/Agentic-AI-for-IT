@@ -1,4 +1,4 @@
-"""Unit tests for the 9 tools against the baked-in Friday Cascade scenario data.
+"""Unit tests for the tools against the baked-in Friday Cascade scenario data.
 Fully offline — no model or network required. Run: python -m pytest tests/"""
 import sys
 from pathlib import Path
@@ -10,6 +10,7 @@ from tools.asset_profile import asset_profile
 from tools.expedite_cost import expedite_cost
 from tools.job_reroute import job_reroute
 from tools.maintenance_schedule import maintenance_schedule
+from tools.notify import notify
 from tools.parts_inventory import parts_inventory
 from tools.quality_history import quality_history
 from tools.robot_cell_status import robot_cell_status
@@ -20,6 +21,7 @@ from tools.shift_conflict_check import shift_conflict_check
 from tools.supplier_catalog import supplier_catalog
 from tools.telemetry_correlate import telemetry_correlate
 from tools.tier2_supplier_risk import tier2_supplier_risk
+from tools.work_order_draft import work_order_draft
 
 
 def test_sensor_query_happy():
@@ -120,3 +122,38 @@ def test_safety_gate_verdicts():
     assert safety_gate("reduce spindle speed to OEM safe limit")["verdict"] == "OK"
     assert safety_gate("bypass the safety interlock")["verdict"] == "HALT"
     assert safety_gate("open the machine for emergency maintenance")["verdict"] == "ESCALATE"
+
+
+# --- scheduling / draft tools (challenge 1/2 shared) ----------------------- #
+def test_work_order_draft_is_pending_approval():
+    wo = work_order_draft(
+        machine_id="CNC-07-LEI", plant_id="LEI", failure_mode="spindle_bearing_failure",
+        parts_required=[{"part_id": "P-4421", "qty": 1}], proposed_window={"start": "Sat 06:00"},
+        technicians_required=["mechanical"], estimated_duration_hours=4,
+        actions=[{"tier": "APPROVE", "action": "emergency bearing replacement"}],
+    )
+    assert wo["status"] == "DRAFT_PENDING_APPROVAL"
+    assert wo["incomplete_flag"] is False
+    assert wo["approval_required_from"] == "plant_manager"
+
+
+def test_work_order_draft_flags_incomplete():
+    wo = work_order_draft(
+        machine_id="CNC-07-LEI", plant_id="LEI", failure_mode="spindle_bearing_failure",
+        parts_required=[], proposed_window={}, technicians_required=[],
+        estimated_duration_hours=0, actions=[],
+    )
+    assert wo["incomplete_flag"] is True
+
+
+def test_notify_computes_roi_and_links_wo():
+    n = notify(
+        recipient_role="plant_manager", subject="Approve emergency procurement",
+        situation_summary="CNC-07-LEI spindle bearing failure predicted 52-76h out",
+        recommended_actions=[{"tier": "APPROVE", "action": "expedite P-4421"}],
+        cost_of_inaction_eur=162000, cost_of_recommended_plan_eur=3200,
+        decision_deadline_utc="2026-06-13T08:00:00Z", work_order_id="WO-CNC-07-LEI-202606121432",
+    )
+    assert n["status"] == "DRAFT_PENDING_SEND"
+    assert n["body"]["roi_ratio"] == 50.6                       # 162000 / 3200
+    assert n["body"]["linked_work_order"] == "WO-CNC-07-LEI-202606121432"
