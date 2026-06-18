@@ -9,5 +9,4 @@ langchain-openai>=0.2.0          # OpenAI  AND  OpenRouter (one key → many fre
 langchain-anthropic>=0.2.0       # Claude
 langchain-mistralai>=0.2.0       # Mistral (free tier)
 langchain-ollama>=0.2.0          # local / offline (no key)
-streamlit>=1.35.0
 python-dotenv>=1.0.0

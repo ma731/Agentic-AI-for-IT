@@ -121,7 +121,8 @@ python scripts/run_demo.py edge        # cross-plant adaptation path
 python scripts/run_demo.py escalation  # telemetry dropout → human review
 python scripts/view_run.py             # replay the last recorded run (no tokens)
 python -m pytest tests/test_tools.py   # 17 offline tool tests — no key needed
-streamlit run streamlit_app/app.py     # demo UI: live multi-agent trace + approval gate
+
+cd webapp/frontend && npm install && npm run dev   # demo UI: live multi-agent trace + approval gate (see webapp/README.md)
 ```
 
 Run commands **from the repo root**. The model is set by `TOS_MODEL`
@@ -143,7 +144,7 @@ data/               scenario data per challenge (alerts, sensors, assets, suppli
 llm.py              model factory: get_chat_model() for agents; complete() for routing/synthesis
 audit_log.py        JSONL audit trail → logs/tos_audit.jsonl
 scripts/            CLI entrypoints: run_demo.py, view_run.py
-streamlit_app/      app.py — the Streamlit UI
+webapp/             web console (React/Vite frontend + FastAPI SSE backend) — see webapp/README.md
 tests/              tool tests (offline) + multi-agent flow tests (need a key)
 docs/               assignment brief, brainstorm, case study, PROGRESS.md, tool_catalog.md, architecture.mmd
 CLAUDE.md           project guide for contributors / Claude Code — read first
@@ -162,7 +163,7 @@ CLAUDE.md           project guide for contributors / Claude Code — read first
 
 ## Status & limitations
 
-- ✅ Tools, graph, all 5 challenges, audit log, Streamlit UI, 17 offline tool tests passing.
+- ✅ Tools, graph, all 5 challenges, audit log, web console, 17 offline tool tests passing.
 - ✅ Happy + edge paths verified live on Groq end-to-end.
 - ⚠️ Heuristic RUL (not a trained model) — honest MVP stub. Simulated data only. English-only.
 - ⚠️ Live runs are bounded by the Groq free-tier daily token budget.

@@ -1,36 +1,79 @@
-# Self-Evaluation Prompt
+# Self-Evaluation Prompts
 
 Run this check before finalizing any response. If any answer is "no", revise before responding.
 
----
-
-## Orchestrator self-check (run before outputting final action plan)
-
-1. Did I actually route to both agents when risk was HIGH, or did I shortcut?
-2. Is every [AUTO] action genuinely within my autonomy policy (no cost commitment, no safety impact)?
-3. Is every [APPROVE] action specific enough for a plant manager to decide in under 2 minutes?
-   - Does it include: cost, deadline, who must approve, consequence of delay?
-4. Did I clearly separate what I KNOW (from tool outputs) from what I am INFERRING?
-5. Did I surface the cost-of-inaction calculation explicitly?
-6. If any tool returned an error or stale data, did I flag it in the action plan?
+> Note: agent-specific versions of these checks are embedded directly in each agent's
+> system prompt ("Before responding" section). This file is the consolidated reference.
 
 ---
 
-## Maintenance Agent self-check (run before returning assessment to orchestrator)
+## Reliability (Maintenance Intelligence) self-check
 
-1. Did I call tools in the correct order (sensor → RUL → asset → schedule)?
-2. Did I feed actual sensor readings into rul_predictor, not assumed values?
-3. Did I include the specific part IDs and quantities the Supply Chain Agent needs?
-4. Did I check the maintenance window and compare it against the RUL window?
-5. If confidence was low, did I flag it clearly — not bury it?
+1. Did I call alert_triage first to confirm the critical machine before querying sensors?
+2. Did I call sensor_query with the confirmed machine_id and get real readings?
+3. Did I feed ACTUAL sensor readings into rul_predictor — not assumed or default values?
+4. Did I include the specific part IDs and quantities the Supply Chain Agent needs?
+5. Did I call maintenance_schedule and compare its window against the RUL window?
+6. If confidence was low or data was interrupted, did I flag it clearly and set RISK: ESCALATE?
+7. Does my response end with exactly one of: `RISK: HIGH` | `RISK: LOW` | `RISK: ESCALATE`?
 
 ---
 
-## Supply Chain Agent self-check (run before returning plan to orchestrator)
+## Supply Chain self-check
 
 1. Did I check on-site stock before calling supplier_catalog?
 2. Did I confirm the parts gap before calling expedite_cost?
-3. Is the WO drafted only after the parts plan is confirmed?
-4. Did I reference the WO ID in the notification?
-5. Did I flag stale data if inventory timestamp > 4 hours?
-6. Did I route ALL costs to APPROVE tier regardless of amount?
+3. Did I call tier2_supplier_risk on the recommended supplier?
+4. Is the work order drafted only after the parts plan is confirmed?
+5. Did I reference the WO ID in the notification?
+6. Did I flag stale data if any inventory timestamp is older than 4 hours?
+7. Are ALL cost options in the APPROVE tier — none self-approved?
+8. If no option fit the failure window, did I check cross-plant inventory (AMS, MUC)?
+
+---
+
+## Production & Human-Robot self-check
+
+1. Did I call job_reroute with the correct machine_id and all job IDs from the task?
+2. Did I call robot_cell_status for the target machines?
+3. Did I call shift_conflict_check for the target machines?
+4. If a conflict was detected, did I RESOLVE it (change the assignment) — not just report it?
+5. If there is a capacity shortfall, is it clearly stated — not hidden?
+6. Does my reroute assignment avoid leaving any operator double-booked?
+
+---
+
+## Quality & Traceability self-check
+
+1. Did I call quality_history for the FAILING machine (Step 1)?
+2. Did I call telemetry_correlate for the FAILING machine (Step 2)?
+3. Did I call quality_history for each REROUTE TARGET machine — not the failing machine again?
+4. Is the correlation stated as POSITIVE or INCONCLUSIVE only — not fabricated?
+5. If the escape rate is above baseline, did I recommend quarantining the affected lots?
+6. Did I read the Production Agent's report to find the reroute target machine IDs?
+
+---
+
+## Compliance & Safety self-check
+
+1. Did I call safety_gate on EVERY proposed action — not just the obvious ones?
+2. If any verdict was HALT, does my overall verdict reflect HALT unconditionally?
+3. If any verdict was ESCALATE, did I name the exact sign-off authority and requirement?
+4. Did I call audit_assemble with the correct run_id?
+5. Does my response end with exactly `VERDICT: PROCEED`, `VERDICT: SIGN-OFF`, or
+   `VERDICT: HALT` on its own line?
+6. Did I soften any safety verdict under business pressure? (Answer must be: No.)
+
+---
+
+## Final synthesizer (orchestrator) self-check
+
+1. Did I read ALL agent reports before writing the plan?
+2. If Safety halt=True, does my plan contain ONLY a `[HALTED]` line — no AUTO/APPROVE actions?
+3. Is the human approval decision reflected correctly (approve → GRANTED, reject → REJECTED)?
+4. Is every [AUTO] action genuinely within the €500 autonomy ceiling?
+5. Is every [APPROVE] action specific enough for a plant manager to decide in under 2 minutes?
+   (Does it include: cost, deadline, who must approve, ROI, consequence of delay?)
+6. Did I surface the cost-of-inaction calculation explicitly?
+7. Did I fabricate any data not present in the agent conversation? (Answer must be: No.)
+8. Does the STATUS line match the actual outcome (COMPLETE / HALTED / ESCALATED)?
