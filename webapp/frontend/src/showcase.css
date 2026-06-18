@@ -183,8 +183,45 @@
 .sc-footer .sub { color: var(--ink-2); margin: 16px auto 28px; max-width: 46ch; font-size: 15px; line-height: 1.6; }
 .sc-footer .fine { margin-top: 40px; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
+/* ------------------------------------------------------- how it works ----- */
+.sc-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; padding-bottom: 24px; }
+.sc-step { border-top: 1px solid var(--ink); padding-top: 16px; }
+.sc-step-n { font-family: var(--d-mono); font-size: 12px; color: var(--brand); letter-spacing: 0.1em; }
+.sc-step-t { font-family: var(--d-display); font-weight: 600; font-size: 18px; margin: 10px 0 8px; letter-spacing: -0.01em; }
+.sc-step-d { font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+
+/* ----------------------------------------------------------- why agent ----- */
+.sc-why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding-bottom: 24px; }
+.sc-why-col { border: 1px solid var(--card-line); border-radius: 18px; padding: 22px; background: #fff; }
+.sc-why-col.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.sc-why-h { font-family: var(--d-display); font-weight: 600; font-size: 16px; margin-bottom: 12px; }
+.sc-why-col p { font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+.sc-why-col.on p { color: rgba(255,255,255,0.78); }
+.sc-why-col.on .sc-why-h { color: var(--brand); }
+.sc-why-col.on b { color: #fff; }
+
+/* --------------------------------------------------------- detail modal ---- */
+.sc-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(14,15,18,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 24px; animation: sc-fade 0.2s ease both; }
+@keyframes sc-fade { from { opacity: 0; } to { opacity: 1; } }
+.sc-modal { position: relative; width: min(560px, 94vw); max-height: 88vh; overflow-y: auto; background: var(--paper); border-radius: 22px; padding: 30px 30px 30px; box-shadow: 0 50px 100px -40px rgba(0,0,0,0.5); animation: sc-modal-in 0.32s var(--ease-expo) both; }
+@keyframes sc-modal-in { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
+.sc-close { position: absolute; top: 18px; right: 18px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--card-line); background: #fff; cursor: pointer; color: var(--ink-2); font-size: 13px; transition: background 0.15s var(--ease-out), transform 0.1s var(--ease-out); }
+.sc-close:hover { background: var(--paper-2); }
+.sc-close:active { transform: scale(0.94); }
+.sc-modal-tag { font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand); }
+.sc-modal-h { font-family: var(--d-display); font-weight: 600; font-size: 28px; letter-spacing: -0.02em; margin: 10px 0 12px; }
+.sc-modal-blurb { font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+.sc-modal-shot { margin: 18px 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--card-line); }
+.sc-modal-shot img { width: 100%; display: block; }
+.sc-modal-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.sc-modal-list li { display: flex; align-items: flex-start; gap: 11px; font-size: 14px; line-height: 1.5; color: var(--ink); }
+.sc-bullet { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); margin-top: 7px; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .sc-modal, .sc-scrim { animation: none; } }
+
 @media (max-width: 820px) {
   .sc-grid { grid-template-columns: 1fr; }
+  .sc-steps { grid-template-columns: 1fr 1fr; }
+  .sc-why { grid-template-columns: 1fr; }
   .sc-nav .links { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

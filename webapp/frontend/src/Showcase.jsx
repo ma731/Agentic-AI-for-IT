@@ -43,10 +43,28 @@ const PROJECTS = [
   },
 ]
 
+const DETAILS = {
+  console: ['Six agents reason live over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
+  agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is an autonomous ReAct agent', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
+  approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
+  cascade: ['CNC-07-LEI bearing failure predicted 52–76h out', '€162,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently — gate / autonomous / human review'],
+  compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Compliance can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
+  feasible: ['Runs on free Gemini / OpenRouter tiers', '~62% transcript token trim', 'Recorded replay = €0, can-not-fail demo', 'One-line provider swap when limits bite'],
+}
+
+const STEPS = [
+  { n: '01', t: 'Perceive', d: 'A sensor alert arrives; the orchestrator triages 22k signals to the critical asset.' },
+  { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next — guided autonomy, not a fixed script.' },
+  { n: '03', t: 'Reason', d: 'Each agent picks its own tools, reasons, and reports into a shared transcript.' },
+  { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan across five domains.' },
+  { n: '05', t: 'Decide', d: 'Compliance can HALT; spend over €500 pauses for a human. Then it acts.' },
+]
+
 const FILTERS = ['All', 'Demo', 'Architecture', 'Safety', 'Engineering']
 
 export default function Showcase({ onLaunch }) {
   const [filter, setFilter] = useState('All')
+  const [detail, setDetail] = useState(null)
   const shown = PROJECTS.filter((p) => filter === 'All' || p.cat === filter)
 
   return (
@@ -102,9 +120,29 @@ export default function Showcase({ onLaunch }) {
 
           <div className="sc-grid">
             {shown.map((p, i) => (
-              <Card key={p.id} p={p} index={i} onLaunch={onLaunch} />
+              <Card key={p.id} p={p} index={i} onLaunch={onLaunch} onOpen={setDetail} />
             ))}
           </div>
+        </div>
+
+        {/* how it works */}
+        <div className="sc-section-label"><span className="tick" /> How it works</div>
+        <div className="sc-steps">
+          {STEPS.map((s) => (
+            <div className="sc-step" key={s.n}>
+              <div className="sc-step-n">{s.n}</div>
+              <div className="sc-step-t">{s.t}</div>
+              <div className="sc-step-d">{s.d}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* why an agent */}
+        <div className="sc-section-label"><span className="tick" /> Why an agent, not a dashboard</div>
+        <div className="sc-why">
+          <div className="sc-why-col"><div className="sc-why-h">A dashboard</div><p>Shows you six panels and waits. The human does the cross-domain reasoning under time pressure.</p></div>
+          <div className="sc-why-col"><div className="sc-why-h">An automation</div><p>Fires a fixed rule. It can't weigh ROI vs risk, adapt a reroute, or know when to ask a human.</p></div>
+          <div className="sc-why-col on"><div className="sc-why-h">Our agent</div><p>Reasons across five domains, decides, and hands you <b>one costed, safety-gated plan</b> — and escalates when the data is thin.</p></div>
         </div>
 
         <footer className="sc-footer" id="contact">
@@ -113,12 +151,14 @@ export default function Showcase({ onLaunch }) {
           <button className="sc-btn-primary" onClick={onLaunch}>Launch the live console →</button>
           <div className="fine">Titan Operations Sentinel · IE Agentic AI · 2026</div>
         </footer>
+
+        {detail && <DetailModal p={detail} onClose={() => setDetail(null)} onLaunch={onLaunch} />}
       </div>
     </div>
   )
 }
 
-function Card({ p, index, onLaunch }) {
+function Card({ p, index, onLaunch, onOpen }) {
   const ref = useRef(null)
   const [seen, setSeen] = useState(false)
   useEffect(() => {
@@ -128,7 +168,7 @@ function Card({ p, index, onLaunch }) {
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  const onClick = () => { if (p.launch) onLaunch() }
+  const onClick = () => { if (p.launch) onLaunch(); else onOpen(p) }
   return (
     <article
       ref={ref}
@@ -149,5 +189,24 @@ function Card({ p, index, onLaunch }) {
         <span className="sc-arrow">→</span>
       </div>
     </article>
+  )
+}
+
+function DetailModal({ p, onClose, onLaunch }) {
+  const points = DETAILS[p.id] || []
+  return (
+    <div className="sc-scrim" onClick={onClose}>
+      <div className="sc-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="sc-close" onClick={onClose} aria-label="Close">✕</button>
+        <div className="sc-modal-tag">{p.tag} · {p.year}</div>
+        <h3 className="sc-modal-h">{p.title}</h3>
+        <p className="sc-modal-blurb">{p.blurb}</p>
+        {p.img && <div className="sc-modal-shot"><img src={p.img} alt={p.title} /></div>}
+        <ul className="sc-modal-list">
+          {points.map((pt, i) => <li key={i}><span className="sc-bullet" />{pt}</li>)}
+        </ul>
+        <button className="sc-btn-primary" onClick={onLaunch} style={{ marginTop: 22 }}>Launch the live console →</button>
+      </div>
+    </div>
   )
 }
