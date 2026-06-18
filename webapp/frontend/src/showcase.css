@@ -23,6 +23,8 @@
 
   --d-display: 'Schibsted Grotesk', system-ui, sans-serif;
   --d-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --ease-out:  cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   font-family: var(--d-display);
   background: var(--paper);
@@ -63,7 +65,8 @@
   background: var(--ink); color: var(--paper); border: 0; border-radius: 999px; cursor: pointer;
   font-family: var(--d-display); font-weight: 600; font-size: 13px; padding: 10px 20px; transition: transform 0.14s, background 0.15s;
 }
-.sc-cta:hover { transform: translateY(-1px); background: var(--brand); color: #042; }
+@media (hover: hover) and (pointer: fine) { .sc-cta:hover { transform: translateY(-1px); background: var(--brand); color: #042; } }
+.sc-cta:active { transform: scale(0.97); }
 
 /* --------------------------------------------------------------- hero ----- */
 .sc-hero { text-align: center; padding: 92px 0 46px; }
@@ -79,12 +82,15 @@
   background: var(--ink); color: var(--paper); border: 0; border-radius: 999px; cursor: pointer;
   font-family: var(--d-display); font-weight: 600; font-size: 14px; padding: 14px 28px; transition: transform 0.14s, background 0.15s;
 }
-.sc-btn-primary:hover { transform: translateY(-2px); background: var(--brand); color: #042; }
+@media (hover: hover) and (pointer: fine) { .sc-btn-primary:hover { transform: translateY(-2px); background: var(--brand); color: #042; } }
+.sc-btn-primary:active { transform: scale(0.97); }
 .sc-btn-ghost {
   background: transparent; color: var(--ink); border: 1px solid var(--ink); border-radius: 999px; cursor: pointer;
-  font-family: var(--d-display); font-weight: 600; font-size: 14px; padding: 14px 26px; transition: all 0.14s;
+  font-family: var(--d-display); font-weight: 600; font-size: 14px; padding: 14px 26px;
+  transition: background 0.16s var(--ease-out), color 0.16s var(--ease-out), transform 0.1s var(--ease-out);
 }
-.sc-btn-ghost:hover { background: var(--ink); color: var(--paper); }
+@media (hover: hover) and (pointer: fine) { .sc-btn-ghost:hover { background: var(--ink); color: var(--paper); } }
+.sc-btn-ghost:active { transform: scale(0.97); }
 
 /* -------------------------------------------------------- stat strip ------ */
 .sc-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 0; margin: 48px 0 8px; border-top: 1px solid var(--card-line); border-bottom: 1px solid var(--card-line); }
@@ -100,9 +106,11 @@
 .sc-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
 .sc-pill {
   border: 1px solid var(--card-line); background: #fff; color: var(--ink-2); cursor: pointer;
-  font-family: var(--d-display); font-weight: 500; font-size: 13.5px; padding: 9px 18px; border-radius: 999px; transition: all 0.15s;
+  font-family: var(--d-display); font-weight: 500; font-size: 13.5px; padding: 9px 18px; border-radius: 999px;
+  transition: border-color 0.16s var(--ease-out), color 0.16s var(--ease-out), background 0.16s var(--ease-out), transform 0.1s var(--ease-out);
 }
-.sc-pill:hover { border-color: var(--ink); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .sc-pill:hover { border-color: var(--ink); color: var(--ink); } }
+.sc-pill:active { transform: scale(0.96); }
 .sc-pill.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* ----------------------------------------------------------- grid --------- */
@@ -116,7 +124,8 @@
   opacity: 0; transform: translateY(26px);
 }
 .sc-card.in { opacity: 1; transform: none; }
-.sc-card:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(0,0,0,0.45); }
+@media (hover: hover) and (pointer: fine) { .sc-card.in:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(0,0,0,0.45); } }
+.sc-card.in:active { transform: translateY(-2px) scale(0.995); }
 .sc-card.dark { background: var(--c-dark); color: #fff; border-color: rgba(255,255,255,0.08); }
 
 .sc-shot { flex: 1; border-radius: 14px; overflow: hidden; background: rgba(0,0,0,0.05); display: grid; place-items: center; margin-bottom: 18px; }
