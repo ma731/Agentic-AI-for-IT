@@ -25,8 +25,11 @@ Three paths via `scenario`: happy / edge / escalation.
 from __future__ import annotations
 
 import json
+import logging
 import operator
 import re
+import sys
+import time
 from collections import Counter
 from pathlib import Path
 from typing import Annotated, TypedDict
@@ -41,6 +44,29 @@ from audit_log import new_run_id, write_event
 
 PROMPTS = Path(__file__).parent / "prompts"
 COST_CEILING_EUR = 500
+
+# Live run status. The graph emits concise, timestamped progress lines to this logger AS it
+# runs (which agent is working, how long it took, tools used, routing, the approval gate) so a
+# long run is observable instead of silent. Library default is silent (NullHandler); an
+# entrypoint opts in by calling configure_console_logging().
+log = logging.getLogger("tos")
+log.addHandler(logging.NullHandler())
+
+
+def configure_console_logging(level: int | str = logging.INFO, stream=None) -> None:
+    """Attach a timestamped console handler to the 'tos' status logger (idempotent).
+
+    Call this from an entrypoint (run_demo.py, the webapp backend, a notebook) to watch a
+    run live. Safe to call more than once — it won't add duplicate handlers."""
+    if any(getattr(h, "_tos_console", False) for h in log.handlers):
+        log.setLevel(level)
+        return
+    handler = logging.StreamHandler(stream or sys.stdout)
+    handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s", datefmt="%H:%M:%S"))
+    handler._tos_console = True          # tag so we don't attach twice
+    log.addHandler(handler)
+    log.setLevel(level)
+    log.propagate = False                # don't double-print via the root logger
 JOBS = ["J4421", "J4422", "J4423", "J4424", "J4425"]
 CORE_AGENTS = ["supply_chain", "production", "quality"]
 MAX_VISITS = 2          # cap re-engagement per agent so follow-ups can't loop forever
@@ -198,6 +224,10 @@ def _task_for(name: str, state: OpsState) -> str:
 # --------------------------------------------------------------------------- #
 def perceive(state: OpsState) -> dict:
     alert = state["alert"]
+    log.info("PERCEIVE      | %s on %s (%s=%s%s, threshold %s, trend %s) [scenario=%s]",
+             alert.get("alert_id", "?"), alert["machine_id"], alert.get("sensor", "?"),
+             alert.get("value", "?"), alert.get("unit", ""), alert.get("threshold", "?"),
+             alert.get("trend", "?"), state.get("scenario", "happy"))
     ev = _ev(state["run_id"], "perception", "orchestrator",
              message="Alert received. Orchestrator will route across specialist agents.",
              alert=alert)
@@ -208,11 +238,16 @@ def perceive(state: OpsState) -> dict:
 def _make_worker(name: str):
     def node(state: OpsState) -> dict:
         rid = state["run_id"]
+        log.info("RUN   %-17s| working… (reads %d prior reports)",
+                 name, len(state.get("transcript", [])))
+        t0 = time.perf_counter()
         agents = build_agents()
         try:
             result = agents[name].invoke({"messages": [("user", _task_for(name, state))]})
             msgs = result["messages"]
         except Exception as exc:  # noqa: BLE001 — a flaky tool call must not kill the run
+            log.warning("FAIL  %-17s| after %.1fs — %s", name, time.perf_counter() - t0,
+                        str(exc)[:120])
             ev = _ev(rid, "agent_error", name, error=str(exc)[:300])
             report = f"[{name} could not complete autonomously: {str(exc)[:200]}]"
             update = {"ops_context": {name: report}, "visited": [name],
@@ -226,6 +261,7 @@ def _make_worker(name: str):
             return update
 
         events, blob = _tool_events(msgs, name, rid)
+        tool_names = [e["tool"] for e in events]
         full_report = _agent_report(msgs)
         followup = _detect_followup(full_report, name)   # detect on FULL text first…
         report = _clip(full_report, REPORT_STORE_CHARS)  # …then cap what we store/forward
@@ -234,7 +270,10 @@ def _make_worker(name: str):
                         "transcript": [{"agent": name, "message": report}],
                         "pending_followup": followup or "",
                         "status": f"{name}_done", "trace": events}
+        log.info("DONE  %-17s| %.1fs, %d tool calls [%s]", name, time.perf_counter() - t0,
+                 len(tool_names), ", ".join(tool_names) or "—")
         if followup:
+            log.info("  ↳ %s asks %s a direct follow-up", name, followup)
             update["trace"].append(_ev(rid, "decision", name,
                                        message=f"{name} asks {followup} a direct follow-up."))
 
@@ -246,10 +285,12 @@ def _make_worker(name: str):
                 update["risk"] = "HIGH"
             else:
                 update["risk"] = "LOW"
+            log.info("  ↳ reliability verdict: risk=%s", update["risk"])
         if name == "supply_chain":
             update["needs_approval"] = True
         if name == "compliance_safety":
             update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
+            log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
         return update
     return node
 
@@ -291,6 +332,9 @@ def _llm_route(state: OpsState, allowed: list[str]) -> str:
 def supervisor(state: OpsState) -> dict:
     allowed = _allowed_next(state)
     choice = allowed[0] if len(allowed) == 1 else _llm_route(state, allowed)
+    how = "forced" if len(allowed) == 1 else "LLM-picked"
+    log.info("ROUTE         | → %s  (%s; allowed=%s)",
+             "FINISH" if choice == "FINISH" else choice, how, allowed)
     ev = _ev(state["run_id"], "route", "orchestrator",
              message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice)
     return {"next_agent": choice, "trace": [ev]}
@@ -304,16 +348,20 @@ def route_from_supervisor(state: OpsState) -> str:
 def approval_gate(state: OpsState) -> dict:
     rid = state["run_id"]
     if state.get("halt"):
+        log.info("GATE          | HALT — compliance stopped the plan; skipping approval")
         return {"trace": [_ev(rid, "decision", "orchestrator",
                               message="Plan HALTED by Compliance & Safety — skipping approval.")]}
     if not state.get("needs_approval"):
+        log.info("GATE          | no approval required")
         return {}
     request = {"type": "approval_request",
                "question": "Approve emergency procurement + maintenance window? (approve / reject)",
                "ceiling_eur": COST_CEILING_EUR,
                "supply_summary": str(state.get("ops_context", {}).get("supply_chain", ""))[:400]}
     write_event(rid, "approval_request", request, "orchestrator")
+    log.info("GATE          | ⏸ awaiting human decision (ceiling €%d)…", COST_CEILING_EUR)
     decision = interrupt(request)
+    log.info("GATE          | human decided: %s", decision)
     return {"approval": decision,
             "trace": [_ev(rid, "human_decision", "human", decision=decision)]}
 
@@ -344,9 +392,12 @@ def _escalation_plan(state: OpsState) -> str:
 def synthesize(state: OpsState) -> dict:
     rid = state["run_id"]
     if state.get("escalate"):
+        log.info("PLAN          | escalation handoff (deterministic, no LLM)")
         plan = _escalation_plan(state)
         ev = _ev(rid, "plan", "orchestrator", plan=plan)
+        log.info("END           | status=escalated")
         return {"final_plan": plan, "status": "escalated", "trace": [ev]}
+    log.info("PLAN          | composing final action plan…")
     plan = llm.complete(
         _prompt("orchestrator_system.md"),
         f"Synthesise the FINAL action plan in your exact [AUTO]/[APPROVE]/[MONITOR] format, "
@@ -357,6 +408,7 @@ def synthesize(state: OpsState) -> dict:
     )
     status = "halted" if state.get("halt") else "complete"
     ev = _ev(rid, "plan", "orchestrator", plan=plan)
+    log.info("END           | status=%s", status)
     return {"final_plan": plan, "status": status, "trace": [ev]}
 
 
