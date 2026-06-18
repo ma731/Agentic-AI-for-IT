@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
+import Showcase from './Showcase.jsx'
 
 const AGENTS = [
   { id: 'reliability', name: 'Reliability', chal: 'CH-1 · Predictive Maintenance' },
@@ -31,6 +32,7 @@ const scenarioFor = (text) => {
 }
 
 export default function App() {
+  const [view, setView] = useState('showcase')   // 'showcase' | 'console'
   const [scenario, setScenario] = useState('happy')
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
@@ -170,10 +172,12 @@ export default function App() {
   const neutralized = completed && plan?.status === 'complete'
   const showStream = timeline.length > 0 || running
 
+  if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} />
+
   return (
     <div className="app">
       <Topbar scenario={scenario} setScenario={setScenario} mode={mode} setMode={setMode}
-        running={running} onRun={() => run()} clock={clock} />
+        running={running} onRun={() => run()} clock={clock} onBack={() => setView('showcase')} />
 
       <Ticker />
 
@@ -259,11 +263,11 @@ function Ticker() {
   )
 }
 
-function Topbar({ scenario, setScenario, mode, setMode, running, onRun, clock }) {
+function Topbar({ scenario, setScenario, mode, setMode, running, onRun, clock, onBack }) {
   return (
     <div className="topbar">
       <div className="brand">
-        <div className="mark">T</div>
+        <div className="mark" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer' }}>T</div>
         <div>
           <div className="title">Titan Operations Sentinel</div>
           <div className="sub">Multi-agent operations brain</div>
