@@ -9,6 +9,11 @@ brief's "Elite / maximum differentiation" markers (§16). Each file maps to a ru
 | [`risk_matrix.md`](risk_matrix.md) | Risk Awareness (15) | Risk matrix + approval-tier matrix + failure-mode table |
 | [`evaluation_metrics.md`](evaluation_metrics.md) | Benefits/Feasibility | 3-layer evaluation metrics |
 | [`qa_cheatsheet.md`](qa_cheatsheet.md) | Clarity & Presentation (20) | Per-member Q&A readiness |
+| [`sequence_diagram.md`](sequence_diagram.md) | Agentic Thinking (25) | Sequence diagram / agent trace |
+| [`failure_modes.md`](failure_modes.md) | Risk Awareness (15) | Failure-mode table (FMEA) |
+| [`confidence_policy.md`](confidence_policy.md) | Agentic Thinking (25) | Confidence-threshold policy |
+| [`audit_log_schema.md`](audit_log_schema.md) | Risk / Feasibility | Sample audit-log schema |
+| [`RECORDING.md`](RECORDING.md) | Demo | Golden-run recording steps (you run once) |
 
 Already in the repo and counting toward the same goal:
 - `docs/tool_catalog.md` — Tools & feasibility (15): every tool's spec + fallback.
