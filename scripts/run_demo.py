@@ -10,6 +10,7 @@ Usage (from the repo root):
     python scripts/run_demo.py escalation      # telemetry dropout → human review
     python scripts/run_demo.py happy reject    # happy path but reject the procurement
 """
+import os
 import sys
 from pathlib import Path
 
@@ -17,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root →
 
 from langgraph.types import Command
 
-from graph import build_graph, make_initial_state
+from graph import build_graph, configure_console_logging, make_initial_state
 
 # Windows consoles default to cp1252 and can't encode the trace glyphs (→, ⏸, …).
 try:
@@ -42,7 +43,11 @@ def render(event: dict):
         print(f"    [TOOL] {agent}.{event['tool']}({_short(event['input'], 90)})")
         print(f"           ↳ {_short(event['result'], 130)}")
     elif t == "agent_report":
-        print(f"  [{agent.upper()} REPORT] {_short(event['report'], 400)}")
+        # The agent's full natural-language assessment — this is what it "says" to the others.
+        print(f"\n  ┌─ {agent.upper()} REPORT " + "─" * max(0, 48 - len(agent)))
+        for line in (event["report"] or "(no report)").splitlines():
+            print(f"  │ {line}")
+        print("  └" + "─" * 56)
     elif t == "decision":
         print(f"\n[DECISION · {agent}] {event['message']}")
     elif t == "escalation":
@@ -81,7 +86,11 @@ def main():
     decision = "reject" if "reject" in args else "approve"
 
     print("TITAN OPERATIONS SENTINEL")
-    print(f"Scenario: {scenario.upper()} | human will: {decision.upper()}")
+    print(f"Scenario: {scenario.upper()} | human will: {decision.upper()}\n")
+
+    # Live status logging — concise, timestamped progress as the graph runs (set TOS_LOG=0 to mute).
+    if os.getenv("TOS_LOG", "1") != "0":
+        configure_console_logging()
 
     graph = build_graph()
     state = make_initial_state(scenario)
