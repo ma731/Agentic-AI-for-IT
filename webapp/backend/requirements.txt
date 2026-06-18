@@ -1,0 +1,3 @@
+# Web-console backend (the multi-agent stack itself is in the repo-root requirements.txt)
+fastapi>=0.110
+uvicorn[standard]>=0.29
