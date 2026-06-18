@@ -1,15 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
 import Showcase from './Showcase.jsx'
+import Dashboard from './Dashboard.jsx'
+import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 
-const AGENTS = [
-  { id: 'reliability', name: 'Reliability', chal: 'CH-1 · Predictive Maintenance' },
-  { id: 'supply_chain', name: 'Supply Chain', chal: 'CH-2 · Sourcing & Risk' },
-  { id: 'production', name: 'Production', chal: 'CH-3 · Human-Robot Scheduling' },
-  { id: 'quality', name: 'Quality', chal: 'CH-4 · Defect Traceability' },
-  { id: 'compliance_safety', name: 'Compliance', chal: 'CH-5 · Safety / OSHA Gate' },
-]
-const AGENT_MAP = Object.fromEntries(AGENTS.map((a) => [a.id, a]))
 const RATE_PER_S = 162000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
@@ -175,80 +169,17 @@ export default function App() {
   if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} />
 
   return (
-    <div className="app">
-      <Topbar scenario={scenario} setScenario={setScenario} mode={mode} setMode={setMode}
-        running={running} onRun={() => run()} clock={clock} onBack={() => setView('showcase')} />
-
-      <Ticker />
-
-      <div className="main">
-        {/* ---- left: agent spine ---- */}
-        <div className="col">
-          <div className="col-head"><span>Agent Network</span><span className="count">{doneCount}/{AGENTS.length}</span></div>
-          <div className="col-scroll">
-            <div className="spine">
-              <div className="supervisor-tag"><span className="glyph">◆</span> Orchestrator <b>· Supervisor</b></div>
-              {AGENTS.map((a) => <AgentNode key={a.id} agent={a} status={agentStatus[a.id]} />)}
-            </div>
-          </div>
-        </div>
-
-        {/* ---- center: stream + command bar ---- */}
-        <div className="col center">
-          <div className="col-head">
-            <span>Live Reasoning · {ALERT.machine_id}</span>
-            <span className={`mode-pill ${mode === 'live' ? 'live' : ''}`}>{mode === 'live' ? '● live' : 'replay'}</span>
-          </div>
-          <div className="col-scroll">
-            {showStream ? (
-              <div className="stream">
-                {timeline.map((it) => <Entry key={it.id} item={it} />)}
-                {plan && <div className="stream" style={{ padding: 0 }}><ActionPlan plan={plan} /></div>}
-                <div ref={streamEndRef} />
-              </div>
-            ) : <IdleHero />}
-          </div>
-          <CommandBar idle={!showStream} running={running} onSubmit={submitCommand} />
-        </div>
-
-        {/* ---- right: status rail ---- */}
-        <div className="col">
-          <div className="col-head"><span>Operations Status</span></div>
-          <div className="col-scroll">
-            <div className="rail">
-              <div className="stat">
-                <div className="label">Run State</div>
-                <div className="runstate">{running && <span className="spin" />}{runStatus}</div>
-              </div>
-              <div className="stat">
-                <div className="label">Failure Risk</div>
-                <div className={`risk-badge risk-${risk}`}><span className="blip" />{risk}</div>
-              </div>
-              <div className={`stat cost ${neutralized ? 'safe' : ''}`}>
-                <div className="label">{neutralized ? 'Exposure Neutralized' : 'Downtime Exposure'}</div>
-                <div className="big">€{exposure.toLocaleString()}</div>
-                <div className="unit">€162,000 / day · €6,750 / h</div>
-              </div>
-              <div className="stat">
-                <div className="label">Challenge Coverage</div>
-                <div className="coverage">{AGENTS.map((a) => <span key={a.id} className={`cov-pip ${agentStatus[a.id] === 'done' ? 'on' : ''}`} />)}</div>
-                <div className="unit">{doneCount} of 5 TMC challenges addressed</div>
-              </div>
-              <div className="stat">
-                <div className="label">Active Alert</div>
-                <div className="unit" style={{ marginTop: 2 }}>
-                  {ALERT.alert_id} · {ALERT.plant_name}<br />
-                  {ALERT.sensor} {ALERT.value} {ALERT.unit} · thr {ALERT.threshold}<br />
-                  trend {ALERT.trend} from {ALERT.baseline} / {ALERT.trend_window}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <>
+      <Dashboard
+        scenario={scenario} setScenario={setScenario}
+        running={running} completed={completed}
+        timeline={timeline} agentStatus={agentStatus} runStatus={runStatus} risk={risk}
+        plan={plan} exposure={exposure} doneCount={doneCount}
+        onRun={(scen) => run(scen)} onStop={() => { reset(); setRunStatus('Standing by') }}
+        onBack={() => setView('showcase')} alert={ALERT}
+      />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
-    </div>
+    </>
   )
 }
 
