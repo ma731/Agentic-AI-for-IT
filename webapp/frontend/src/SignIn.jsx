@@ -59,14 +59,14 @@ export default function SignIn({ onEnter }) {
         <div className="si-team-label">Sign in as</div>
         <div className="si-team">
           {TEAM.map((m) => (
-            <button key={m.name} className="si-member" onClick={onEnter} style={{ '--mc': m.color }}>
+            <button key={m.name} className="si-member" onClick={() => onEnter(m)} style={{ '--mc': m.color }}>
               <span className="si-ava">{m.initials}</span>
               <span className="si-mname">{m.name}</span>
               <span className="si-arrow">→</span>
             </button>
           ))}
         </div>
-        <button className="si-skip" onClick={onEnter}>Continue as guest</button>
+        <button className="si-skip" onClick={() => onEnter({ name: 'Guest', initials: 'G', color: '#14e8a0' })}>Continue as guest</button>
       </div>
     </div>
   )

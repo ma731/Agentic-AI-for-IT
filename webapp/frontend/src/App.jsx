@@ -28,6 +28,8 @@ const scenarioFor = (text) => {
 
 export default function App() {
   const [view, setView] = useState('signin')   // 'signin' | 'showcase' | 'console'
+  const [user, setUser] = useState(null)       // signed-in presenter (name, initials, color)
+  const signOut = () => { setUser(null); setView('signin') }
   const [scenario, setScenario] = useState('happy')
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
@@ -167,8 +169,8 @@ export default function App() {
   const neutralized = completed && plan?.status === 'complete'
   const showStream = timeline.length > 0 || running
 
-  if (view === 'signin') return <SignIn onEnter={() => setView('showcase')} />
-  if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} />
+  if (view === 'signin') return <SignIn onEnter={(m) => { setUser(m); setView('showcase') }} />
+  if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} user={user} onSignOut={signOut} />
 
   return (
     <>
@@ -180,6 +182,7 @@ export default function App() {
         plan={plan} exposure={exposure} doneCount={doneCount}
         onRun={(scen) => run(scen)} onStop={() => { reset(); setRunStatus('Standing by') }}
         onBack={() => setView('showcase')} alert={ALERT}
+        user={user} onSignOut={signOut}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
     </>

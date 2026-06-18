@@ -63,7 +63,7 @@ const STEPS = [
 
 const FILTERS = ['All', 'Demo', 'Architecture', 'Safety', 'Engineering']
 
-export default function Showcase({ onLaunch }) {
+export default function Showcase({ onLaunch, user, onSignOut }) {
   const [filter, setFilter] = useState('All')
   const [detail, setDetail] = useState(null)
   const shown = PROJECTS.filter((p) => filter === 'All' || p.cat === filter)
@@ -77,6 +77,7 @@ export default function Showcase({ onLaunch }) {
             <a onClick={onLaunch}>Live demo</a>
             <a href="#work">Work</a>
             <a href="#contact">Approach</a>
+            {user && <a onClick={onSignOut} title="Switch user">Sign out ({user.name.split(' ')[0]})</a>}
           </div>
           <button className="sc-cta" onClick={onLaunch}>Launch console →</button>
         </div>

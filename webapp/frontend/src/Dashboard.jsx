@@ -29,22 +29,27 @@ const SCENARIOS = [
 export default function Dashboard(props) {
   const {
     scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
-    plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT,
+    plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut,
   } = props
   const [nav, setNav] = useState('dashboard')
+  const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
+  const firstName = me.name.split(' ')[0]
 
   const blocks = timeline.filter((t) => t.kind === 'block')
   const focusAgent = AGENT_MAP[nav] ? nav : null
   const shownBlocks = focusAgent ? blocks.filter((b) => b.agent === focusAgent) : blocks
 
   return (
-    <div className="dash">
+    <div className="dash" style={{ '--accent': me.color }}>
       <header className="dash-top">
-        <div className="dash-brand"><span className="logo-svg" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer', display: 'flex' }}><Logo size={28} accent="#f97316" /></span> Operations Sentinel</div>
+        <div className="dash-brand"><span className="logo-svg" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer', display: 'flex' }}><Logo size={28} accent={me.color} /></span> Operations Sentinel</div>
         <span className="sp" />
         <ProviderBar mode={mode} setMode={setMode} />
-        <button className="icon-btn" title="Notifications">◔</button>
-        <span className="avatar" />
+        <button className="user-chip" onClick={onSignOut} title="Switch user / sign out">
+          <span className="uc-ava" style={{ background: me.color }}>{me.initials}</span>
+          <span className="uc-name">{firstName}</span>
+          <span className="uc-out">⇄</span>
+        </button>
       </header>
 
       <div className="dash-body">
@@ -66,10 +71,10 @@ export default function Dashboard(props) {
 
           <div className="side-foot">
             <div className="op-card">
-              <span className="av" />
+              <span className="av" style={{ background: me.color, display: 'grid', placeItems: 'center', color: '#06140e', fontWeight: 700, fontSize: 11 }}>{me.initials}</span>
               <div>
-                <div className="who">Plant Manager</div>
-                <div className="st"><span className="d" />{running ? 'Run active' : 'Standing by'}</div>
+                <div className="who">{me.name}</div>
+                <div className="st"><span className="d" />{running ? 'Run active' : 'Signed in'}</div>
               </div>
             </div>
             <div className="run-ctrls">

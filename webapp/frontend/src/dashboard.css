@@ -49,6 +49,13 @@
 .status-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 7px var(--green); }
 .icon-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); cursor: pointer; display: grid; place-items: center; color: var(--ink-2); font-size: 15px; }
 .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#cbd5e1,#94a3b8); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.user-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; cursor: pointer; font-family: var(--d-ui);
+  transition: border-color 0.16s var(--ease-out), transform 0.1s var(--ease-out); }
+.user-chip:hover { border-color: var(--accent); }
+.user-chip:active { transform: scale(0.97); }
+.uc-ava { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 11px; color: #06140e; }
+.uc-name { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.uc-out { font-size: 13px; color: var(--muted); }
 
 /* --------------------------------------------------------------- body ---- */
 .dash-body { flex: 1; display: grid; grid-template-columns: 236px 1fr 312px; overflow: hidden; }
