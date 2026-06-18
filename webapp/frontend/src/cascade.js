@@ -42,6 +42,7 @@ const happy = [
   { t: 600, type: 'tool_call', agent: 'production', tool: 'job_reroute', input: { from: 'CNC-07', to: 'CNC-08' }, result: { rerouted: 5 } },
   { t: 900, type: 'agent_report', agent: 'production', report: 'Rerouted jobs J4421–J4425 off CNC-07. First-choice CNC-05 hit an operator conflict (op_Keller, overlapping shift), so adapted to CNC-08 — idle, no human-robot conflict. Throughput preserved during the maintenance window.' },
 
+  { t: 600, type: 'decision', agent: 'production', message: 'Production → Quality: are CNC-05/CNC-08 reroute targets quality-safe for the extra load before I commit the reroute?' },
   { t: 650, type: 'route', to: 'quality', allowed: ['quality'] },
   { t: 600, type: 'tool_call', agent: 'quality', tool: 'telemetry_correlate', input: { machine: 'CNC-07-LEI' }, result: { corr: 'vibration↔defect 0.82' } },
   { t: 550, type: 'tool_call', agent: 'quality', tool: 'quality_history', input: { target: 'CNC-08-LEI' }, result: { ppm: 'within spec' } },

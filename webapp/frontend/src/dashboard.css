@@ -142,6 +142,22 @@
 .tier.MONITOR { color: var(--blue); background: var(--blue-bg); }
 .pl .tx { font-size: 12.5px; line-height: 1.5; }
 
+/* agent-to-agent chat */
+.chat { display: flex; flex-direction: column; gap: 14px; }
+.ch-sys { align-self: center; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--muted); background: var(--bg); border-radius: 999px; padding: 6px 14px; }
+.ch-row { display: flex; gap: 10px; align-items: flex-end; max-width: 80%; animation: ch-in 0.35s var(--ease-out) both; }
+.ch-row.me { align-self: flex-end; flex-direction: row; }
+@keyframes ch-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.ch-av { width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; }
+.ch-bubble { background: var(--bg); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 11px 14px; font-size: 13px; line-height: 1.55; color: var(--ink); }
+.ch-bubble.me { background: var(--ink); color: #fff; border: 0; border-radius: 14px 14px 4px 14px; }
+.ch-nm { font-weight: 600; font-size: 11.5px; color: var(--ink-2); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+.ch-bubble.me .ch-nm { color: rgba(255,255,255,0.7); }
+.ch-typing { font-family: var(--d-mono); font-size: 9.5px; color: var(--accent); }
+.ch-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ch-followup { align-self: center; max-width: 88%; text-align: center; font-size: 12.5px; line-height: 1.5; color: var(--orange); background: var(--orange-bg); border-radius: 12px; padding: 9px 14px; }
+.ch-fu-tag { font-family: var(--d-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; background: var(--orange); color: #fff; padding: 2px 7px; border-radius: 5px; margin-right: 7px; }
+
 /* right info panel */
 .dash-info { background: var(--card); border-left: 1px solid var(--line); overflow-y: auto; padding: 18px 18px 28px; }
 .info-h { font-family: var(--d-head); font-weight: 600; font-size: 15px; margin: 4px 0 14px; }
