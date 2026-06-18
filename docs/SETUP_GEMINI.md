@@ -44,7 +44,8 @@ That's the whole setup. Nothing else to change.
 python scripts/run_demo.py            # happy path (auto-approves)
 python scripts/run_demo.py edge       # cross-plant adaptation
 python scripts/run_demo.py escalation # telemetry dropout -> human review
-streamlit run streamlit_app/app.py    # the demo UI with the approve/reject button
+
+cd webapp/frontend && npm install && npm run dev   # the demo UI with the approve/reject button (see webapp/README.md)
 ```
 
 Offline tool tests need no key:

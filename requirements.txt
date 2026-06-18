@@ -5,5 +5,4 @@ langchain-core>=0.3.0
 langchain-google-genai>=2.0.0    # Gemini (free tier / pay-as-you-go) — primary provider
 langchain-groq>=0.2.0            # Groq (Llama, free tier) — fast alternative
 langchain-ollama>=0.2.0          # offline demo-day fallback
-streamlit>=1.35.0
 python-dotenv>=1.0.0
