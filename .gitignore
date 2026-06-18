@@ -8,3 +8,6 @@ venv/
 logs/
 *.egg-info/
 build/
+.gstack/
+.agents/
+data/skills/

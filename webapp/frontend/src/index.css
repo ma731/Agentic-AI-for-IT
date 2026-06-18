@@ -333,8 +333,9 @@ body {
 .modal .actions { display: flex; gap: 12px; }
 .btn { flex: 1; padding: 14px; border-radius: var(--r-pill); cursor: pointer; border: 1px solid var(--line-2);
   font-family: var(--font-ui); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 13px;
-  transition: all 0.14s; background: var(--raised); color: var(--text); }
-.btn:hover { transform: translateY(-1px); }
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease; background: var(--raised); color: var(--text); }
+@media (hover: hover) and (pointer: fine) { .btn:hover { transform: translateY(-1px); } }
+.btn:active { transform: scale(0.97); }
 .btn.approve { background: linear-gradient(180deg, var(--green-2), var(--green-dim)); color: var(--green-deep); border: 0; box-shadow: 0 0 22px -6px var(--green); }
 .btn.reject { background: transparent; color: var(--red); border-color: color-mix(in srgb, var(--red) 50%, var(--line)); }
 

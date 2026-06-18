@@ -54,6 +54,38 @@ def decision(d: Decision):
     return {"ok": False, "error": "no pending approval"}
 
 
+@app.get("/api/providers")
+def providers():
+    """Catalog of model providers + which are ready, and the active one."""
+    import llm
+    return {"active": llm.active_provider(), "model": llm.resolve_model(), "providers": llm.supported()}
+
+
+class Config(BaseModel):
+    provider: str
+    model: str
+    apiKey: str | None = None
+
+
+@app.post("/api/config")
+def configure(c: Config):
+    """Switch provider/model live (key held in memory only — never written to disk)."""
+    import llm
+    p = llm.PROVIDER_BY_ID.get(c.provider)
+    if not p:
+        return {"ok": False, "error": f"unknown provider '{c.provider}'"}
+    if c.apiKey:
+        os.environ[p["keys"][0]] = c.apiKey            # in-memory for this process only
+    os.environ["TOS_MODEL"] = f"{c.provider}:{c.model}"
+    llm.get_chat_model.cache_clear()
+    llm.get_llm.cache_clear()
+    try:
+        llm.get_chat_model()                            # validate it builds with the given key
+        return {"ok": True, "active": llm.active_provider(), "model": llm.resolve_model()}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": str(exc)[:200]}
+
+
 @app.get("/api/run")
 def run(scenario: str = "happy"):
     def gen():

@@ -172,6 +172,7 @@ export default function App() {
     <>
       <Dashboard
         scenario={scenario} setScenario={setScenario}
+        mode={mode} setMode={setMode}
         running={running} completed={completed}
         timeline={timeline} agentStatus={agentStatus} runStatus={runStatus} risk={risk}
         plan={plan} exposure={exposure} doneCount={doneCount}

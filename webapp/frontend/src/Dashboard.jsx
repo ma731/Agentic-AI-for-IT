@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
+import AgentGraph from './AgentGraph.jsx'
+import ProviderBar from './ProviderBar.jsx'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
 const NAV = [
@@ -12,6 +14,8 @@ const NAV = [
 ]
 const WORKFLOW_NAV = [
   { id: 'scenarios', ic: '◇', label: 'Scenarios' },
+  { id: 'chat', ic: '⇆', label: 'Agent Chat' },
+  { id: 'cost', ic: '€', label: 'Cost & Feasibility' },
   { id: 'audit', ic: '≣', label: 'Audit Log' },
   { id: 'plan', ic: '◈', label: 'Action Plan' },
 ]
@@ -23,7 +27,7 @@ const SCENARIOS = [
 
 export default function Dashboard(props) {
   const {
-    scenario, setScenario, running, completed, timeline, agentStatus, runStatus, risk,
+    scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
     plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT,
   } = props
   const [nav, setNav] = useState('dashboard')
@@ -37,7 +41,7 @@ export default function Dashboard(props) {
       <header className="dash-top">
         <div className="dash-brand"><span className="logo" onClick={onBack} title="Back to showcase">✦</span> Operations Sentinel</div>
         <span className="sp" />
-        <span className="status-pill"><i />{running ? 'Running' : 'Online'}</span>
+        <ProviderBar mode={mode} setMode={setMode} />
         <button className="icon-btn" title="Notifications">◔</button>
         <span className="avatar" />
       </header>
@@ -78,6 +82,10 @@ export default function Dashboard(props) {
         <main className="dash-main">
           {nav === 'scenarios' ? (
             <ScenariosView scenario={scenario} setScenario={setScenario} onRun={onRun} running={running} />
+          ) : nav === 'chat' ? (
+            <ChatView timeline={timeline} running={running} />
+          ) : nav === 'cost' ? (
+            <CostView doneCount={doneCount} />
           ) : nav === 'audit' ? (
             <AuditView timeline={timeline} />
           ) : nav === 'plan' ? (
@@ -85,6 +93,8 @@ export default function Dashboard(props) {
           ) : (
             <>
               <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
+
+              {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
 
               <div className="dash-tabs">
                 {SCENARIOS.map((s) => (
@@ -231,6 +241,85 @@ function PlanView({ plan }) {
             {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
             {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
           </div>}
+    </>
+  )
+}
+
+function ChatView({ timeline, running }) {
+  return (
+    <>
+      <div className="dash-h">Agent Conversation</div>
+      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
+        The agents don't just run in sequence — they converse through a shared transcript and can ask each other direct follow-ups. This is that dialogue.
+      </p>
+      <div className="panel chat">
+        {timeline.length === 0 ? (
+          <div className="empty-note">Run a scenario to see the agents talk.</div>
+        ) : timeline.map((t, i) => {
+          if (t.kind === 'system') return <div className="ch-sys" key={i}>{t.text}</div>
+          if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">follow-up</span> {t.text}</div>
+          if (t.kind === 'human') return (
+            <div className="ch-row me" key={i}>
+              <div className="ch-bubble me"><div className="ch-nm">Plant Manager</div>{t.text}</div>
+              <span className="ch-av" style={{ background: '#0f1115' }}>★</span>
+            </div>
+          )
+          const a = AGENT_MAP[t.agent] || { name: t.agent, tint: 'blue' }
+          return (
+            <div className="ch-row" key={i}>
+              <span className="ch-av" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
+              <div className="ch-bubble">
+                <div className="ch-nm">{a.name}{t.status === 'active' && <span className="ch-typing">typing…</span>}</div>
+                {t.report || 'Analyzing…'}
+                {t.tools?.length > 0 && <div className="ch-tools">{t.tools.map((x, j) => <span className="tchip" key={j}>{x.tool}</span>)}</div>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+const COST_ROWS = [
+  { who: 'Orchestrator routing', tok: '1.5k', tint: 'orange' },
+  { who: 'Reliability', tok: '3.2k', tint: 'blue' },
+  { who: 'Supply Chain', tok: '3.8k', tint: 'green' },
+  { who: 'Production', tok: '2.9k', tint: 'purple' },
+  { who: 'Quality', tok: '2.4k', tint: 'orange' },
+  { who: 'Compliance', tok: '3.1k', tint: 'red' },
+  { who: 'Final synthesis', tok: '1.2k', tint: 'blue' },
+]
+function CostView() {
+  return (
+    <>
+      <div className="dash-h">Cost & Feasibility</div>
+      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
+        A full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim). That runs for <b>€0</b> on free tiers, or fractions of a cent paid.
+      </p>
+      <div className="stat-row" style={{ marginBottom: 16 }}>
+        <Stat lbl="Tokens / run" chip="blue" ic="◉" val="~18k" sub="after token-trim (−62%)" />
+        <Stat lbl="Free-tier cost" chip="green" ic="€" val="€0" sub="Gemini / OpenRouter free" deltaUp />
+        <Stat lbl="Pay-as-you-go" chip="purple" ic="€" val="~€0.005" sub="Flash-Lite, per full run" />
+        <Stat lbl="Rehearse 50×" chip="orange" ic="↻" val="< €1" sub="a week of practice runs" />
+      </div>
+      <div className="panel">
+        <div className="panel-h"><span className="t">Tokens by agent</span><span className="sub">representative full run</span></div>
+        {COST_ROWS.map((r, i) => (
+          <div className="act" key={i} style={{ alignItems: 'center' }}>
+            <span className="ava" style={{ background: TINT[r.tint], width: 28, height: 28, fontSize: 11 }}>{r.who[0]}</span>
+            <div className="bd"><div className="nm" style={{ fontSize: 12.5 }}>{r.who}</div></div>
+            <span className="tchip">{r.tok} tok</span>
+          </div>
+        ))}
+      </div>
+      <div className="panel">
+        <div className="panel-h"><span className="t">Why it's feasible</span></div>
+        <div className="pl"><span className="tier AUTO">FREE</span><span className="tx">Runs end-to-end on Gemini / OpenRouter free tiers — no paid keys (assignment §14).</span></div>
+        <div className="pl"><span className="tier MONITOR">TRIM</span><span className="tx">Transcript caps cut tokens ~62%, so more runs fit the daily quota.</span></div>
+        <div className="pl"><span className="tier APPROVE">SWAP</span><span className="tx">One-line provider switch when a free tier rate-limits.</span></div>
+        <div className="pl"><span className="tier AUTO">REPLAY</span><span className="tx">Demo day uses the recorded replay — zero API calls, can't fail.</span></div>
+      </div>
     </>
   )
 }
