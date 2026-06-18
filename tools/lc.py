@@ -1,7 +1,7 @@
 """
 LangChain @tool wrappers for the TOS tool functions.
 
-The ReAct agents in agents.py bind these. The docstrings here are what the LLM
+The ReAct agents in agents/factory.py bind these. The docstrings here are what the LLM
 reads to decide *which* tool to call and *when* — so they are written for the model,
 not for humans (the human-facing spec lives in docs/tool_catalog.md). Each wrapper
 just calls the pure function in tools/; no logic lives here.
@@ -15,6 +15,8 @@ from .asset_profile import asset_profile as _asset_profile
 from .audit_assemble import audit_assemble as _audit_assemble
 from .expedite_cost import expedite_cost as _expedite_cost
 from .job_reroute import job_reroute as _job_reroute
+from .maintenance_schedule import maintenance_schedule as _maintenance_schedule
+from .notify import notify as _notify
 from .parts_inventory import parts_inventory as _parts_inventory
 from .quality_history import quality_history as _quality_history
 from .robot_cell_status import robot_cell_status as _robot_cell_status
@@ -25,6 +27,7 @@ from .shift_conflict_check import shift_conflict_check as _shift_conflict_check
 from .supplier_catalog import supplier_catalog as _supplier_catalog
 from .telemetry_correlate import telemetry_correlate as _telemetry_correlate
 from .tier2_supplier_risk import tier2_supplier_risk as _tier2_supplier_risk
+from .work_order_draft import work_order_draft as _work_order_draft
 
 
 # --- Reliability (challenge 1) -------------------------------------------- #
@@ -56,6 +59,13 @@ def asset_profile(machine_id: str) -> dict:
     return _asset_profile(machine_id)
 
 
+@tool
+def maintenance_schedule(plant_id: str, horizon: str = "7d") -> dict:
+    """Get the plant's scheduled + emergency maintenance windows over a horizon ('7d'/'14d'/
+    '30d'). Compare the next available window against the RUL to find the schedule gap."""
+    return _maintenance_schedule(plant_id, horizon)
+
+
 # --- Supply Chain (challenge 2) ------------------------------------------- #
 @tool
 def parts_inventory(parts: list[str], plant_id: str) -> dict:
@@ -84,6 +94,30 @@ def tier2_supplier_risk(supplier_ids: list[str]) -> dict:
     """Reveal Tier-2 (supplier's supplier) dependencies and risk for Tier-1 supplier IDs.
     Use to sanity-check a sourcing choice for hidden upstream risk."""
     return _tier2_supplier_risk(supplier_ids)
+
+
+@tool
+def work_order_draft(machine_id: str, plant_id: str, failure_mode: str,
+                     parts_required: list[dict], proposed_window: dict,
+                     technicians_required: list[str], estimated_duration_hours: int,
+                     actions: list[dict]) -> dict:
+    """Draft a DRAFT_PENDING_APPROVAL work order once the parts plan is confirmed. Not
+    committed until a human releases it. Call after expedite_cost picks an option."""
+    return _work_order_draft(machine_id, plant_id, failure_mode, parts_required,
+                             proposed_window, technicians_required,
+                             estimated_duration_hours, actions)
+
+
+@tool
+def notify(recipient_role: str, subject: str, situation_summary: str,
+           recommended_actions: list[dict], cost_of_inaction_eur: float,
+           cost_of_recommended_plan_eur: float, decision_deadline_utc: str,
+           work_order_id: str | None = None) -> dict:
+    """Draft an approval-request notification for the decision-maker (e.g. plant_manager).
+    Reference the work_order_id from work_order_draft. Drafted, not sent."""
+    return _notify(recipient_role, subject, situation_summary, recommended_actions,
+                   cost_of_inaction_eur, cost_of_recommended_plan_eur,
+                   decision_deadline_utc, work_order_id)
 
 
 # --- Production & Human-Robot (challenge 3) ------------------------------- #
@@ -137,9 +171,11 @@ def audit_assemble(run_id: str) -> dict:
     return _audit_assemble(run_id)
 
 
-# Grouped per agent — imported by agents.py.
-RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, asset_profile]
-SUPPLY_CHAIN_TOOLS = [parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk]
+# Grouped per agent — imported by agents/factory.py.
+RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, asset_profile,
+                     maintenance_schedule]
+SUPPLY_CHAIN_TOOLS = [parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk,
+                      work_order_draft, notify]
 PRODUCTION_TOOLS = [job_reroute, robot_cell_status, shift_conflict_check]
 QUALITY_TOOLS = [quality_history, telemetry_correlate]
 COMPLIANCE_TOOLS = [safety_gate, audit_assemble]
