@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
+import AgentGraph from './AgentGraph.jsx'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
 const NAV = [
@@ -85,6 +86,8 @@ export default function Dashboard(props) {
           ) : (
             <>
               <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
+
+              {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
 
               <div className="dash-tabs">
                 {SCENARIOS.map((s) => (

@@ -155,3 +155,54 @@
 .sugg .si { font-size: 15px; flex-shrink: 0; }
 
 /* the engine's approval modal still renders; give it a light skin under .dash via .scrim override is global — leave as accent */
+
+/* ============================================================================
+   Live Orchestration graph — a cinematic DARK viewport set inside the light dash
+   ========================================================================== */
+.ag-stage {
+  position: relative; height: 444px; border-radius: 18px; overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 12%, #0e1622, #070a10 70%);
+  border: 1px solid #0c1118; box-shadow: inset 0 0 60px rgba(0,0,0,0.6), 0 18px 50px -28px rgba(0,0,0,0.6);
+  margin-bottom: 16px;
+}
+.ag-aurora { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; pointer-events: none; mix-blend-mode: screen; }
+.ag-aurora.a1 { width: 340px; height: 340px; left: -60px; top: -80px; background: radial-gradient(circle, rgba(20,232,160,0.55), transparent 70%); animation: ag-drift1 14s ease-in-out infinite; }
+.ag-aurora.a2 { width: 300px; height: 300px; right: -50px; top: -40px; background: radial-gradient(circle, rgba(122,140,255,0.5), transparent 70%); animation: ag-drift2 17s ease-in-out infinite; }
+.ag-aurora.a3 { width: 360px; height: 360px; left: 40%; bottom: -120px; background: radial-gradient(circle, rgba(255,184,77,0.32), transparent 70%); animation: ag-drift1 20s ease-in-out infinite reverse; }
+@keyframes ag-drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(34px,26px); } }
+@keyframes ag-drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-30px,30px); } }
+.ag-stars { position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image: radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 40% 70%, #cfe, transparent), radial-gradient(1px 1px at 85% 60%, #fff, transparent),
+    radial-gradient(1px 1px at 55% 45%, #fff, transparent), radial-gradient(1px 1px at 12% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 88%, #cef, transparent), radial-gradient(1px 1px at 33% 15%, #fff, transparent);
+  animation: ag-twinkle 5s ease-in-out infinite; }
+@keyframes ag-twinkle { 0%,100% { opacity: 0.4; } 50% { opacity: 0.75; } }
+
+.ag-cap { position: absolute; top: 16px; left: 18px; z-index: 2; }
+.ag-cap-t { display: block; font-family: var(--d-head); font-weight: 600; font-size: 15px; color: #eef4ff; letter-spacing: 0.01em; }
+.ag-cap-s { display: block; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: #7fe9c4; margin-top: 4px; }
+
+.ag-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+.ag-edge-live { stroke-dasharray: 7 10; animation: ag-flow 0.7s linear infinite; }
+@keyframes ag-flow { to { stroke-dashoffset: -34; } }
+.ag-orch-ring { transform-box: fill-box; transform-origin: center; animation: ag-spin 16s linear infinite; }
+@keyframes ag-spin { to { transform: rotate(360deg); } }
+.ag-orch-core.live { animation: ag-pulse 2s ease-in-out infinite; }
+@keyframes ag-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.82; } }
+.ag-halo { transform-box: fill-box; transform-origin: center; animation: ag-halo 1.5s ease-in-out infinite; }
+@keyframes ag-halo { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.22); opacity: 0.35; } }
+.ag-core-live { transform-box: fill-box; transform-origin: center; animation: ag-corepulse 1.3s ease-in-out infinite; }
+@keyframes ag-corepulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+.ag-orch-label { fill: #1a1206; font-family: var(--d-head); font-weight: 800; font-size: 12px; letter-spacing: 0.08em; }
+.ag-orch-sub { fill: rgba(20,18,6,0.7); font-family: var(--d-mono); font-size: 5.6px; letter-spacing: 0.18em; }
+.ag-node-ic { fill: #0a0e14; font-family: var(--d-head); font-weight: 800; font-size: 15px; }
+.ag-node.idle .ag-node-ic { fill: rgba(255,255,255,0.5); }
+.ag-node-label { fill: #dfe7f2; font-family: var(--d-ui); font-weight: 600; font-size: 12px; }
+.ag-node.idle .ag-node-label { fill: rgba(223,231,242,0.45); }
+.ag-node-state { font-family: var(--d-mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-edge-live, .ag-orch-ring, .ag-orch-core.live, .ag-halo, .ag-core-live, .ag-aurora, .ag-stars { animation: none; }
+}
