@@ -77,8 +77,9 @@ audit_log.py             # JSONL audit trail → logs/tos_audit.jsonl (read by a
 scripts/
   run_demo.py            # terminal runner — happy / edge / escalation
   view_run.py            # replay a recorded run from the audit log (no tokens)
-streamlit_app/
-  app.py                 # Streamlit UI — live multi-agent trace + human approval gate
+webapp/
+  backend/main.py        # FastAPI SSE server wrapping graph.py
+  frontend/              # React/Vite web console — live multi-agent trace + human approval gate
 tests/
   test_tools.py          # 17 tool unit tests (offline)
   test_agent_flow.py     # 3 multi-agent flow tests (skip without GROQ_API_KEY)
@@ -88,7 +89,7 @@ docs/                    # brief, brainstorm, case study, PROGRESS.md, tool_cata
 **Imports:** top-level modules use absolute imports (`import llm`, `from agents import build_agents`,
 `from tools.X import ...`). `agents/` and `tools/` are packages (have `__init__.py`); within them use
 relative imports (`from .factory import ...`, `from .alert_triage import ...`). Entrypoints in
-`scripts/` and `streamlit_app/` add the repo root to `sys.path`, so run them from the repo root.
+`scripts/` (and `webapp/backend/`) add the repo root to `sys.path`, so run them from the repo root.
 
 ---
 
@@ -131,7 +132,7 @@ graph edges to order within-agent calls anymore — that's the agent's job now.
 
 ---
 
-## 7. Trace event contract (graph state `trace`, rendered by demo + Streamlit)
+## 7. Trace event contract (graph state `trace`, rendered by demo + web console)
 
 Each node appends typed events to `state["trace"]` (reducer = list add); they are also written
 to the audit log. Event types:
@@ -161,7 +162,7 @@ python scripts/run_demo.py escalation  # telemetry dropout → stops after relia
 python scripts/view_run.py             # replay last recorded run (no tokens) — also --list, RUN-id
 python -m pytest tests/test_tools.py   # 17 tool tests, offline, no key needed
 python -m pytest tests/                # also runs flow tests (need GROQ_API_KEY; else skipped)
-streamlit run streamlit_app/app.py     # demo UI with live multi-agent trace + approval gate
+cd webapp/frontend && npm install && npm run dev   # demo UI with live multi-agent trace + approval gate (see webapp/README.md)
 ```
 
 The 5 ReAct agents need a real tool-calling model (GROQ_API_KEY in `.env`, or `TOS_MODEL=ollama:…`).
@@ -194,7 +195,7 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 | Agent prompts (5) + supervisor + guardrails + self-eval | Done |
 | Shared blackboard, guided routing, safety HALT, interrupt approval | Done |
 | Audit log + `audit_assemble` reconstruction | Done |
-| Streamlit UI (live multi-agent trace + approval) | Done |
+| Web console (React/Vite + FastAPI SSE; live multi-agent trace + approval) | Done |
 | Tool tests (17, offline) | Done |
 | Live Groq run verified (happy path end-to-end) | Done |
 | Full flow tests (happy/edge/escalation) live | In progress / verify |

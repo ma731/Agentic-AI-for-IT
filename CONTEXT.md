@@ -57,7 +57,8 @@ python scripts/run_demo.py edge        # cross-plant adaptation
 python scripts/run_demo.py escalation  # telemetry dropout → escalate
 python scripts/view_run.py             # REPLAY a recorded run — no tokens, great to just "see it"
 python -m pytest tests/test_tools.py   # 17 offline tests, no key needed
-streamlit run streamlit_app/app.py     # live UI with the approve/reject button
+
+cd webapp/frontend && npm install && npm run dev   # live UI with the approve/reject button (see webapp/README.md)
 ```
 
 > **Important — Groq free tier is ~100k tokens/day.** The 6-agent system is token-heavy; a few full
@@ -77,7 +78,7 @@ data/               all the simulated scenario data (per challenge)
 llm.py              model selection (Groq default; Ollama/offline fallback)
 audit_log.py        writes logs/tos_audit.jsonl
 scripts/            run_demo.py, view_run.py
-streamlit_app/      app.py
+webapp/             web console (React/Vite + FastAPI SSE) — see webapp/README.md
 tests/              tool tests (offline) + flow tests (need a key)
 docs/               brief, brainstorm, case study, tool_catalog.md, architecture.mmd, PROGRESS.md
 ```
@@ -92,7 +93,7 @@ routing entry in `graph.py`.
 ## Status
 
 **Done & verified**
-- All 5 challenges implemented; 18 tools; full audit log; Streamlit UI.
+- All 5 challenges implemented; 18 tools; full audit log; web console.
 - 17/17 offline tool tests pass.
 - Happy + edge paths verified **live on Groq** end-to-end (incl. the production agent adapting a
   reroute to avoid an operator conflict, and Compliance returning a sign-off verdict).
