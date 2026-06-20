@@ -24,6 +24,13 @@ const WORKFLOW_NAV = [
   { id: 'plan', ic: '◈', label: 'Action Plan' },
   { id: 'report', ic: '▤', label: 'Run History' },
 ]
+const FLEET = [
+  { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
+  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle' },
+  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok' },
+  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok' },
+  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok' },
+]
 const SCENARIOS = [
   { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
   { id: 'edge', label: 'Edge', desc: 'Cross-plant adaptation when local supply is disrupted' },
@@ -109,6 +116,11 @@ export default function Dashboard(props) {
           ) : (
             <>
               <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
+              {!focusAgent && (
+                <p className="dash-explain">
+                  A sensor on <b>CNC-07-LEI</b> just crossed its limit. Press <b>Run</b> to watch six AI agents diagnose it across five domains and converge on one <b>costed, safety-gated action plan</b>, with a human approving anything over €500.
+                </p>
+              )}
 
               {!focusAgent && <AgentGraph agentStatus={agentStatus} running={running} risk={risk} />}
 
@@ -148,7 +160,20 @@ export default function Dashboard(props) {
 
         {/* ---------------- right info ---------------- */}
         <aside className="dash-info">
-          <div className="info-h">Asset Information</div>
+          <div className="info-h">Plant Fleet <span className="info-h-note">Titan Leipzig · 1 alert · 4 nominal</span></div>
+          <div className="fleet">
+            {FLEET.map((m) => (
+              <button key={m.id} className={`fleet-row ${m.status} ${m.id === ALERT.machine_id ? 'active' : ''}`}
+                onClick={m.id === ALERT.machine_id ? () => setAssetOpen(true) : undefined}
+                title={m.id === ALERT.machine_id ? 'Open full asset profile' : 'Nominal, no action needed'}>
+                <span className="fleet-dot" />
+                <div className="fleet-bd"><div className="fleet-id">{m.id}</div><div className="fleet-nm">{m.name}</div></div>
+                <span className="fleet-st">{m.status === 'critical' ? 'ALERT' : m.status === 'idle' ? 'idle' : 'nominal'}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="info-h mt">Asset Information</div>
           <div className="asset">
             <span className="ic">⚙</span>
             <div><div className="nm">{ALERT.machine_id}</div><div className="sub">{ALERT.plant_name}</div></div>

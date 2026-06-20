@@ -467,3 +467,25 @@
 .asset-hist-tag.service { background: var(--blue-bg); color: #1d4ed8; }
 .asset-hist-tag.quality { background: var(--orange-bg); color: #92560a; }
 @media (max-width: 720px) { .asset-body { grid-template-columns: 1fr; gap: 8px; } .asset-kv { grid-template-columns: 1fr; } }
+
+/* ---- dashboard explainer line ---- */
+.dash-explain { margin: -2px 0 18px; max-width: 70ch; font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.dash-explain b { color: var(--ink); font-weight: 600; }
+
+/* ---- plant fleet panel (right column) ---- */
+.info-h-note { float: right; font-family: var(--d-mono); font-size: 9px; letter-spacing: 0.04em; text-transform: none; color: var(--muted); font-weight: 400; }
+.fleet { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; }
+.fleet-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-family: var(--d-ui); transition: border-color 0.15s var(--ease-out), transform 0.1s var(--ease-out); }
+.fleet-row.active { cursor: pointer; }
+.fleet-row.active:hover { border-color: var(--accent); }
+.fleet-row.active:active { transform: scale(0.99); }
+.fleet-row:not(.active) { cursor: default; }
+.fleet-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--green); }
+.fleet-row.critical .fleet-dot { background: var(--red); box-shadow: 0 0 7px var(--red); animation: ch-ping 1.5s var(--ease-out) infinite; }
+.fleet-row.idle .fleet-dot { background: var(--muted); }
+.fleet-bd { flex: 1; min-width: 0; }
+.fleet-id { font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.fleet-row.active .fleet-id { color: var(--accent); }
+.fleet-nm { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fleet-st { font-family: var(--d-mono); font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 5px; flex: none; background: var(--bg); color: var(--muted); }
+.fleet-row.critical .fleet-st { background: var(--red-bg); color: #a51f1f; font-weight: 700; }
