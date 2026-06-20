@@ -46,6 +46,8 @@ export default function Dashboard(props) {
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [assetOpen, setAssetOpen] = useState(false)
+  const [coach, setCoach] = useState(() => { try { return !localStorage.getItem('tos.coach') } catch { return false } })
+  const closeCoach = () => { setCoach(false); try { localStorage.setItem('tos.coach', '1') } catch { /* ignore */ } }
   const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
   const firstName = me.name.split(' ')[0]
 
@@ -60,6 +62,7 @@ export default function Dashboard(props) {
         <button className="dash-home" onClick={onBack} title="Back to home page"><span className="ic">←</span> Home</button>
         <span className="sp" />
         <ProviderBar mode={mode} setMode={setMode} />
+        <button className="help-btn" onClick={() => setCoach(true)} title="What am I looking at?">?</button>
         <button className="cmdk-trigger" onClick={() => setPaletteOpen(true)} title="Command palette">
           <span className="ic">⌘</span>K
         </button>
@@ -152,6 +155,7 @@ export default function Dashboard(props) {
                   ))}
                   {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
                   {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+                  <TierLegend />
                 </div>
               )}
             </>
@@ -216,6 +220,51 @@ export default function Dashboard(props) {
       />
 
       {assetOpen && <AssetModal alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
+      {coach && <Coachmark onClose={closeCoach} />}
+    </div>
+  )
+}
+
+// First-load "what am I looking at?" intro (shown once per browser; reopen via the ? button).
+function Coachmark({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  const steps = [
+    { ic: '◉', t: 'An alert just fired', d: 'A sensor on CNC-07-LEI crossed its vibration limit. This console is the operations brain that responds.' },
+    { ic: '▶', t: 'Press Run', d: 'Six AI agents are dispatched. Watch the graph: the orchestrator routes them and they reason live, one domain at a time.' },
+    { ic: '◈', t: 'They converge on a plan', d: 'Findings combine into one costed, safety-gated action plan. Anything over €500, or any safety risk, pauses for a human.' },
+    { ic: '€', t: 'It runs free', d: 'Replay mode plays the recorded run with no API key and zero cost. Live mode uses a real model when you add a key.' },
+  ]
+  return (
+    <div className="coach-scrim" onClick={onClose}>
+      <div className="coach" onClick={(e) => e.stopPropagation()}>
+        <button className="coach-close" onClick={onClose} aria-label="Close">✕</button>
+        <div className="coach-eyebrow">Titan Operations Sentinel</div>
+        <div className="coach-h">What am I looking at?</div>
+        <div className="coach-steps">
+          {steps.map((s, i) => (
+            <div className="coach-step" key={i}>
+              <span className="coach-ic">{s.ic}</span>
+              <div><div className="coach-t">{s.t}</div><div className="coach-d">{s.d}</div></div>
+            </div>
+          ))}
+        </div>
+        <button className="coach-go" onClick={onClose}>Got it, run the demo</button>
+      </div>
+    </div>
+  )
+}
+
+// Legend for the autonomy tiers that appear on every action-plan line.
+function TierLegend() {
+  return (
+    <div className="tier-legend">
+      <span><span className="tier AUTO">AUTO</span> agent executes on its own</span>
+      <span><span className="tier APPROVE">APPROVE</span> needs a human (spend &gt; €500)</span>
+      <span><span className="tier ESCALATE">ESCALATE</span> routed to a safety officer</span>
     </div>
   )
 }
@@ -436,6 +485,7 @@ function PlanView({ plan }) {
             {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
             {plan.text && !plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{plan.text}</div>}
             {plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{plan.roi}</span></div>}
+            <TierLegend />
           </div>}
     </>
   )
