@@ -60,10 +60,10 @@ export default function ProviderBar({ mode, setMode }) {
       if (data.ok) {
         setStatus('live'); setMode('live')
         localStorage.setItem(LS, JSON.stringify({ provider, model, key: remember ? key : '', azureEndpoint, apiVersion }))
-        if (persistEnv) setMsg(data.persisted ? '✓ saved to .env — survives restart' : `.env not saved: ${data.persistError || 'unknown'}`)
+        if (persistEnv) setMsg(data.persisted ? '✓ saved to .env, survives restart' : `.env not saved: ${data.persistError || 'unknown'}`)
       } else { setStatus('error'); setMsg(data.error || 'could not connect') }
     } catch {
-      setStatus('error'); setMsg('backend not reachable — start the FastAPI server (uvicorn) or use Replay')
+      setStatus('error'); setMsg('backend not reachable, start the FastAPI server (uvicorn) or use Replay')
     }
   }
 
@@ -110,7 +110,7 @@ export default function ProviderBar({ mode, setMode }) {
 
           <label className="pb-l">API key <span className="pb-hint">· {PMAP[provider].hint}</span></label>
           <div className="pb-key-wrap">
-            <input className="pb-key" type={showKey ? 'text' : 'password'} value={key} placeholder="paste key — stays in memory, never committed"
+            <input className="pb-key" type={showKey ? 'text' : 'password'} value={key} placeholder="paste key, stays in memory, never committed"
               onChange={(e) => setKey(e.target.value)} autoComplete="off" spellCheck="false" />
             <button type="button" className="pb-eye" onClick={() => setShowKey((s) => !s)} title={showKey ? 'Hide' : 'Show'}>{showKey ? '🙈' : '👁'}</button>
           </div>

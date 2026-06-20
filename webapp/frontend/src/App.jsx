@@ -10,13 +10,13 @@ const RATE_PER_S = 162000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
-  'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52–76 h',
+  'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
   'DOWNTIME €162,000 / day', 'RECOMMENDED ROI 71.7:1', '5 TMC CHALLENGES',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 
 const CHIPS = [
-  'CNC-07 vibration spiking — handle it',
+  'CNC-07 vibration spiking, handle it',
   'Sensor feed on CNC-07 dropped out',
   'Cross-plant supply disruption today',
 ]
@@ -116,7 +116,7 @@ export default function App() {
       case 'approval_request':
         setApproval(ev); setRunStatus('Awaiting human approval'); break
       case 'human_decision':
-        pushItem({ kind: 'human', text: `Human decision — ${ev.decision}${ev.by ? ' · ' + ev.by : ''}` }); setApproval(null); break
+        pushItem({ kind: 'human', text: `Human decision, ${ev.decision}${ev.by ? ' · ' + ev.by : ''}` }); setApproval(null); break
       case 'plan':
         setPlan({ status: ev.status || 'complete', lines: ev.lines || [], roi: ev.roi, text: ev.text })
         if (ev.status === 'escalated') setRisk((r) => (r === 'PENDING' ? 'ESCALATE' : r))
@@ -161,13 +161,13 @@ export default function App() {
     es.onmessage = (e) => {
       try { const ev = JSON.parse(e.data); applyEvent(ev); if (ev.type === 'plan') es.close() } catch { /* keep-alive */ }
     }
-    es.onerror = () => { es.close(); setRunStatus('Live backend unavailable — use Replay'); setRunning(false) }
+    es.onerror = () => { es.close(); setRunStatus('Live backend unavailable, use Replay'); setRunning(false) }
   }, [applyEvent])
 
   const run = (scen = scenario, command = null) => {
     reset(); setRunning(true)
     runMetaRef.current = { id: Date.now(), scenario: scen, mode, command }
-    if (command) pushItem({ kind: 'human', text: `Operator — ${command}` })
+    if (command) pushItem({ kind: 'human', text: `Operator, ${command}` })
     if (mode === 'live') runLive(scen)
     else { queueRef.current = SCENARIOS[scen].map((e) => ({ ...e })); pump() }
   }
@@ -333,7 +333,7 @@ function CommandBar({ idle, running, onSubmit }) {
       <div className="cmd-bar">
         <span className="prompt-glyph">$</span>
         <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
-          placeholder="Describe the situation…  e.g. CNC-07 vibration spiking — handle it" disabled={running} />
+          placeholder="Describe the situation…  e.g. CNC-07 vibration spiking, handle it" disabled={running} />
         <button className="cmd-send" onClick={submit} disabled={running} aria-label="Dispatch agents">→</button>
       </div>
     </div>
@@ -345,7 +345,7 @@ function IdleHero() {
     <div className="console-hero">
       <div className="eyebrow">◈ Standing by · Titan Leipzig Plant 7</div>
       <h1>One alert. Five domains. <em>One costed plan.</em></h1>
-      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan — with a human in the loop on every euro.</p>
+      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
       <div className="alert-card">
         <span className="pulse" />
         <div className="ac-body">
@@ -365,7 +365,7 @@ function ApprovalModal({ req, onApprove, onReject }) {
         <div className="body">
           <div className="kicker">◈ Human-in-the-loop · approval required</div>
           <h2>{req.question}</h2>
-          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve — a human must decide.</p>
+          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve, a human must decide.</p>
           <div className="figure">€{(req.amount_eur ?? 0).toLocaleString()}</div>
           <div className="ceiling">€{req.ceiling_eur} autonomous ceiling · routed to Plant Manager</div>
           <div className="actions">

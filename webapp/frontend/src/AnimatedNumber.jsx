@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Counts toward the target with a soft ease-out, always starting from whatever is
-// currently on screen — so it handles both discrete jumps (0→5) and fast live ticks
+// currently on screen, so it handles both discrete jumps (0→5) and fast live ticks
 // (the downtime €) without snapping or stutter. Honours prefers-reduced-motion.
 export default function AnimatedNumber({ value, format = (n) => Math.round(n).toLocaleString(), duration = 850, className }) {
   const [display, setDisplay] = useState(0)   // start at 0 so KPIs count up on first paint

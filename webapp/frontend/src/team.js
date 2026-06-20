@@ -1,4 +1,4 @@
-// Shared presenter roster — used by the sign-in picker and the in-console user switcher.
+// Shared presenter roster, used by the sign-in picker and the in-console user switcher.
 export const TEAM = [
   { name: 'Marco Ortiz Togashi', initials: 'MO', color: '#14e8a0' },
   { name: 'David Carrillo Aguilera', initials: 'DC', color: '#4d9bff' },

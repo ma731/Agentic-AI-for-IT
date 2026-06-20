@@ -5,7 +5,7 @@ import Logo from './Logo.jsx'
 
 // a frozen "mid-run" state so the hero graph glows with energy
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
-const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52–76 h', '€162,000 / day AT RISK', 'ROI 71.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€162,000 / day AT RISK', 'ROI 71.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
   { n: '6', l: 'Autonomous agents' },
@@ -18,7 +18,7 @@ const PROJECTS = [
   {
     id: 'console', cat: 'Demo', tag: 'Live Demo', title: 'Live Operations Console', year: '2026',
     bg: 'var(--c-dark)', dark: true, feature: true, span: 2, img: '/shots/console.png',
-    blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan — live.',
+    blurb: 'Watch six agents perceive, reason across five domains, and converge on one costed plan, live.',
     launch: true,
   },
   {
@@ -39,12 +39,12 @@ const PROJECTS = [
   {
     id: 'compliance', cat: 'Safety', tag: 'Compliance', title: 'Safety Can HALT', year: '2026',
     bg: 'var(--c-blush)', img: '/shots/compliance.png',
-    blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail — Compliance can stop the plan outright.',
+    blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail, Compliance can stop the plan outright.',
   },
   {
     id: 'feasible', cat: 'Engineering', tag: 'Feasibility', title: 'Zero-Cost Demo', year: '2026',
     bg: 'var(--c-sky)', img: '/shots/feasible.png', span: 2,
-    blurb: 'A full six-agent run is ~18k tokens — €0 on Gemini\'s free tier, with a recorded replay fallback so it can never fail.',
+    blurb: 'A full six-agent run is ~18k tokens, €0 on Gemini\'s free tier, with a recorded replay fallback so it can never fail.',
   },
 ]
 
@@ -52,14 +52,14 @@ const DETAILS = {
   console: ['Six agents reason live over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
   agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is an autonomous ReAct agent', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
   approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
-  cascade: ['CNC-07-LEI bearing failure predicted 52–76h out', '€162,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently — gate / autonomous / human review'],
+  cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€162,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently, gate / autonomous / human review'],
   compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Compliance can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
   feasible: ['Runs on free Gemini / OpenRouter tiers', '~62% transcript token trim', 'Recorded replay = €0, can-not-fail demo', 'One-line provider swap when limits bite'],
 }
 
 const STEPS = [
   { n: '01', t: 'Perceive', d: 'A sensor alert arrives; the orchestrator triages 22k signals to the critical asset.' },
-  { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next — guided autonomy, not a fixed script.' },
+  { n: '02', t: 'Route', d: 'A supervisor decides which specialist acts next, guided autonomy, not a fixed script.' },
   { n: '03', t: 'Reason', d: 'Each agent picks its own tools, reasons, and reports into a shared transcript.' },
   { n: '04', t: 'Converge', d: 'Findings combine into one costed, safety-gated plan across five domains.' },
   { n: '05', t: 'Decide', d: 'Compliance can HALT; spend over €500 pauses for a human. Then it acts.' },
@@ -73,7 +73,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
   const shown = PROJECTS.filter((p) => filter === 'All' || p.cat === filter)
 
   // anime.js choreography: a sequenced hero entrance + staggered scroll reveals.
-  // Elements are visible by default — anime only animates if it loads, so a failure
+  // Elements are visible by default, anime only animates if it loads, so a failure
   // never leaves the page blank. Skipped entirely under prefers-reduced-motion.
   useLayoutEffect(() => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
@@ -126,7 +126,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <header className="sc-hero">
           <div className="sc-eyebrow">◈ Agentic AI · Manufacturing operations</div>
           <RevealHeadline />
-          <p>Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents reason across reliability, supply, production, quality and safety — and hand a human one decision.</p>
+          <p>Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents reason across reliability, supply, production, quality and safety, and hand a human one decision.</p>
           <div className="actions">
             <button className="sc-btn-primary" onClick={onLaunch}>Launch the live console →</button>
             <a className="sc-btn-ghost" href="#work">See the system</a>
@@ -188,7 +188,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
         <div className="sc-why">
           <div className="sc-why-col"><div className="sc-why-h">A dashboard</div><p>Shows you six panels and waits. The human does the cross-domain reasoning under time pressure.</p></div>
           <div className="sc-why-col"><div className="sc-why-h">An automation</div><p>Fires a fixed rule. It can't weigh ROI vs risk, adapt a reroute, or know when to ask a human.</p></div>
-          <div className="sc-why-col on"><div className="sc-why-h">Our agent</div><p>Reasons across five domains, decides, and hands you <b>one costed, safety-gated plan</b> — and escalates when the data is thin.</p></div>
+          <div className="sc-why-col on"><div className="sc-why-h">Our agent</div><p>Reasons across five domains, decides, and hands you <b>one costed, safety-gated plan</b>, and escalates when the data is thin.</p></div>
         </div>
 
         <footer className="sc-footer" id="contact">
@@ -206,7 +206,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
 
 // Signature anime.js "living grid" (à la animejs.com): a field of dots that
 // continuously ripples from the centre, cycles through the six agent colours, and
-// ripples outward from the cursor on hover. Pure decoration — reduced-motion safe.
+// ripples outward from the cursor on hover. Pure decoration, reduced-motion safe.
 const GRID_COLORS = ['#4d9bff', '#14e8a0', '#a78bfa', '#ffb84d', '#ff6b81', '#0fbe85']
 function AnimeGrid() {
   const ref = useRef(null)
@@ -248,7 +248,7 @@ function AnimeGrid() {
   return <div className="anime-grid" ref={ref} aria-hidden="true" />
 }
 
-// headline whose words "materialize" (de-blur + rise) in sequence — fits the
+// headline whose words "materialize" (de-blur + rise) in sequence, fits the
 // "agents generate the plan" story (Aceternity Text-Generate technique).
 const HERO_LINES = [['One', 'sensor', 'alert.'], ['Five', 'domains.'], ['One', 'costed', 'plan.']]
 function RevealHeadline() {

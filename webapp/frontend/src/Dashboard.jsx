@@ -172,7 +172,7 @@ export default function Dashboard(props) {
           <div className="info-h mt">AI Suggestions</div>
           {plan
             ? <>
-                <div className="sugg amber"><span className="si">💡</span><span>{plan.status === 'escalated' ? 'Insufficient data — route to on-call reliability engineer for manual inspection.' : 'Emergency Schaeffler expedite recommended — €3,200, inside the 52h window.'}</span></div>
+                <div className="sugg amber"><span className="si">💡</span><span>{plan.status === 'escalated' ? 'Insufficient data, route to on-call reliability engineer for manual inspection.' : 'Emergency Schaeffler expedite recommended, €3,200, inside the 52h window.'}</span></div>
                 <div className="sugg green"><span className="si">✅</span><span>{plan.status === 'complete' ? 'Plan signed off by Compliance. Throttle + reroute can execute automatically.' : 'Keep the alert open and re-run once clean telemetry is available.'}</span></div>
               </>
             : <>
@@ -289,7 +289,7 @@ function AuditView({ timeline }) {
     <>
       <div className="dash-h">Audit Log</div>
       <div className="panel">
-        {timeline.length === 0 ? <div className="empty-note">No events yet — run a scenario.</div>
+        {timeline.length === 0 ? <div className="empty-note">No events yet, run a scenario.</div>
           : timeline.map((t, i) => (
             <div className="pl" key={i}>
               <span className="tier MONITOR">{t.kind}</span>
@@ -305,7 +305,7 @@ function PlanView({ plan }) {
   return (
     <>
       <div className="dash-h">Action Plan</div>
-      {!plan ? <div className="panel"><div className="empty-note">No plan yet — run a scenario to completion.</div></div>
+      {!plan ? <div className="panel"><div className="empty-note">No plan yet, run a scenario to completion.</div></div>
         : <div className="panel">
             <div className="panel-h"><span className="t">Final Plan</span><span className="sub">{plan.status}</span></div>
             {(plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
@@ -318,11 +318,11 @@ function PlanView({ plan }) {
 
 function buildReportMd(r, ALERT) {
   const label = SCENARIOS.find((s) => s.id === r.scenario)?.label || r.scenario
-  let md = `# Titan Operations Sentinel — Run Report\n\n`
+  let md = `# Titan Operations Sentinel Run Report\n\n`
   md += `**Scenario:** ${label}  \n**When:** ${new Date(r.ts).toLocaleString()}  \n**Presenter:** ${r.by}  \n`
   md += `**Mode:** ${r.mode}  \n**Failure risk:** ${r.risk}  \n**Outcome:** ${r.status}  \n**Challenges covered:** ${r.doneCount}/5\n\n`
   if (r.command) md += `**Operator prompt:** “${r.command}”\n\n`
-  md += `## Alert\n${ALERT.machine_id} · ${ALERT.plant_name} — ${ALERT.sensor} ${ALERT.value}${ALERT.unit} (threshold ${ALERT.threshold}, ${ALERT.trend})\n\n`
+  md += `## Alert\n${ALERT.machine_id} · ${ALERT.plant_name}, ${ALERT.sensor} ${ALERT.value}${ALERT.unit} (threshold ${ALERT.threshold}, ${ALERT.trend})\n\n`
   md += `## Agent reports\n`
   r.reports.forEach((a) => {
     md += `### ${AGENT_MAP[a.agent]?.name || a.agent}\n${a.report || '(no report)'}\n`
@@ -331,7 +331,7 @@ function buildReportMd(r, ALERT) {
   })
   if (r.followups?.length) md += `## Agent-to-agent follow-ups\n` + r.followups.map((f) => `- ${f}`).join('\n') + `\n\n`
   if (r.decisions?.length) md += `## Human decisions\n` + r.decisions.map((d) => `- ${d}`).join('\n') + `\n\n`
-  md += `## Final action plan — ${r.plan.status}\n`
+  md += `## Final action plan, ${r.plan.status}\n`
   if (r.plan.lines?.length) md += r.plan.lines.map((l) => `- **[${l.tier}]** ${l.txt}`).join('\n')
   else if (r.plan.text) md += r.plan.text
   if (r.plan.roi) md += `\n\n**Return on action:** ${r.plan.roi}`
@@ -355,7 +355,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
     <>
       <div className="dash-h">Run History</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
-        Every completed run is saved here — review what each agent concluded and export a shareable report.
+        Every completed run is saved here, review what each agent concluded and export a shareable report.
       </p>
       {history.length === 0 ? (
         <div className="panel"><div className="empty-note">No runs yet. Run a scenario (or type a crisis in Agent Chat) and it'll be saved here automatically.</div></div>
@@ -404,7 +404,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
                     <span className="ava" style={{ background: TINT[AGENT_MAP[a.agent]?.tint] || '#3b82f6' }}>{(AGENT_MAP[a.agent]?.name || a.agent)[0]}</span>
                     <div className="bd">
                       <div className="nm">{AGENT_MAP[a.agent]?.name || a.agent}</div>
-                      <div className="msg">{a.report || '—'}</div>
+                      <div className="msg">{a.report || '-'}</div>
                       {a.tools?.length > 0 && <div className="tools">{a.tools.map((t, j) => <span className="tchip" key={j}>{t}</span>)}</div>}
                     </div>
                   </div>
@@ -434,7 +434,7 @@ function ReportView({ history, onClearHistory, alert: ALERT }) {
 }
 
 const CRISES = [
-  'CNC-07 vibration spiking — handle it',
+  'CNC-07 vibration spiking, handle it',
   'Sensor feed on CNC-07 just dropped out',
   'Cross-plant supply disruption today',
 ]
@@ -455,10 +455,10 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
     <>
       <div className="dash-h">Agent Conversation</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
-        Describe a situation in plain language — the orchestrator routes it to the right agents, who reason and converse through a shared transcript. Or pick an example below.
+        Describe a situation in plain language, the orchestrator routes it to the right agents, who reason and converse through a shared transcript. Or pick an example below.
       </p>
 
-      {/* live status bar — makes it obvious what's happening during a run */}
+      {/* live status bar, makes it obvious what's happening during a run */}
       {started && (
         <div className={`ch-status ${running ? 'live' : 'done'}`}>
           <span className="ch-status-dot" />
@@ -472,7 +472,7 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
 
       <div className="panel chat">
         {timeline.length === 0 ? (
-          <div className="empty-note">{running ? 'Dispatching the agents…' : 'Type a crisis below — or try an example — to dispatch the agents.'}</div>
+          <div className="empty-note">{running ? 'Dispatching the agents…' : 'Type a crisis below, or try an example, to dispatch the agents.'}</div>
         ) : timeline.map((t, i) => {
           if (t.kind === 'system') return <div className="ch-sys" key={i}><span className="ch-sys-ic">◈</span>{t.text}</div>
           if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">agent → agent</span> {t.text}</div>
@@ -515,7 +515,7 @@ function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode
           value={val}
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') send() }}
-          placeholder={running ? 'Agents are working…' : 'Describe the situation…  e.g. CNC-07 vibration spiking — handle it'}
+          placeholder={running ? 'Agents are working…' : 'Describe the situation…  e.g. CNC-07 vibration spiking, handle it'}
           disabled={running}
         />
         <button className="ch-send" onClick={() => send()} disabled={running || !val.trim()} aria-label="Dispatch agents">↑</button>
@@ -558,10 +558,10 @@ function CostView() {
       </div>
       <div className="panel">
         <div className="panel-h"><span className="t">Why it's feasible</span></div>
-        <div className="pl"><span className="tier AUTO">FREE</span><span className="tx">Runs end-to-end on Gemini / OpenRouter free tiers — no paid keys (assignment §14).</span></div>
+        <div className="pl"><span className="tier AUTO">FREE</span><span className="tx">Runs end-to-end on Gemini / OpenRouter free tiers, no paid keys (assignment §14).</span></div>
         <div className="pl"><span className="tier MONITOR">TRIM</span><span className="tx">Transcript caps cut tokens ~62%, so more runs fit the daily quota.</span></div>
         <div className="pl"><span className="tier APPROVE">SWAP</span><span className="tx">One-line provider switch when a free tier rate-limits.</span></div>
-        <div className="pl"><span className="tier AUTO">REPLAY</span><span className="tx">Demo day uses the recorded replay — zero API calls, can't fail.</span></div>
+        <div className="pl"><span className="tier AUTO">REPLAY</span><span className="tx">Demo day uses the recorded replay, zero API calls, can't fail.</span></div>
       </div>
     </>
   )

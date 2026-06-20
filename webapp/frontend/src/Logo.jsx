@@ -1,4 +1,4 @@
-// Operations Sentinel brandmark — a hexagonal "sentinel" enclosing the orchestration
+// Operations Sentinel brandmark, a hexagonal "sentinel" enclosing the orchestration
 // graph (a central supervisor node radiating to its agents). Scalable SVG, themeable:
 // the frame uses currentColor; the core uses `accent`. Industrial / brutalist geometry.
 const HEX = '16,2.5 27.7,9.25 27.7,22.75 16,29.5 4.3,22.75 4.3,9.25'
