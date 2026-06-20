@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import Logo from './Logo.jsx'
-
-const TEAM = [
-  { name: 'Marco Ortiz Togashi', initials: 'MO', color: '#14e8a0' },
-  { name: 'David Carrillo Aguilera', initials: 'DC', color: '#4d9bff' },
-  { name: 'Nuria Diaz Jimenez', initials: 'ND', color: '#a78bfa' },
-  { name: 'Marian Garabana Garrido', initials: 'MG', color: '#ffb84d' },
-  { name: 'Ignacio Agustin Moreno', initials: 'IA', color: '#ff6b81' },
-]
+import IELogo from './IELogo.jsx'
+import { TEAM, GUEST } from './team.js'
 
 const REEL = [
   { name: 'Orchestrator', role: 'routes the team', color: '#ffd479' },
@@ -30,6 +24,15 @@ export default function SignIn({ onEnter }) {
     <div className="signin" style={{ '--accent': agent.color }}>
       {/* atmosphere */}
       <div className="si-aura a1" /><div className="si-aura a2" /><div className="si-stars" />
+
+      {/* corner brands — IE University (left) · course wordmark (right) */}
+      <div className="si-corner tl" aria-label="IE University">
+        <IELogo size={30} color="#fff" />
+        <span className="ie-word">University</span>
+      </div>
+      <div className="si-corner tr" aria-label="Agentic AI for IT">
+        <span className="si-script">Agentic<span className="caps">AI</span><span className="lc">for</span><span className="caps">IT</span></span>
+      </div>
       {/* wavy bottom — color shifts with the active agent */}
       <svg className="si-waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
         <path className="si-wave w1" d="M0,160 C320,260 520,80 760,150 C1040,230 1240,90 1440,160 L1440,320 L0,320 Z" />
@@ -66,7 +69,7 @@ export default function SignIn({ onEnter }) {
             </button>
           ))}
         </div>
-        <button className="si-skip" onClick={() => onEnter({ name: 'Guest', initials: 'G', color: '#14e8a0' })}>Continue as guest</button>
+        <button className="si-skip" onClick={() => onEnter(GUEST)}>Continue as guest</button>
       </div>
     </div>
   )

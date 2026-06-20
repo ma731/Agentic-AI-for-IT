@@ -35,6 +35,8 @@ PROVIDERS = [
      "pip": "langchain-groq", "note": "fast, daily token cap"},
     {"id": "openrouter", "keys": ["OPENROUTER_API_KEY"], "default": "meta-llama/llama-3.3-70b-instruct:free",
      "pip": "langchain-openai", "note": "ONE key, many free models — best when limits bite"},
+    {"id": "azure_openai", "keys": ["AZURE_OPENAI_API_KEY"], "default": "gpt-4o-mini",
+     "pip": "langchain-openai", "note": "Azure credits — paid-tier limits, no throttling"},
     {"id": "openai", "keys": ["OPENAI_API_KEY"], "default": "gpt-4o-mini",
      "pip": "langchain-openai", "note": "paid"},
     {"id": "anthropic", "keys": ["ANTHROPIC_API_KEY"], "default": "claude-haiku-4-5",
@@ -93,6 +95,13 @@ def _build(model_str: str):
         name = model_str.split(":", 1)[1]
         return init_chat_model(name, model_provider="openai", temperature=0, max_retries=MAX_RETRIES,
                                base_url=OPENROUTER_BASE, api_key=os.getenv("OPENROUTER_API_KEY"))
+    if model_str.startswith("azure_openai:"):
+        deployment = model_str.split(":", 1)[1]            # the Azure DEPLOYMENT name
+        return init_chat_model(deployment, model_provider="azure_openai", temperature=0, max_retries=MAX_RETRIES,
+                               azure_deployment=deployment,
+                               api_version=os.getenv("OPENAI_API_VERSION", "2024-10-21"),
+                               azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+                               api_key=os.getenv("AZURE_OPENAI_API_KEY"))
     return init_chat_model(model_str, temperature=0, max_retries=MAX_RETRIES)
 
 

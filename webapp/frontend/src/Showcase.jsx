@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { animate, stagger } from 'animejs'
 import AgentGraph from './AgentGraph.jsx'
 import Logo from './Logo.jsx'
 
@@ -32,15 +33,18 @@ const PROJECTS = [
   },
   {
     id: 'cascade', cat: 'Demo', tag: 'Scenario', title: 'The Friday Cascade', year: '2026',
-    bg: 'var(--c-mint)', figure: <><span className="big">52–76<span className="g">h</span></span><div className="sub">Predicted bearing failure on CNC-07-LEI, with €162,000/day of downtime on the line.</div></>,
+    bg: 'var(--c-mint)', img: '/shots/cascade.png',
+    blurb: 'Six agents converse through one shared transcript as the bearing-failure crisis unfolds in real time.',
   },
   {
     id: 'compliance', cat: 'Safety', tag: 'Compliance', title: 'Safety Can HALT', year: '2026',
-    bg: 'var(--c-blush)', figure: <><span className="big">OSHA<span className="g">·</span>gated</span><div className="sub">Every proposed action is checked against safety rules — Compliance can stop the plan outright.</div></>,
+    bg: 'var(--c-blush)', img: '/shots/compliance.png',
+    blurb: 'Every action is checked against OSHA / OEM limits and written to a full audit trail — Compliance can stop the plan outright.',
   },
   {
     id: 'feasible', cat: 'Engineering', tag: 'Feasibility', title: 'Zero-Cost Demo', year: '2026',
-    bg: 'var(--c-sky)', figure: <><span className="big">100% <span className="g">free</span></span><div className="sub">Runs on Gemini's free tier with a recorded replay fallback — no paid keys, ever.</div></>,
+    bg: 'var(--c-sky)', img: '/shots/feasible.png', span: 2,
+    blurb: 'A full six-agent run is ~18k tokens — €0 on Gemini\'s free tier, with a recorded replay fallback so it can never fail.',
   },
 ]
 
@@ -68,6 +72,41 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
   const [detail, setDetail] = useState(null)
   const shown = PROJECTS.filter((p) => filter === 'All' || p.cat === filter)
 
+  // anime.js choreography: a sequenced hero entrance + staggered scroll reveals.
+  // Elements are visible by default — anime only animates if it loads, so a failure
+  // never leaves the page blank. Skipped entirely under prefers-reduced-motion.
+  useLayoutEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const cleanups = []
+    try {
+      const ease = 'outExpo'
+      // hero plays in sequence after the headline starts resolving
+      animate('.sc-eyebrow', { opacity: [0, 1], translateY: [-10, 0], duration: 600, ease, delay: 120 })
+      animate('.sc-hero p', { opacity: [0, 1], translateY: [16, 0], duration: 700, ease, delay: 360 })
+      animate('.sc-hero .actions > *', { opacity: [0, 1], translateY: [14, 0], scale: [0.96, 1], duration: 650, ease, delay: stagger(90, { start: 560 }) })
+
+      // staggered reveals when a band scrolls into view
+      const reveal = (containerSel, itemSel, opts = {}) => {
+        const el = document.querySelector(containerSel)
+        if (!el) return
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return
+            animate(e.target.querySelectorAll(itemSel), {
+              opacity: [0, 1], translateY: [22, 0], duration: 720, ease, delay: stagger(70), ...opts,
+            })
+            io.unobserve(e.target)
+          })
+        }, { threshold: 0.25 })
+        io.observe(el)
+        cleanups.push(() => io.disconnect())
+      }
+      reveal('.sc-stats', '.sc-stat')
+      reveal('.sc-steps', '.sc-step', { scale: [0.97, 1] })
+    } catch { /* anime unavailable → elements just stay visible */ }
+    return () => cleanups.forEach((fn) => fn())
+  }, [])
+
   return (
     <div className="showcase">
       <nav className="sc-nav">
@@ -86,7 +125,7 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
       <div className="sc-inner">
         <header className="sc-hero">
           <div className="sc-eyebrow">◈ Agentic AI · Manufacturing operations</div>
-          <h1>One sensor alert.<br />Five domains.<br /><span className="g">One costed plan.</span></h1>
+          <RevealHeadline />
           <p>Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents reason across reliability, supply, production, quality and safety — and hand a human one decision.</p>
           <div className="actions">
             <button className="sc-btn-primary" onClick={onLaunch}>Launch the live console →</button>
@@ -104,6 +143,11 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
           <div className="sc-marquee-row">
             {[...MARQUEE, ...MARQUEE].map((m, i) => <span className="sc-mq" key={i}>{m}</span>)}
           </div>
+        </div>
+
+        <div className="sc-grid-band">
+          <span className="sc-grid-cap">six agents · always watching · move your cursor</span>
+          <AnimeGrid />
         </div>
 
         <div className="sc-stats">
@@ -160,6 +204,68 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
   )
 }
 
+// Signature anime.js "living grid" (à la animejs.com): a field of dots that
+// continuously ripples from the centre, cycles through the six agent colours, and
+// ripples outward from the cursor on hover. Pure decoration — reduced-motion safe.
+const GRID_COLORS = ['#4d9bff', '#14e8a0', '#a78bfa', '#ffb84d', '#ff6b81', '#0fbe85']
+function AnimeGrid() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const root = ref.current
+    if (!root || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const cols = 30, rows = 7
+    root.innerHTML = ''                         // guard against StrictMode double-mount
+    root.style.gridTemplateColumns = `repeat(${cols}, 1fr)`
+    const dots = []
+    for (let i = 0; i < cols * rows; i++) {
+      const d = document.createElement('span'); d.className = 'ag-dot'; root.appendChild(d); dots.push(d)
+    }
+    let loop
+    try {
+      // continuous wave: scale + colour-switch rolling out from the centre
+      loop = animate(dots, {
+        scale: [0.5, 1.15],
+        backgroundColor: GRID_COLORS,
+        delay: stagger(110, { grid: [cols, rows], from: 'center' }),
+        loop: true, alternate: true, duration: 2200, ease: 'inOutSine',
+      })
+    } catch { /* anime down → static dots */ }
+    const onMove = (e) => {
+      try {
+        const r = root.getBoundingClientRect()
+        const col = Math.max(0, Math.min(cols - 1, Math.round(((e.clientX - r.left) / r.width) * (cols - 1))))
+        const row = Math.max(0, Math.min(rows - 1, Math.round(((e.clientY - r.top) / r.height) * (rows - 1))))
+        animate(dots, {
+          opacity: [{ to: 0.95, duration: 200 }, { to: 0.32, duration: 700 }],
+          delay: stagger(55, { grid: [cols, rows], from: row * cols + col }),
+          ease: 'outQuad',
+        })
+      } catch { /* ignore */ }
+    }
+    root.addEventListener('pointermove', onMove)
+    return () => { root.removeEventListener('pointermove', onMove); try { loop?.pause() } catch { /* ignore */ } root.innerHTML = '' }
+  }, [])
+  return <div className="anime-grid" ref={ref} aria-hidden="true" />
+}
+
+// headline whose words "materialize" (de-blur + rise) in sequence — fits the
+// "agents generate the plan" story (Aceternity Text-Generate technique).
+const HERO_LINES = [['One', 'sensor', 'alert.'], ['Five', 'domains.'], ['One', 'costed', 'plan.']]
+function RevealHeadline() {
+  let n = 0
+  return (
+    <h1 className="sc-reveal">
+      {HERO_LINES.map((words, li) => (
+        <span className={`rv-line ${li === HERO_LINES.length - 1 ? 'g' : ''}`} key={li}>
+          {words.map((w, wi) => (
+            <span className="rv-word" style={{ '--d': `${(n++) * 0.07 + 0.1}s` }} key={wi}>{w}</span>
+          ))}
+        </span>
+      ))}
+    </h1>
+  )
+}
+
 function Card({ p, index, onLaunch, onOpen }) {
   const ref = useRef(null)
   const [seen, setSeen] = useState(false)
@@ -171,12 +277,19 @@ function Card({ p, index, onLaunch, onOpen }) {
     return () => io.disconnect()
   }, [])
   const onClick = () => { if (p.launch) onLaunch(); else onOpen(p) }
+  const onMove = (e) => {
+    const el = ref.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+    el.style.setProperty('--my', `${e.clientY - r.top}px`)
+  }
   return (
     <article
       ref={ref}
       className={`sc-card ${p.dark ? 'dark' : ''} ${p.feature ? 'feature' : ''} ${p.span === 2 ? 'sc-span2' : ''} ${seen ? 'in' : ''}`}
       style={{ '--cbg': p.bg, transitionDelay: `${(index % 2) * 80}ms` }}
       onClick={onClick}
+      onMouseMove={onMove}
     >
       {p.img
         ? <div className="sc-shot"><img src={p.img} alt={p.title} loading="lazy" /></div>

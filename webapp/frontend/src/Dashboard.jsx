@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 import AgentGraph from './AgentGraph.jsx'
 import ProviderBar from './ProviderBar.jsx'
 import Logo from './Logo.jsx'
+import AnimatedNumber from './AnimatedNumber.jsx'
+import CommandPalette from './CommandPalette.jsx'
+import { TEAM, GUEST } from './team.js'
 
 const TINT = { blue: '#3b82f6', green: '#16b364', purple: '#8b5cf6', orange: '#f59e0b', red: '#ef4444' }
 const NAV = [
@@ -19,6 +22,7 @@ const WORKFLOW_NAV = [
   { id: 'cost', ic: '€', label: 'Cost & Feasibility' },
   { id: 'audit', ic: '≣', label: 'Audit Log' },
   { id: 'plan', ic: '◈', label: 'Action Plan' },
+  { id: 'report', ic: '▤', label: 'Run History' },
 ]
 const SCENARIOS = [
   { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
@@ -29,9 +33,11 @@ const SCENARIOS = [
 export default function Dashboard(props) {
   const {
     scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
-    plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut,
+    plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut, onSwitchUser, onCommand,
+    history = [], onClearHistory,
   } = props
   const [nav, setNav] = useState('dashboard')
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
   const firstName = me.name.split(' ')[0]
 
@@ -42,14 +48,14 @@ export default function Dashboard(props) {
   return (
     <div className="dash" style={{ '--accent': me.color }}>
       <header className="dash-top">
-        <div className="dash-brand"><span className="logo-svg" onClick={onBack} title="Back to showcase" style={{ cursor: 'pointer', display: 'flex' }}><Logo size={28} accent={me.color} /></span> Operations Sentinel</div>
+        <div className="dash-brand"><span className="logo-svg" onClick={onBack} title="Back to home" style={{ cursor: 'pointer', display: 'flex' }}><Logo size={28} accent={me.color} /></span> Operations Sentinel</div>
+        <button className="dash-home" onClick={onBack} title="Back to home page"><span className="ic">←</span> Home</button>
         <span className="sp" />
         <ProviderBar mode={mode} setMode={setMode} />
-        <button className="user-chip" onClick={onSignOut} title="Switch user / sign out">
-          <span className="uc-ava" style={{ background: me.color }}>{me.initials}</span>
-          <span className="uc-name">{firstName}</span>
-          <span className="uc-out">⇄</span>
+        <button className="cmdk-trigger" onClick={() => setPaletteOpen(true)} title="Command palette">
+          <span className="ic">⌘</span>K
         </button>
+        <UserMenu me={me} firstName={firstName} onSwitchUser={onSwitchUser} onSignOut={onSignOut} />
       </header>
 
       <div className="dash-body">
@@ -78,8 +84,9 @@ export default function Dashboard(props) {
               </div>
             </div>
             <div className="run-ctrls">
-              <button className="go" onClick={() => onRun(scenario)} disabled={running}>▶ Run {SCENARIOS.find((s) => s.id === scenario)?.label}</button>
-              <button className="stop" onClick={onStop} disabled={!running} title="Stop">■</button>
+              {running
+                ? <button className="stop wide" onClick={onStop} title="Stop the run">■ Stop run</button>
+                : <button className="go" onClick={() => onRun(scenario)}>▶ Run {SCENARIOS.find((s) => s.id === scenario)?.label}</button>}
             </div>
           </div>
         </aside>
@@ -89,13 +96,15 @@ export default function Dashboard(props) {
           {nav === 'scenarios' ? (
             <ScenariosView scenario={scenario} setScenario={setScenario} onRun={onRun} running={running} />
           ) : nav === 'chat' ? (
-            <ChatView timeline={timeline} running={running} />
+            <ChatView timeline={timeline} running={running} onCommand={onCommand} runStatus={runStatus} doneCount={doneCount} mode={mode} />
           ) : nav === 'cost' ? (
             <CostView doneCount={doneCount} />
           ) : nav === 'audit' ? (
             <AuditView timeline={timeline} />
           ) : nav === 'plan' ? (
             <PlanView plan={plan} />
+          ) : nav === 'report' ? (
+            <ReportView history={history} onClearHistory={onClearHistory} alert={ALERT} />
           ) : (
             <>
               <div className="dash-h">{focusAgent ? `${AGENT_MAP[focusAgent].name} · ${AGENT_MAP[focusAgent].chal}` : 'Operations Dashboard'}</div>
@@ -109,10 +118,10 @@ export default function Dashboard(props) {
               </div>
 
               <div className="stat-row">
-                <Stat lbl="Active Alert" chip="blue" ic="◉" val="1" sub="ALT-22847 · CNC-07-LEI" />
+                <Stat lbl="Active Alert" chip="blue" ic="◉" val={<AnimatedNumber value={1} format={(n) => Math.round(n)} />} sub="ALT-22847 · CNC-07-LEI" />
                 <Stat lbl="Failure Risk" chip="red" ic="⚠" val={risk} valClass={`risk-${risk}`} sub="from reliability triage" />
-                <Stat lbl="Challenge Coverage" chip="green" ic="✓" val={`${doneCount}/5`} sub="TMC challenges addressed" deltaUp />
-                <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={`€${(exposure || 0).toLocaleString()}`} sub="€6,750 / h accruing" />
+                <Stat lbl="Challenge Coverage" chip="green" ic="✓" val={<AnimatedNumber value={doneCount} format={(n) => `${Math.round(n)}/5`} />} sub="TMC challenges addressed" deltaUp />
+                <Stat lbl="Downtime Exposure" chip="orange" ic="€" val={<AnimatedNumber value={exposure || 0} format={(n) => `€${Math.round(n).toLocaleString()}`} />} sub="€6,750 / h accruing" />
               </div>
 
               <div className="panel">
@@ -172,6 +181,62 @@ export default function Dashboard(props) {
               </>}
         </aside>
       </div>
+
+      <CommandPalette
+        open={paletteOpen} setOpen={setPaletteOpen}
+        navItems={[...NAV, ...WORKFLOW_NAV]} setNav={setNav}
+        scenarios={SCENARIOS} onRun={onRun}
+        me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
+      />
+    </div>
+  )
+}
+
+function UserMenu({ me, firstName, onSwitchUser, onSignOut }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey) }
+  }, [open])
+
+  const pick = (m) => { onSwitchUser?.(m); setOpen(false) }
+
+  return (
+    <div className="user-menu" ref={ref}>
+      <button className={`user-chip ${open ? 'open' : ''}`} onClick={() => setOpen((o) => !o)} title="Switch presenter">
+        <span className="uc-ava" style={{ background: me.color }}>{me.initials}</span>
+        <span className="uc-name">{firstName}</span>
+        <span className="uc-caret">▾</span>
+      </button>
+      {open && (
+        <div className="user-pop" role="menu">
+          <div className="up-head">Switch presenter</div>
+          {TEAM.map((m) => {
+            const active = m.name === me.name
+            return (
+              <button key={m.name} className={`up-item ${active ? 'on' : ''}`} onClick={() => pick(m)} role="menuitem">
+                <span className="up-ava" style={{ background: m.color }}>{m.initials}</span>
+                <span className="up-name">{m.name}</span>
+                {active && <span className="up-check" style={{ color: m.color }}>●</span>}
+              </button>
+            )
+          })}
+          <button className={`up-item ${me.name === 'Guest' ? 'on' : ''}`} onClick={() => pick(GUEST)} role="menuitem">
+            <span className="up-ava" style={{ background: GUEST.color }}>G</span>
+            <span className="up-name">Guest</span>
+          </button>
+          <div className="up-sep" />
+          <button className="up-item up-out" onClick={() => { setOpen(false); onSignOut?.() }} role="menuitem">
+            <span className="up-out-ic">⎋</span>
+            <span className="up-name">Sign out</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -251,19 +316,166 @@ function PlanView({ plan }) {
   )
 }
 
-function ChatView({ timeline, running }) {
+function buildReportMd(r, ALERT) {
+  const label = SCENARIOS.find((s) => s.id === r.scenario)?.label || r.scenario
+  let md = `# Titan Operations Sentinel — Run Report\n\n`
+  md += `**Scenario:** ${label}  \n**When:** ${new Date(r.ts).toLocaleString()}  \n**Presenter:** ${r.by}  \n`
+  md += `**Mode:** ${r.mode}  \n**Failure risk:** ${r.risk}  \n**Outcome:** ${r.status}  \n**Challenges covered:** ${r.doneCount}/5\n\n`
+  if (r.command) md += `**Operator prompt:** “${r.command}”\n\n`
+  md += `## Alert\n${ALERT.machine_id} · ${ALERT.plant_name} — ${ALERT.sensor} ${ALERT.value}${ALERT.unit} (threshold ${ALERT.threshold}, ${ALERT.trend})\n\n`
+  md += `## Agent reports\n`
+  r.reports.forEach((a) => {
+    md += `### ${AGENT_MAP[a.agent]?.name || a.agent}\n${a.report || '(no report)'}\n`
+    if (a.tools?.length) md += `\n_Tools used: ${a.tools.join(', ')}_\n`
+    md += `\n`
+  })
+  if (r.followups?.length) md += `## Agent-to-agent follow-ups\n` + r.followups.map((f) => `- ${f}`).join('\n') + `\n\n`
+  if (r.decisions?.length) md += `## Human decisions\n` + r.decisions.map((d) => `- ${d}`).join('\n') + `\n\n`
+  md += `## Final action plan — ${r.plan.status}\n`
+  if (r.plan.lines?.length) md += r.plan.lines.map((l) => `- **[${l.tier}]** ${l.txt}`).join('\n')
+  else if (r.plan.text) md += r.plan.text
+  if (r.plan.roi) md += `\n\n**Return on action:** ${r.plan.roi}`
+  md += `\n\n---\n_Generated by Titan Operations Sentinel_\n`
+  return md
+}
+
+function downloadReport(r, ALERT) {
+  const label = (SCENARIOS.find((s) => s.id === r.scenario)?.label || r.scenario).toLowerCase()
+  const blob = new Blob([buildReportMd(r, ALERT)], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = `tos-report-${label}-${r.id}.md`
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+}
+
+function ReportView({ history, onClearHistory, alert: ALERT }) {
+  const [sel, setSel] = useState(null)
+  const run = history.find((r) => r.id === sel) || history[0] || null
+  return (
+    <>
+      <div className="dash-h">Run History</div>
+      <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
+        Every completed run is saved here — review what each agent concluded and export a shareable report.
+      </p>
+      {history.length === 0 ? (
+        <div className="panel"><div className="empty-note">No runs yet. Run a scenario (or type a crisis in Agent Chat) and it'll be saved here automatically.</div></div>
+      ) : (
+        <div className="rep-wrap">
+          <div className="rep-list">
+            <div className="rep-list-h">
+              <span>{history.length} run{history.length > 1 ? 's' : ''}</span>
+              <button className="rep-clear" onClick={onClearHistory} title="Clear all">Clear</button>
+            </div>
+            {history.map((r) => {
+              const label = SCENARIOS.find((s) => s.id === r.scenario)?.label || r.scenario
+              return (
+                <button key={r.id} className={`rep-item ${run?.id === r.id ? 'on' : ''}`} onClick={() => setSel(r.id)}>
+                  <span className={`rep-dot ${r.status}`} />
+                  <div className="rep-item-bd">
+                    <div className="rep-item-t">{label} <span className="rep-mode">{r.mode}</span></div>
+                    <div className="rep-item-s">{new Date(r.ts).toLocaleString()} · {r.by}</div>
+                  </div>
+                  <span className={`rep-badge ${r.status}`}>{r.status}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {run && (
+            <div className="rep-detail">
+              <div className="panel">
+                <div className="panel-h">
+                  <span className="t">{SCENARIOS.find((s) => s.id === run.scenario)?.label || run.scenario} · report</span>
+                  <button className="info-btn" style={{ width: 'auto', padding: '7px 13px', marginTop: 0 }} onClick={() => downloadReport(run, ALERT)}>↓ Export .md</button>
+                </div>
+                <div className="rep-meta">
+                  <span><b>When</b>{new Date(run.ts).toLocaleString()}</span>
+                  <span><b>Presenter</b>{run.by}</span>
+                  <span><b>Risk</b>{run.risk}</span>
+                  <span><b>Coverage</b>{run.doneCount}/5</span>
+                </div>
+                {run.command && <div className="rep-cmd">Operator: “{run.command}”</div>}
+              </div>
+
+              <div className="panel">
+                <div className="panel-h"><span className="t">Agent reports</span></div>
+                {run.reports.map((a, i) => (
+                  <div className={`act ${a.status === 'error' ? '' : ''}`} key={i} style={{ alignItems: 'flex-start' }}>
+                    <span className="ava" style={{ background: TINT[AGENT_MAP[a.agent]?.tint] || '#3b82f6' }}>{(AGENT_MAP[a.agent]?.name || a.agent)[0]}</span>
+                    <div className="bd">
+                      <div className="nm">{AGENT_MAP[a.agent]?.name || a.agent}</div>
+                      <div className="msg">{a.report || '—'}</div>
+                      {a.tools?.length > 0 && <div className="tools">{a.tools.map((t, j) => <span className="tchip" key={j}>{t}</span>)}</div>}
+                    </div>
+                  </div>
+                ))}
+                {run.followups.map((f, i) => <div className="ch-followup" key={`f${i}`} style={{ margin: '8px 0' }}><span className="ch-fu-tag">agent → agent</span> {f}</div>)}
+              </div>
+
+              {run.decisions.length > 0 && (
+                <div className="panel">
+                  <div className="panel-h"><span className="t">Human decisions</span></div>
+                  {run.decisions.map((d, i) => <div className="pl" key={i}><span className="tier APPROVE">HUMAN</span><span className="tx">{d}</span></div>)}
+                </div>
+              )}
+
+              <div className="panel">
+                <div className="panel-h"><span className="t">Final action plan</span><span className="sub">{run.plan.status}</span></div>
+                {(run.plan.lines || []).map((l, i) => <div className="pl" key={i}><span className={`tier ${l.tier}`}>{l.tier}</span><span className="tx">{l.txt}</span></div>)}
+                {run.plan.text && !run.plan.lines?.length && <div className="tx" style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{run.plan.text}</div>}
+                {run.plan.roi && <div className="pl"><span className="tier AUTO">ROI</span><span className="tx" style={{ fontWeight: 700 }}>{run.plan.roi}</span></div>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+const CRISES = [
+  'CNC-07 vibration spiking — handle it',
+  'Sensor feed on CNC-07 just dropped out',
+  'Cross-plant supply disruption today',
+]
+
+function ChatView({ timeline, running, onCommand, runStatus, doneCount = 0, mode }) {
+  const [val, setVal] = useState('')
+  const endRef = useRef(null)
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [timeline, running])
+  const send = (text) => {
+    const t = (text ?? val).trim()
+    if (!t || running) return
+    onCommand?.(t)
+    setVal('')
+  }
+  const started = timeline.length > 0 || running
+  const activeAgent = [...timeline].reverse().find((t) => t.kind === 'block' && t.status === 'active')
   return (
     <>
       <div className="dash-h">Agent Conversation</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
-        The agents don't just run in sequence — they converse through a shared transcript and can ask each other direct follow-ups. This is that dialogue.
+        Describe a situation in plain language — the orchestrator routes it to the right agents, who reason and converse through a shared transcript. Or pick an example below.
       </p>
+
+      {/* live status bar — makes it obvious what's happening during a run */}
+      {started && (
+        <div className={`ch-status ${running ? 'live' : 'done'}`}>
+          <span className="ch-status-dot" />
+          <span className="ch-status-txt">{running ? (runStatus || 'Working…') : 'Conversation complete'}</span>
+          <span className="ch-status-prog">
+            {[0, 1, 2, 3, 4].map((n) => <i key={n} className={n < doneCount ? 'on' : ''} />)}
+            <b>{doneCount}/5</b>
+          </span>
+        </div>
+      )}
+
       <div className="panel chat">
         {timeline.length === 0 ? (
-          <div className="empty-note">Run a scenario to see the agents talk.</div>
+          <div className="empty-note">{running ? 'Dispatching the agents…' : 'Type a crisis below — or try an example — to dispatch the agents.'}</div>
         ) : timeline.map((t, i) => {
-          if (t.kind === 'system') return <div className="ch-sys" key={i}>{t.text}</div>
-          if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">follow-up</span> {t.text}</div>
+          if (t.kind === 'system') return <div className="ch-sys" key={i}><span className="ch-sys-ic">◈</span>{t.text}</div>
+          if (t.kind === 'note') return <div className="ch-followup" key={i}><span className="ch-fu-tag">agent → agent</span> {t.text}</div>
           if (t.kind === 'human') return (
             <div className="ch-row me" key={i}>
               <div className="ch-bubble me"><div className="ch-nm">Plant Manager</div>{t.text}</div>
@@ -271,17 +483,42 @@ function ChatView({ timeline, running }) {
             </div>
           )
           const a = AGENT_MAP[t.agent] || { name: t.agent, tint: 'blue' }
+          const thinking = t.status === 'active'
           return (
             <div className="ch-row" key={i}>
-              <span className="ch-av" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
-              <div className="ch-bubble">
-                <div className="ch-nm">{a.name}{t.status === 'active' && <span className="ch-typing">typing…</span>}</div>
-                {t.report || 'Analyzing…'}
-                {t.tools?.length > 0 && <div className="ch-tools">{t.tools.map((x, j) => <span className="tchip" key={j}>{x.tool}</span>)}</div>}
+              <span className={`ch-av ${thinking ? 'pulse' : ''}`} style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
+              <div className={`ch-bubble ${thinking ? 'thinking' : ''} ${t.status === 'error' ? 'err' : ''}`}>
+                <div className="ch-nm">{a.name}{thinking && <span className="ch-tag-live">reasoning</span>}</div>
+                {t.tools?.length > 0 && (
+                  <div className="ch-tools">{t.tools.map((x, j) => <span className="tchip" key={j}><span className="tchip-ic">⚙</span>{x.tool}</span>)}</div>
+                )}
+                {t.report
+                  ? <div className="ch-text">{t.report}</div>
+                  : thinking && <div className="ch-think">{t.tools?.length ? 'reasoning over tool results' : 'choosing tools'} <span className="ch-dots"><i /><i /><i /></span></div>}
               </div>
             </div>
           )
         })}
+        <div ref={endRef} />
+      </div>
+
+      {timeline.length === 0 && (
+        <div className="ch-chips">
+          {CRISES.map((c) => (
+            <button key={c} className="ch-chip" disabled={running} onClick={() => send(c)}>{c}</button>
+          ))}
+        </div>
+      )}
+      <div className="ch-composer">
+        <span className="ch-prompt">⌘</span>
+        <input
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') send() }}
+          placeholder={running ? 'Agents are working…' : 'Describe the situation…  e.g. CNC-07 vibration spiking — handle it'}
+          disabled={running}
+        />
+        <button className="ch-send" onClick={() => send()} disabled={running || !val.trim()} aria-label="Dispatch agents">↑</button>
       </div>
     </>
   )
