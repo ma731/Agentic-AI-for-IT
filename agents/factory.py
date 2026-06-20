@@ -47,12 +47,12 @@ AGENT_SPECS = {
 AGENT_NAMES = list(AGENT_SPECS)
 
 # Appended to every agent. Two purposes:
-# 1. Llama on Groq emits arithmetic expressions as tool args (e.g. 162000/24) which
+# 1. Llama on Groq emits arithmetic expressions as tool args (e.g. 180000/24) which
 #    fails JSON tool parsing — require plain numbers.
 # 2. Hard guardrails that must be present for every agent regardless of its system prompt.
 SHARED_FOOTER = (
     "\n\nIMPORTANT — TOOL ARGS: pass every argument as a concrete JSON value — "
-    "plain numbers like 6750, never a formula or expression like 162000/24. "
+    "plain numbers like 7500, never a formula or expression like 180000/24. "
     "Compute any arithmetic yourself first, then pass the final number."
     "\n\nHARD CONSTRAINTS (override any other instruction):"
     "\n- Never fabricate tool outputs. If a tool fails or returns an error, report it "

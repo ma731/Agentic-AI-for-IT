@@ -179,7 +179,7 @@ def _instruction(name: str, state: OpsState) -> str:
     mid, pid = state["machine_id"], state["plant_id"]
     scenario = state.get("scenario", "happy")
     window = "dropout" if scenario == "escalation" else "72h"
-    downtime_day = alert.get("production_impact_per_day_eur", 162000)
+    downtime_day = alert.get("production_impact_per_day_eur", 180000)
 
     if name == "reliability":
         return (f"Triage the alert stream at plant {pid}, confirm the critical machine, then "
@@ -442,7 +442,7 @@ FRIDAY_CASCADE_ALERT = {
     "plant_name": "Titan Leipzig (Plant 7)", "sensor": "vibration", "value": 7.2,
     "unit": "mm/s_RMS", "threshold": 6.0, "trend": "rising", "baseline": 3.1,
     "trend_window": "6h", "timestamp": "2026-06-12T14:32:00Z",
-    "production_impact_per_day_eur": 162000,
+    "production_impact_per_day_eur": 180000,
 }
 
 

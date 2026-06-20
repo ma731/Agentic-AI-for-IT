@@ -8,7 +8,7 @@
     "manufacturer": "DMG MORI",
     "model": "DMU 85 monoBLOCK",
     "year_installed": 2019,
-    "production_value_per_day_eur": 162000,
+    "production_value_per_day_eur": 180000,
     "oem_speed_reduction_safe_limit_pct": 60,
     "equivalent_machines": ["CNC-05-LEI", "CNC-08-LEI"],
     "spindle_assembly": {
@@ -74,7 +74,7 @@
     "manufacturer": "DMG MORI",
     "model": "DMU 85 monoBLOCK",
     "year_installed": 2021,
-    "production_value_per_day_eur": 162000,
+    "production_value_per_day_eur": 180000,
     "available_capacity_pct": 40,
     "status": "operational"
   },
