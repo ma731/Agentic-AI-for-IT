@@ -38,6 +38,7 @@ export default function Dashboard(props) {
   } = props
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [assetOpen, setAssetOpen] = useState(false)
   const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
   const firstName = me.name.split(' ')[0]
 
@@ -158,7 +159,7 @@ export default function Dashboard(props) {
             <div><div className="k">Trend</div><div className="v">{ALERT.trend} (from {ALERT.baseline})</div></div>
             <div><div className="k">Window</div><div className="v">{ALERT.trend_window}</div></div>
           </div>
-          <button className="info-btn">View Full Asset Profile</button>
+          <button className="info-btn" onClick={() => setAssetOpen(true)}>View Full Asset Profile</button>
 
           <div className="info-h mt">Run History</div>
           {timeline.filter((t) => t.kind === 'human' || (t.kind === 'block' && t.status === 'done')).slice(-4).map((t, i) => (
@@ -188,6 +189,105 @@ export default function Dashboard(props) {
         scenarios={SCENARIOS} onRun={onRun}
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
+
+      {assetOpen && <AssetModal alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
+    </div>
+  )
+}
+
+// Full machine dossier behind the "View Full Asset Profile" button. Static spec data
+// (consistent with the Friday Cascade scenario) merged with the live alert reading.
+const ASSET_SPEC = {
+  type: 'CNC Machining Center #7', oem: 'DMG MORI · DMU 50', controller: 'Siemens SINUMERIK 840D sl',
+  installed: 'Mar 2019', spindle: 'Motorized · 14,000 rpm · HSK-A63', criticality: 'A · line-critical',
+  hoursYTD: '3,212 h', utilisation: '87%', lastService: '2026-04-02 (preventive)', nextWindow: 'in 9 days',
+}
+const ASSET_SENSORS = [
+  { k: 'Vibration (RMS)', v: '7.2 mm/s', s: 'over', note: 'threshold 6.0 · baseline 3.1' },
+  { k: 'Bearing temp', v: '+14 °C', s: 'over', note: 'rising vs 6h baseline' },
+  { k: 'Spindle load', v: '78 %', s: 'ok', note: 'within OEM envelope' },
+  { k: 'Coolant flow', v: '12.4 L/min', s: 'ok', note: 'nominal' },
+]
+const ASSET_PARTS = [
+  { id: 'P-4421', name: 'Spindle bearing kit', stock: '0 on-site', note: '3 in Amsterdam (AMS)' },
+  { id: 'P-7803', name: 'Hydraulic seal set', stock: '1 on-site (need 2)', note: '4 in Amsterdam (AMS)' },
+]
+const ASSET_HISTORY = [
+  { d: '2026-06-12', t: 'Vibration alert ALT-22847 raised (7.2 mm/s)', tag: 'alert' },
+  { d: '2026-04-02', t: 'Preventive service: spindle inspection, coolant flush', tag: 'service' },
+  { d: '2025-11-18', t: 'Bearing micro-defect flagged by quality (r=0.61)', tag: 'quality' },
+  { d: '2025-07-09', t: 'Controller firmware update SINUMERIK 4.95', tag: 'service' },
+]
+
+function AssetModal({ alert: ALERT, risk, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return (
+    <div className="asset-scrim" onClick={onClose}>
+      <div className="asset-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="asset-close" onClick={onClose} aria-label="Close">✕</button>
+        <div className="asset-head">
+          <span className="asset-ic">⚙</span>
+          <div>
+            <div className="asset-id">{ALERT.machine_id}</div>
+            <div className="asset-sub">{ASSET_SPEC.type} · {ALERT.plant_name}</div>
+          </div>
+          <span className={`asset-risk risk-${risk}`}>{risk === 'PENDING' ? 'MONITOR' : risk} RISK</span>
+        </div>
+
+        <div className="asset-body">
+          <div className="asset-col">
+            <div className="asset-sec">Specifications</div>
+            <div className="asset-kv">
+              <div><span>OEM / Model</span>{ASSET_SPEC.oem}</div>
+              <div><span>Controller</span>{ASSET_SPEC.controller}</div>
+              <div><span>Spindle</span>{ASSET_SPEC.spindle}</div>
+              <div><span>Installed</span>{ASSET_SPEC.installed}</div>
+              <div><span>Criticality</span>{ASSET_SPEC.criticality}</div>
+              <div><span>Hours (YTD)</span>{ASSET_SPEC.hoursYTD} · {ASSET_SPEC.utilisation}</div>
+              <div><span>Last service</span>{ASSET_SPEC.lastService}</div>
+              <div><span>Next window</span>{ASSET_SPEC.nextWindow}</div>
+            </div>
+
+            <div className="asset-sec">Live sensors</div>
+            {ASSET_SENSORS.map((s, i) => (
+              <div className="asset-sensor" key={i}>
+                <span className={`asset-dot ${s.s}`} />
+                <div className="asset-sensor-bd"><div className="asset-sensor-k">{s.k}</div><div className="asset-sensor-n">{s.note}</div></div>
+                <span className={`asset-sensor-v ${s.s}`}>{s.v}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="asset-col">
+            <div className="asset-sec">Predicted failure</div>
+            <div className="asset-rul">
+              <div className="asset-rul-big">52-76 h</div>
+              <div className="asset-rul-sub">Spindle-bearing failure · 95% confidence · €162,000/day exposure if it stops the line</div>
+            </div>
+
+            <div className="asset-sec">Required parts</div>
+            {ASSET_PARTS.map((p, i) => (
+              <div className="asset-part" key={i}>
+                <span className="asset-part-id">{p.id}</span>
+                <div className="asset-part-bd"><div className="asset-part-n">{p.name}</div><div className="asset-part-note">{p.note}</div></div>
+                <span className="asset-part-stock">{p.stock}</span>
+              </div>
+            ))}
+
+            <div className="asset-sec">Service history</div>
+            {ASSET_HISTORY.map((h, i) => (
+              <div className="asset-hist" key={i}>
+                <span className={`asset-hist-tag ${h.tag}`}>{h.tag}</span>
+                <div className="asset-hist-bd"><div className="asset-hist-t">{h.t}</div><div className="asset-hist-d">{h.d}</div></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
