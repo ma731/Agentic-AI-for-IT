@@ -46,6 +46,7 @@ export default function App() {
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const [presenting, setPresenting] = useState(false)
 
   const [timeline, setTimeline] = useState([])
   const [agentStatus, setAgentStatus] = useState(FRESH_STATUS)
@@ -140,6 +141,7 @@ export default function App() {
     esRef.current?.close()
     queueRef.current = []
     setRunning(false)
+    setPresenting(false)
     setApproval(null)
     setAgentStatus((s) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, v === 'active' ? 'idle' : v])))
     setRunStatus('Stopped')
@@ -186,6 +188,15 @@ export default function App() {
     }
     queueRef.current = RESOLUTIONS[choice].map((e) => ({ ...e })); setApproval(null); pump()
   }
+
+  // ---- presenter (hands-free) mode ----
+  const present = (scen = scenario) => { setPresenting(true); run(scen) }
+  useEffect(() => {                         // auto-approve the human gate while presenting
+    if (!presenting || !approval) return
+    const id = setTimeout(() => resolve('approve'), 3800)
+    return () => clearTimeout(id)
+  }, [presenting, approval])               // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (completed) setPresenting(false) }, [completed])
 
   useEffect(() => () => { clearTimeout(timerRef.current); esRef.current?.close() }, [])
 
@@ -243,6 +254,7 @@ export default function App() {
         user={user} onSignOut={signOut} onSwitchUser={setUser}
         onCommand={submitCommand}
         history={history} onClearHistory={clearHistory}
+        presenting={presenting} onPresent={() => present(scenario)}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
     </>

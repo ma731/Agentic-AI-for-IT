@@ -41,7 +41,7 @@ export default function Dashboard(props) {
   const {
     scenario, setScenario, mode, setMode, running, completed, timeline, agentStatus, runStatus, risk,
     plan, exposure, doneCount, onRun, onStop, onBack, alert: ALERT, user, onSignOut, onSwitchUser, onCommand,
-    history = [], onClearHistory,
+    history = [], onClearHistory, presenting, onPresent,
   } = props
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -62,12 +62,21 @@ export default function Dashboard(props) {
         <button className="dash-home" onClick={onBack} title="Back to home page"><span className="ic">←</span> Home</button>
         <span className="sp" />
         <ProviderBar mode={mode} setMode={setMode} />
+        <button className="present-btn" onClick={onPresent} disabled={running} title="Hands-free guided demo">▶ Present</button>
         <button className="help-btn" onClick={() => setCoach(true)} title="What am I looking at?">?</button>
         <button className="cmdk-trigger" onClick={() => setPaletteOpen(true)} title="Command palette">
           <span className="ic">⌘</span>K
         </button>
         <UserMenu me={me} firstName={firstName} onSwitchUser={onSwitchUser} onSignOut={onSignOut} />
       </header>
+
+      {presenting && (
+        <div className="present-bar">
+          <span className="present-dot" />
+          <span className="present-tag">Presenting</span>
+          <span className="present-status">{runStatus}</span>
+        </div>
+      )}
 
       <div className="dash-body">
         {/* ---------------- sidebar ---------------- */}

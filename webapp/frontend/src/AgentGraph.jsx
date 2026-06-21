@@ -119,6 +119,12 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
           )
         })()}
       </svg>
+
+      <div className="ag-legend" aria-hidden="true">
+        <span><i className="d idle" /> idle</span>
+        <span><i className="d active" /> reasoning</span>
+        <span><i className="d done" /> done</span>
+      </div>
     </div>
   )
 }

@@ -11,3 +11,7 @@ build/
 .gstack/
 .agents/
 data/skills/
+
+# vite local env overrides
+.env.local
+*.local
