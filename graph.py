@@ -104,6 +104,7 @@ class OpsState(TypedDict, total=False):
     pending_followup: str                        # agent name another agent asked for
     next_agent: str
     risk: str                                    # HIGH | LOW | ESCALATE
+    predicted_rul: list                          # [min_h, max_h] from rul_predictor, for case memory
     escalate: bool
     halt: bool
     needs_approval: bool
@@ -293,6 +294,9 @@ def _make_worker(name: str):
             # Prefer the rul_predictor structured result; fall back to text if unavailable.
             rp = results.get("rul_predictor", {})
             fmode = str(rp.get("failure_mode", "")).lower()
+            rh = rp.get("rul_hours") or {}
+            if rh.get("min") is not None:
+                update["predicted_rul"] = [rh["min"], rh.get("max", rh["min"])]
             if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
                 update["escalate"], update["risk"] = True, "ESCALATE"
             elif "bearing_failure" in fmode or "spindle_bearing_failure" in blob:
@@ -361,7 +365,7 @@ def supervisor(state: OpsState) -> dict:
     log.info("ROUTE         | → %s  (%s; allowed=%s)",
              "FINISH" if choice == "FINISH" else choice, how, allowed)
     ev = _ev(state["run_id"], "route", "orchestrator",
-             message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice)
+             message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice, how=how)
     return {"next_agent": choice, "trace": [ev]}
 
 
@@ -428,7 +432,7 @@ def _log_closed_case(state: OpsState, status: str) -> None:
             "machine_type": "CNC Machining Center",
             "sensor": a.get("sensor", "?"),
             "signature": f"{a.get('sensor', '?')} {a.get('value', '')}{a.get('unit', '')}".strip(),
-            "predicted_rul_h": None,
+            "predicted_rul_h": state.get("predicted_rul"),
             "actual_failure_h": None,
             "decision": str(state.get("approval", status)),
             "outcome": "pending (reconciled when the predicted window resolves)",

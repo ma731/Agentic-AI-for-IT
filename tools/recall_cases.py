@@ -58,6 +58,28 @@ def recall_similar_cases(machine_id: str = "", sensor: str = "", signature: str 
     }
 
 
+def reconcile_case(case_id: str, actual_failure_h) -> bool:
+    """Close the loop: once the predicted window resolves, record the actual failure time
+    (or None for 'no failure') for a previously-'pending' case, compute whether the
+    prediction landed in-window, and persist it so it counts toward RUL accuracy. This is
+    how recall -> append(pending) -> validate becomes a real feedback cycle. Never raises."""
+    try:
+        data = json.loads(_LIB.read_text(encoding="utf-8"))
+        for c in data.get("cases", []):
+            if c.get("id") == case_id and c.get("actual_failure_h") is None and c.get("in_window") is None:
+                win = c.get("predicted_rul_h") or [None, None]
+                lo, hi = (win + [None, None])[:2]
+                c["actual_failure_h"] = actual_failure_h
+                c["in_window"] = (actual_failure_h is not None and lo is not None and lo <= actual_failure_h <= hi)
+                c["outcome"] = (f"reconciled: failed at {actual_failure_h}h" if actual_failure_h is not None
+                                else "reconciled: no failure (false alarm)")
+                _LIB.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                return True
+        return False
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def append_case(case: dict) -> bool:
     """Append a closed run to the case library so recall and outcome-validation grow over
     time. Called by graph.synthesize() when a run finalizes. The new case starts with a

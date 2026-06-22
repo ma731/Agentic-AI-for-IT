@@ -186,3 +186,16 @@ def test_cost_ceiling_gates_over_500_runs_autonomous_under():
     assert edge["options_ranked"][0]["cost_eur"] <= COST_CEILING_EUR     # €420 → autonomous
     happy = expedite_cost([{"label": "Schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"}], 7500, 52)
     assert happy["options_ranked"][0]["cost_eur"] > COST_CEILING_EUR     # €3,200 → needs approval
+
+
+def test_reconcile_closes_the_loop(tmp_path, monkeypatch):
+    import json
+    import tools.recall_cases as rc
+    tmp = tmp_path / "case_library.json"
+    tmp.write_text(json.dumps({"cases": []}), encoding="utf-8")
+    monkeypatch.setattr(rc, "_LIB", tmp)
+    rc.append_case({"id": "RUN-Z", "predicted_rul_h": [50, 74], "actual_failure_h": None, "in_window": None})
+    assert rc.reconcile_case("RUN-Z", 58) is True          # 58h is inside the 50-74h window
+    case = json.loads(tmp.read_text(encoding="utf-8"))["cases"][-1]
+    assert case["actual_failure_h"] == 58 and case["in_window"] is True
+    assert rc.reconcile_case("RUN-Z", 58) is False         # already reconciled

@@ -505,7 +505,7 @@ function ActivityRow({ b }) {
     <div className={`act ${live ? 'live' : ''}`}>
       <span className="ava" style={{ background: TINT[a.tint] || '#3b82f6' }}>{a.name[0]}</span>
       <div className="bd">
-        <div className="nm">{a.name}{b.status === 'done' && <span className="act-dot" style={{ background: '#16b364' }} />}</div>
+        <div className="nm">{a.name}{b.how && <span className={`route-tag ${b.how === 'LLM-picked' ? 'llm' : ''}`}>{b.how === 'LLM-picked' ? 'LLM-routed' : 'auto-routed'}</span>}{b.status === 'done' && <span className="act-dot" style={{ background: '#16b364' }} />}</div>
         <div className="msg">{b.report || 'Analyzing…'}</div>
         {b.tools?.length > 0 && <div className="tools">{b.tools.map((t, i) => <span className="tchip" key={i}>{t.tool}</span>)}</div>}
       </div>

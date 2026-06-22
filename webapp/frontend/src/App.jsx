@@ -99,8 +99,8 @@ export default function App() {
         pushItem({ kind: 'system', text: ev.message }); setRunStatus('Perceiving alert'); break
       case 'route':
         setAgentStatus((s) => ({ ...s, [ev.to]: 'active' }))
-        setRunStatus(`Routing → ${AGENT_MAP[ev.to]?.name || ev.to}`)
-        pushItem({ kind: 'block', agent: ev.to, tools: [], report: null, status: 'active' }); break
+        setRunStatus(`Routing → ${AGENT_MAP[ev.to]?.name || ev.to}${ev.how ? ` · ${ev.how}` : ''}`)
+        pushItem({ kind: 'block', agent: ev.to, tools: [], report: null, status: 'active', how: ev.how }); break
       case 'tool_call':
         setTimeline((prev) => updateActiveBlock(prev, ev.agent, (b) => ({ ...b, tools: [...b.tools, ev] }))); break
       case 'agent_report':
