@@ -160,7 +160,7 @@ python scripts/run_demo.py             # happy path (auto-approves)
 python scripts/run_demo.py edge        # cross-plant adaptation path
 python scripts/run_demo.py escalation  # telemetry dropout → stops after reliability
 python scripts/view_run.py             # replay last recorded run (no tokens) — also --list, RUN-id
-python -m pytest tests/test_tools.py   # 17 tool tests, offline, no key needed
+python -m pytest tests/test_tools.py   # 26 tool tests, offline, no key needed
 python -m pytest tests/                # also runs flow tests (need GROQ_API_KEY; else skipped)
 cd webapp/frontend && npm install && npm run dev   # demo UI with live multi-agent trace + approval gate (see webapp/README.md)
 ```

@@ -50,9 +50,12 @@ research risk. We're honest about this rather than faking integrations.
 ## Risk, safety & security
 
 **Can the agent self-approve a €400 spend?**
-No — **code-enforced**. A sourcing option runs autonomously only if it's **under €500 *and* fits the
-failure window**; anything else routes to a human via `interrupt()`. There's a unit test for both
-branches (€420 autonomous vs €3,200 gated).
+Precisely: €500 is the **delegated-authority ceiling**, not "never spends." A sourcing option runs
+autonomously only if it's **under €500 *and* fits the failure window** (e.g. the Edge path's €420
+cross-plant transfer); anything over €500, or that misses the window, routes to a human via
+`interrupt()`. It's **code-enforced** with a unit test for both branches (€420 autonomous vs €3,200
+gated). So say "below the €500 ceiling *and* in-window = within delegated authority," not "it can
+never spend without approval" — the Edge demo would contradict that.
 
 **What stops a poisoned tool output or FOLLOWUP line from hijacking the agents?**
 Routing **can't** be hijacked: the next agent comes from the `_allowed_next()` policy (the LLM only
@@ -82,9 +85,21 @@ labelled "design"** in the console, not claimed as live.
 `test_append_case_grows_library`, `test_reconcile_closes_the_loop`.
 
 **Quantify the improvement.**
-We demonstrate the *mechanism*, not a measured magnitude — the accuracy figure is over a seeded
-case library (labelled). Measuring run-1-vs-run-100 delta needs production outcome data; that's the
-honest framing.
+We demonstrate the *mechanism*, not a measured magnitude — the accuracy figure is **3/3 over a
+seeded case library** (labelled "design" in the console, "over the seeded case library"). Measuring
+a run-1-vs-run-100 delta needs production outcome data; that's the honest framing.
+
+**Show the loop reconcile something live.**
+`reconcile_due()` runs every cycle in `perceive`, but it only acts when an outcome is known — it
+reads `data/memory/outcomes.json`, which a telemetry/maintenance feed would write. With no feed
+present it's a safe **no-op** (cases stay honestly pending); the mechanism is proven by
+`test_reconcile_closes_the_loop` and `test_reconcile_due_resolves_known_outcomes`. Don't claim it
+reconciles live unless you drop an `outcomes.json` in first.
+
+**Why does the ROI use 52h, not 76h?**
+Deliberately the **conservative** bound: we cost against the *earliest* predicted failure (RUL min =
+52h), which gives the *fewest* hours saved and the *lowest, most defensible* ROI. Using 76h would
+inflate it.
 
 ---
 
