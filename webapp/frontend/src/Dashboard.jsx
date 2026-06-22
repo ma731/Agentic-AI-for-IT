@@ -569,13 +569,22 @@ const REFLECTIONS = [
 ]
 
 function LearningView({ history = [], alert: ALERT }) {
-  // human-feedback: seeded historical record + this browser's live runs
+  // everything below is DERIVED from the visible case library + this session's runs,
+  // so the panel never shows totals that disagree with the data it displays.
   const decided = history.flatMap((r) => r.decisions || [])
-  const approvals = 6 + decided.filter((d) => /approve/i.test(d)).length
-  const rejections = 1 + decided.filter((d) => /reject/i.test(d)).length
-  const totalRuns = 12 + history.length
-  // outcome validation: predicted-window vs actual (seeded track record)
-  const closedN = 19, hits = 17, acc = Math.round((hits / closedN) * 100)
+  const approvals = CASE_LIBRARY.filter((c) => /approved/i.test(c.decision)).length + decided.filter((d) => /approve/i.test(d)).length
+  const rejections = decided.filter((d) => /reject/i.test(d)).length
+  const totalRuns = CASE_LIBRARY.length + history.length
+  // outcome validation: predicted RUL window vs actual, over the seeded library
+  const closedCases = CASE_LIBRARY.filter((c) => /failed at/.test(c.actual))
+  const hits = closedCases.filter((c) => {
+    const m = c.actual.match(/(\d+)\s*h/); const [lo, hi] = c.predRul.split('-').map((x) => parseInt(x))
+    return m && +m[1] >= lo && +m[1] <= hi
+  }).length
+  const closedN = closedCases.length
+  const acc = closedN ? Math.round((hits / closedN) * 100) : 0
+  const falseAlarms = CASE_LIBRARY.filter((c) => /false alarm/i.test(c.actual)).length
+  const avgLead = closedN ? Math.round(closedCases.reduce((s, c) => s + (+c.actual.match(/(\d+)\s*h/)[1]), 0) / closedN) : 0
 
   return (
     <>
@@ -605,14 +614,14 @@ function LearningView({ history = [], alert: ALERT }) {
 
       {/* 2. Human-feedback / preference learning */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Learned from your decisions</span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} this session</span></div>
+        <div className="panel-h"><span className="t">Learned from decisions</span><span className="sub">{totalRuns} run{totalRuns === 1 ? '' : 's'} on record</span></div>
         <div className="stat-row" style={{ marginBottom: 14 }}>
-          <Stat lbl="Gate approvals" chip="green" ic="✓" val={`${approvals}`} sub="expedites cleared across runs" deltaUp />
+          <Stat lbl="Gate approvals" chip="green" ic="✓" val={`${approvals}`} sub="expedites cleared on record" deltaUp />
           <Stat lbl="Gate rejections" chip="red" ic="✕" val={`${rejections}`} sub="paths declined" />
-          <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="in the decision history" />
-          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="biased by your history" />
+          <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="library + this session" />
+          <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="biased by the record" />
         </div>
-        <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite under €3,500 has been approved {Math.max(approvals, 4)}/{Math.max(approvals, 4)} times. This informs the recommended path shown above (still gated).</span></div>
+        <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite has been approved {approvals} of {approvals + rejections} times on record. This informs the recommended path shown above (still gated).</span></div>
         <div className="learn-foot">Each closed run is appended to the case library (append_case); the approve/reject tally above biases the recommended path toward how this plant manager actually decides.</div>
       </div>
 
@@ -633,9 +642,9 @@ function LearningView({ history = [], alert: ALERT }) {
         <div className="panel-h"><span className="t">Prediction accuracy <span className="learn-concept">design</span></span><span className="sub">over the seeded case library</span></div>
         <div className="stat-row" style={{ marginBottom: 12 }}>
           <Stat lbl="RUL accuracy" chip="green" ic="◉" val={`${acc}%`} sub={`${hits}/${closedN} closed cases inside window`} deltaUp />
-          <Stat lbl="False alarms" chip="orange" ic="⚠" val="2" sub="caught and de-prioritized" />
+          <Stat lbl="False alarms" chip="orange" ic="⚠" val={`${falseAlarms}`} sub="caught and de-prioritized" />
           <Stat lbl="Cases closed" chip="blue" ic="✓" val={`${closedN}`} sub="with a confirmed outcome" />
-          <Stat lbl="Avg lead time" chip="purple" ic="◔" val="59 h" sub="warning before failure" />
+          <Stat lbl="Avg lead time" chip="purple" ic="◔" val={`${avgLead} h`} sub="warning before failure" />
         </div>
         <div className="learn-foot">Each closed case validates the predicted RUL window (accuracy above is over the seeded library). Automatically down-weighting a signature that misses is the production design.</div>
       </div>

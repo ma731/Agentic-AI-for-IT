@@ -52,7 +52,7 @@ Titan Manufacturing runs 28 plants of robots bolted onto aging operational techn
 
 | # | Challenge | The hurt (from the case study) |
 |---|-----------|--------------------------------|
-| 1 | Predictive maintenance | 22,000+ alerts/day with no prioritisation; **€162k/day** when a CNC goes down; 38% of failures "should have been predicted" |
+| 1 | Predictive maintenance | 22,000+ alerts/day with no prioritisation; **€180k/day** when a CNC goes down; 38% of failures "should have been predicted" |
 | 2 | Supply-chain volatility | **€14M** in line stoppages last quarter; expediting costs up 52%; zero visibility past Tier-1 suppliers |
 | 3 | Human-robot coordination | 17% of shifts hit robot/operator conflicts; safety shutdowns up 15% |
 | 4 | Quality & traceability | quality escapes up 22%; defect root-cause takes weeks; QMS not linked to machine telemetry |

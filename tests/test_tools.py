@@ -75,9 +75,9 @@ def test_expedite_cost_prefers_fitting_low_risk_option():
         {"label": "warehouse", "cost_eur": 420, "lead_time_hours": 36, "risk_level": "MEDIUM"},
         {"label": "schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"},
     ]
-    r = expedite_cost(opts, downtime_cost_per_hour=6750, failure_window_hours=52)
+    r = expedite_cost(opts, downtime_cost_per_hour=7500, failure_window_hours=52)
     assert r["recommendation"] == "schaeffler"          # LOW risk fits → ranked first
-    assert r["options_ranked"][0]["roi_ratio"] == 71.7  # (52-18)*6750/3200
+    assert r["options_ranked"][0]["roi_ratio"] == 79.7  # (52-18)*7500/3200
 
 
 def test_maintenance_schedule_exposes_emergency_slot():
@@ -151,9 +151,9 @@ def test_notify_computes_roi_and_links_wo():
         recipient_role="plant_manager", subject="Approve emergency procurement",
         situation_summary="CNC-07-LEI spindle bearing failure predicted 52-76h out",
         recommended_actions=[{"tier": "APPROVE", "action": "expedite P-4421"}],
-        cost_of_inaction_eur=162000, cost_of_recommended_plan_eur=3200,
+        cost_of_inaction_eur=180000, cost_of_recommended_plan_eur=3200,
         decision_deadline_utc="2026-06-13T08:00:00Z", work_order_id="WO-CNC-07-LEI-202606121432",
     )
     assert n["status"] == "DRAFT_PENDING_SEND"
-    assert n["body"]["roi_ratio"] == 50.6                       # 162000 / 3200
+    assert n["body"]["roi_ratio"] == 56.2                       # 180000 / 3200
     assert n["body"]["linked_work_order"] == "WO-CNC-07-LEI-202606121432"
