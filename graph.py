@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import operator
+import ast
 import re
 import sys
 import time
@@ -121,9 +122,18 @@ def _ev(rid: str, etype: str, agent: str, **detail) -> dict:
 # Read a ReAct agent's run: surface its tool calls + its full natural-language reply.
 # --------------------------------------------------------------------------- #
 def _safe(content):
+    """Parse a tool's ToolMessage content back into a dict when possible (JSON first, then
+    the Python-repr LangChain often emits) so worker decisions can read structured fields
+    instead of substring-matching text. Falls back to the raw content."""
+    if not isinstance(content, str):
+        return content
     try:
-        return json.loads(content) if isinstance(content, str) else content
+        return json.loads(content)
     except (json.JSONDecodeError, TypeError):
+        pass
+    try:
+        return ast.literal_eval(content)
+    except (ValueError, SyntaxError):
         return content
 
 
@@ -138,7 +148,9 @@ def _tool_events(messages, agent, rid):
             blob.append(str(m.content))
             events.append(_ev(rid, "tool_call", agent, tool=name, input=args,
                               result=_safe(m.content)))
-    return events, " ".join(blob).lower()
+    # last structured result per tool, for verdict logic that prefers fields over substrings
+    results = {e["tool"]: e["result"] for e in events if isinstance(e["result"], dict)}
+    return events, " ".join(blob).lower(), results
 
 
 def _agent_report(messages) -> str:
@@ -260,7 +272,7 @@ def _make_worker(name: str):
                 update["needs_approval"] = True
             return update
 
-        events, blob = _tool_events(msgs, name, rid)
+        events, blob, results = _tool_events(msgs, name, rid)
         tool_names = [e["tool"] for e in events]
         full_report = _agent_report(msgs)
         followup = _detect_followup(full_report, name)   # detect on FULL text first…
@@ -278,18 +290,31 @@ def _make_worker(name: str):
                                        message=f"{name} asks {followup} a direct follow-up."))
 
         if name == "reliability":
-            if ("interrupted" in blob or "data_unavailable" in blob
-                    or '"low_confidence_flag": true' in blob):
+            # Prefer the rul_predictor structured result; fall back to text if unavailable.
+            rp = results.get("rul_predictor", {})
+            fmode = str(rp.get("failure_mode", "")).lower()
+            if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
                 update["escalate"], update["risk"] = True, "ESCALATE"
-            elif "spindle_bearing_failure" in blob:
+            elif "bearing_failure" in fmode or "spindle_bearing_failure" in blob:
                 update["risk"] = "HIGH"
             else:
                 update["risk"] = "LOW"
             log.info("  ↳ reliability verdict: risk=%s", update["risk"])
         if name == "supply_chain":
-            update["needs_approval"] = True
+            # Code-enforced €500 ceiling: read the recommended option's cost and gate only
+            # when it exceeds the autonomy ceiling (so sub-ceiling actions run autonomously).
+            ec = results.get("expedite_cost", {})
+            ranked = ec.get("options_ranked") or []
+            cost = ranked[0].get("cost_eur") if ranked else None
+            update["needs_approval"] = True if cost is None else cost > COST_CEILING_EUR
+            log.info("  ↳ supply_chain spend=%s ceiling=%d → %s", cost, COST_CEILING_EUR,
+                     "needs approval" if update["needs_approval"] else "autonomous")
         if name == "compliance_safety":
-            update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
+            sg = results.get("safety_gate", {})
+            if sg:
+                update["halt"] = str(sg.get("verdict", "")).upper() == "HALT"
+            else:
+                update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
             log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
         return update
     return node

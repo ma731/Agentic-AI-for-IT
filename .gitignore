@@ -15,3 +15,6 @@ data/skills/
 # vite local env overrides
 .env.local
 *.local
+
+# vite build output (rebuild with npm run build)
+webapp/frontend/dist/
