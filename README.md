@@ -5,7 +5,8 @@
 > hand a single, costed action plan to a human for approval.
 
 Group project for **IE University — Agentic AI for IT**. Built on **LangGraph** with autonomous
-**ReAct** agents running on **Groq / Llama 3.3 70B** (free tier — no paid API keys).
+**ReAct** agents and a **provider-agnostic** LLM layer (Gemini / Groq / OpenRouter / Azure OpenAI,
+switchable live) — runs end-to-end on a **free tier**, no paid keys required.
 
 ---
 
@@ -99,6 +100,9 @@ loop only where authority is actually required.
   `interrupt()` for a real approve/reject before anything is committed.
 - **Full audit trail.** Every perception, tool call, decision and approval is written to
   `logs/tos_audit.jsonl` — replayable later with `scripts/view_run.py`.
+- **Learning (perceive → reason → act → learn).** Each closed run is written to a case library;
+  `recall_similar_cases` grounds new assessments in precedent, and a self-closing reconcile step
+  (run on `perceive`) validates predicted-vs-actual RUL as outcomes arrive — no model retraining.
 
 ## The three demo paths
 
@@ -163,9 +167,19 @@ CLAUDE.md           project guide for contributors / Claude Code — read first
 
 ## Status & limitations
 
-- ✅ Tools, graph, all 5 challenges, audit log, web console, 26 offline tool tests passing.
-- ✅ Happy + edge paths verified live on Groq end-to-end.
-- ⚠️ Heuristic RUL (not a trained model) — honest MVP stub. Simulated data only. English-only.
-- ⚠️ Live runs are bounded by the Groq free-tier daily token budget.
+- ✅ Tools, graph, all 5 challenges, learning loop, audit log, web console, 26 offline tool tests passing.
+- ✅ Learning loop (case-memory recall + write-back + self-closing reconcile) and a **code-enforced**
+  €500 ceiling (a sub-ceiling option must also fit the failure window to run autonomously).
+- ✅ Provider-agnostic with an in-app picker (Gemini / Groq / OpenRouter / Azure); happy + edge
+  verified live end-to-end.
+- ✅ Web console (`webapp/`) plays all three paths — **Replay** (€0, no key) or **Live** — with the
+  orchestration graph, approval gate, agent chat, Learning view, run history, and a brand-matched
+  slide deck at **`/deck.html`**.
+- ⚠️ Heuristic RUL (not a trained model) — honest MVP stub. Simulated (production-shaped) data only.
+- ⚠️ Reflection-replay and automatic signature down-weighting are designed, not yet live (labelled
+  "design" in the console). Live runs are bounded by free-tier token budgets.
+
+See [`docs/appendix/`](docs/appendix/) for the prompt pack, tool catalog, risk matrix, evidence
+checklist, and **anticipated Q&A** (`anticipated_questions.md`).
 
 See [`docs/`](docs/) for the full prompt pack, tool catalog, risk matrix, and the project brief.
