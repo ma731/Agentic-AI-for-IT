@@ -137,7 +137,9 @@ memory.
 - **Safety override.** Compliance & Safety can return **HALT**, which stops the whole plan regardless
   of cost or urgency.
 - **Human-in-the-loop.** Spend over €500 (or an option that doesn't fit the failure window) pauses
-  the graph via `interrupt()` for a real approve/reject before anything is committed.
+  the graph via `interrupt()` for a real approve/reject before anything is committed. The gate runs
+  on a LangGraph **`MemorySaver` checkpointer** (which also serves as the run's **episodic memory**),
+  so the graph pauses and resumes cleanly.
 - **Full audit trail.** Every perception, tool call, decision and approval is written to
   `logs/tos_audit.jsonl` — replayable later with `scripts/view_run.py`.
 
@@ -214,7 +216,7 @@ Actions are classified into three tiers; the ceiling is **enforced in code**, no
 
 ```bash
 pip install -r requirements.txt        # install dependencies
-cp .env.example .env                   # add a free key (Gemini or Groq), or run offline with Ollama
+cp .env.example .env                   # add a free key (Gemini or Groq; see docs/SETUP_GEMINI.md), or run offline with Ollama
 
 python scripts/run_demo.py             # happy path (auto-approves)
 python scripts/run_demo.py edge        # cross-plant adaptation path
@@ -259,6 +261,10 @@ What's inside:
 - **Presenter** auto-play, **⌘K** command palette, per-presenter sign-in with accent theming.
 - **Replay vs Live** toggle + an in-app provider/key picker. Replay is a labelled recording.
 - **Slide deck** at **`/deck.html`** — a brand-matched reveal.js deck for the pitch.
+
+**Backend API** (FastAPI, from `webapp/backend/main.py`): `GET /api/run` (streams the live trace as
+SSE) · `POST /api/decision` (resolves the approval `interrupt()`) · `GET /api/providers` ·
+`POST /api/config` (switch provider/model/key live, optionally persist to `.env`) · `GET /api/health`.
 
 See [`webapp/README.md`](webapp/README.md) for details.
 
@@ -397,13 +403,16 @@ In [`docs/`](docs/) and [`docs/appendix/`](docs/appendix/):
 - **Architecture & flow** — `architecture.mmd`, `appendix/sequence_diagram.md`, `appendix/audit_log_schema.md`
 - **Why an agent, not a dashboard** — `appendix/why_agent_not_dashboard.md`
 - **Evidence checklist & anticipated Q&A** — `appendix/evidence_checklist.md`, `appendix/anticipated_questions.md`
-- **Project brief & case study** — `agentic_assignment_brief.md`, the case-study docs
+- **Presentation Q&A prep & eval metrics** — `appendix/qa_cheatsheet.md`, `appendix/evaluation_metrics.md`
+- **Golden-run recording guide** — `appendix/RECORDING.md`
+- **Setup & progress** — `SETUP_GEMINI.md`, `PROGRESS.md`, the design-thinking handouts
+- **Project brief & case study** — `agentic_assignment_brief.md`, `titan_project_brainstorm.md`, the case-study doc
 
 ---
 
 ## Team
 
-IE University · MBD · Agentic AI for IT — **Team 3**:
+IE University · MBD · Agentic AI for IT — **Team 3** · presentation June 24, 2026:
 Marco Ortiz Togashi · David Carrillo Aguilera · Nuria Diaz Jimenez · Marian Garabana Garrido · Ignacio Agustin Moreno.
 
 > Built with LangGraph. Honest by design: every stub, heuristic, and "design-stage" capability is
