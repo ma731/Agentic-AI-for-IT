@@ -6,12 +6,12 @@ import Dashboard from './Dashboard.jsx'
 import SignIn from './SignIn.jsx'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 
-const RATE_PER_S = 162000 / 86400
+const RATE_PER_S = 180000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
   'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
-  'DOWNTIME €162,000 / day', 'RECOMMENDED ROI 71.7:1', '5 TMC CHALLENGES',
+  'DOWNTIME €180,000 / day', 'RECOMMENDED ROI 79.7:1', '5 TMC CHALLENGES',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 

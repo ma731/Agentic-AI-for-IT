@@ -5,12 +5,12 @@ import Logo from './Logo.jsx'
 
 // a frozen "mid-run" state so the hero graph glows with energy
 const HERO_STATE = { reliability: 'done', supply_chain: 'done', production: 'active', quality: 'idle', compliance_safety: 'idle' }
-const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€162,000 / day AT RISK', 'ROI 71.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
+const MARQUEE = ['CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h', '€180,000 / day AT RISK', 'ROI 79.7:1', '6 AUTONOMOUS AGENTS', '5 TMC CHALLENGES', 'HUMAN GATE > €500', 'RUNS ON FREE-TIER']
 
 const STATS = [
   { n: '6', l: 'Autonomous agents' },
   { n: '5', l: 'TMC challenges' },
-  { n: <>71.7<span className="g">:1</span></>, l: 'Action ROI' },
+  { n: <>79.7<span className="g">:1</span></>, l: 'Action ROI' },
   { n: <>€0<span className="g"></span></>, l: 'Runs on free tier' },
 ]
 
@@ -52,7 +52,7 @@ const DETAILS = {
   console: ['Six agents reason live over one sensor alert', 'Supervisor routes; specialists pick their own tools', 'Ends in a costed, safety-gated action plan', 'Human approves anything over the €500 ceiling'],
   agents: ['An LLM supervisor routes between 6 agents', 'Each specialist is an autonomous ReAct agent', 'They converse through one shared transcript', 'FOLLOWUP lets an agent ask another directly'],
   approval: ['€500 autonomy ceiling on spend', 'Anything above pauses the whole plan', 'interrupt() gate → human approve / reject', 'Compliance can HALT independently of cost'],
-  cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€162,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently, gate / autonomous / human review'],
+  cascade: ['CNC-07-LEI bearing failure predicted 52-76h out', '€180,000/day of downtime on the line', 'Three paths: Cascade, Edge, Escalation', 'Each behaves differently, gate / autonomous / human review'],
   compliance: ['Every proposed action gated vs OSHA / OEM limits', 'Compliance can HALT the entire plan', 'Full audit trail assembled per run', 'Safety is a hard override, not a suggestion'],
   feasible: ['Runs on free Gemini / OpenRouter tiers', '~62% transcript token trim', 'Recorded replay = €0, can-not-fail demo', 'One-line provider swap when limits bite'],
 }
@@ -65,6 +65,17 @@ const STEPS = [
   { n: '05', t: 'Decide', d: 'Compliance can HALT; spend over €500 pauses for a human. Then it acts.' },
 ]
 
+// The 8 design-thinking pillars from the brief, answered for Titan Operations Sentinel.
+const PILLARS = [
+  { n: '01', t: 'Agent goals', d: 'Catch a failing machine early and hand the plant manager one costed, safety-gated plan. Value: €180,000/day of downtime avoided, 79.7:1 ROI.' },
+  { n: '02', t: 'Input & context', d: 'Trigger: a sensor alert. Inputs: telemetry, inventory, suppliers, production, quality, compliance. Memory: shared transcript + run checkpoints.' },
+  { n: '03', t: 'Tools & actions', d: '18 tools across the agents (read / write / execute). Spend over €500 or any safety action needs human approval.' },
+  { n: '04', t: 'Lifecycle', d: 'Perceive the alert, reason across five domains, act on a plan, and learn: case memory, human feedback, self-critique, and outcome validation.' },
+  { n: '05', t: 'Architecture', d: 'Multi-agent: an LLM orchestrator routes five autonomous ReAct specialists that converse through one shared transcript.' },
+  { n: '06', t: 'Risks & guardrails', d: 'Hallucination guard (it refuses thin data), Compliance HALT, the €500 ceiling, and an interrupt() human gate.' },
+  { n: '07', t: 'Example run', d: 'The Friday Cascade: bearing failure 52-76h out, parts gap, ROI math, then a human approves the expedite. Three live paths.' },
+  { n: '08', t: 'Tech stack', d: 'Python + LangGraph for the graph; FastAPI + React/Vite for this console. Provider-agnostic LLM (Gemini, Groq, Azure), hosted on Azure.' },
+]
 const FILTERS = ['All', 'Demo', 'Architecture', 'Safety', 'Engineering']
 
 export default function Showcase({ onLaunch, user, onSignOut }) {
@@ -179,6 +190,18 @@ export default function Showcase({ onLaunch, user, onSignOut }) {
               <div className="sc-step-n">{s.n}</div>
               <div className="sc-step-t">{s.t}</div>
               <div className="sc-step-d">{s.d}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* the 8 design decisions (maps to the assignment's design-thinking pillars) */}
+        <div className="sc-section-label"><span className="tick" /> The design, in eight decisions</div>
+        <div className="sc-pillars">
+          {PILLARS.map((p) => (
+            <div className="sc-pillar" key={p.n}>
+              <div className="sc-pillar-n">{p.n}</div>
+              <div className="sc-pillar-t">{p.t}</div>
+              <div className="sc-pillar-d">{p.d}</div>
             </div>
           ))}
         </div>
