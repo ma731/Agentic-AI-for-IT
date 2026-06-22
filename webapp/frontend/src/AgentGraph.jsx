@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AGENTS } from './agentsMeta.js'
 
 // radial layout: supervisor at centre, 5 specialists evenly around it
@@ -13,6 +14,7 @@ const NODES = AGENTS.map((a, i) => {
 
 export default function AgentGraph({ agentStatus = {}, running, risk }) {
   const anyActive = Object.values(agentStatus).includes('active')
+  const [hover, setHover] = useState(null)
   return (
     <div className="ag-stage">
       <div className="ag-aurora a1" />
@@ -78,7 +80,8 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
         {NODES.map((n) => {
           const st = agentStatus[n.id] || 'idle'
           return (
-            <g key={`n-${n.id}`} className={`ag-node ${st}`} style={{ '--nc': n.col }}>
+            <g key={`n-${n.id}`} className={`ag-node ${st}`} style={{ '--nc': n.col, cursor: 'help' }}
+              onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)}>
               {(st === 'active' || st === 'done') && (
                 <circle cx={n.x} cy={n.y} r="30" fill="none" stroke={n.col} strokeWidth="1.2"
                   opacity={st === 'active' ? 0.9 : 0.4} className={st === 'active' ? 'ag-halo' : ''} />
@@ -99,7 +102,29 @@ export default function AgentGraph({ agentStatus = {}, running, risk }) {
             </g>
           )
         })}
+
+        {/* hover tooltip: explains what each agent does */}
+        {hover && (() => {
+          const n = NODES.find((d) => d.id === hover)
+          const w = 184, h = 44
+          const bx = Math.max(6, Math.min(760 - w - 6, n.x - w / 2))
+          let by = n.y - h - 30
+          if (by < 6) by = n.y + 34
+          return (
+            <g className="ag-tip" pointerEvents="none">
+              <rect x={bx} y={by} width={w} height={h} rx="9" />
+              <text x={bx + 13} y={by + 18} className="ag-tip-name" fill={n.col}>{n.name}</text>
+              <text x={bx + 13} y={by + 33} className="ag-tip-desc">{n.desc}</text>
+            </g>
+          )
+        })()}
       </svg>
+
+      <div className="ag-legend" aria-hidden="true">
+        <span><i className="d idle" /> idle</span>
+        <span><i className="d active" /> reasoning</span>
+        <span><i className="d done" /> done</span>
+      </div>
     </div>
   )
 }

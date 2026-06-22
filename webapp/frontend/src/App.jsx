@@ -1,20 +1,22 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { flushSync } from 'react-dom'
 import { ALERT, SCENARIOS, RESOLUTIONS } from './cascade.js'
 import Showcase from './Showcase.jsx'
 import Dashboard from './Dashboard.jsx'
+import SignIn from './SignIn.jsx'
 import { AGENTS, AGENT_MAP } from './agentsMeta.js'
 
-const RATE_PER_S = 162000 / 86400
+const RATE_PER_S = 180000 / 86400
 const FRESH_STATUS = () => Object.fromEntries(AGENTS.map((a) => [a.id, 'idle']))
 
 const TICKER = [
-  'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52–76 h',
-  'DOWNTIME €162,000 / day', 'RECOMMENDED ROI 71.7:1', '5 TMC CHALLENGES',
+  'TITAN LEIPZIG · PLANT 7', 'CNC-07-LEI', 'VIBRATION 7.2 mm/s ▲', 'RUL 52-76 h',
+  'DOWNTIME €180,000 / day', 'RECOMMENDED ROI 79.7:1', '5 TMC CHALLENGES',
   'HUMAN GATE > €500', 'RUNS ON FREE-TIER GEMINI',
 ]
 
 const CHIPS = [
-  'CNC-07 vibration spiking — handle it',
+  'CNC-07 vibration spiking, handle it',
   'Sensor feed on CNC-07 dropped out',
   'Cross-plant supply disruption today',
 ]
@@ -26,11 +28,25 @@ const scenarioFor = (text) => {
 }
 
 export default function App() {
-  const [view, setView] = useState('showcase')   // 'showcase' | 'console'
+  const [view, setView] = useState('signin')   // 'signin' | 'showcase' | 'console'
+  const [user, setUser] = useState(null)       // signed-in presenter (name, initials, color)
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('tos.history') || '[]') } catch { return [] }
+  })
+  const runMetaRef = useRef(null)
+  const savedRunRef = useRef(0)
+
+  // morph between surfaces instead of a hard cut, when the browser supports it
+  const goView = useCallback((next) => {
+    if (document.startViewTransition) document.startViewTransition(() => flushSync(() => setView(next)))
+    else setView(next)
+  }, [])
+  const signOut = () => { flushSync(() => setUser(null)); goView('signin') }
   const [scenario, setScenario] = useState('happy')
   const [mode, setMode] = useState('replay')
   const [running, setRunning] = useState(false)
   const [completed, setCompleted] = useState(false)
+  const [presenting, setPresenting] = useState(false)
 
   const [timeline, setTimeline] = useState([])
   const [agentStatus, setAgentStatus] = useState(FRESH_STATUS)
@@ -83,8 +99,8 @@ export default function App() {
         pushItem({ kind: 'system', text: ev.message }); setRunStatus('Perceiving alert'); break
       case 'route':
         setAgentStatus((s) => ({ ...s, [ev.to]: 'active' }))
-        setRunStatus(`Routing → ${AGENT_MAP[ev.to]?.name || ev.to}`)
-        pushItem({ kind: 'block', agent: ev.to, tools: [], report: null, status: 'active' }); break
+        setRunStatus(`Routing → ${AGENT_MAP[ev.to]?.name || ev.to}${ev.how ? ` · ${ev.how}` : ''}`)
+        pushItem({ kind: 'block', agent: ev.to, tools: [], report: null, status: 'active', how: ev.how }); break
       case 'tool_call':
         setTimeline((prev) => updateActiveBlock(prev, ev.agent, (b) => ({ ...b, tools: [...b.tools, ev] }))); break
       case 'agent_report':
@@ -101,7 +117,7 @@ export default function App() {
       case 'approval_request':
         setApproval(ev); setRunStatus('Awaiting human approval'); break
       case 'human_decision':
-        pushItem({ kind: 'human', text: `Human decision — ${ev.decision}${ev.by ? ' · ' + ev.by : ''}` }); setApproval(null); break
+        pushItem({ kind: 'human', text: `Human decision, ${ev.decision}${ev.by ? ' · ' + ev.by : ''}` }); setApproval(null); break
       case 'plan':
         setPlan({ status: ev.status || 'complete', lines: ev.lines || [], roi: ev.roi, text: ev.text })
         if (ev.status === 'escalated') setRisk((r) => (r === 'PENDING' ? 'ESCALATE' : r))
@@ -116,6 +132,19 @@ export default function App() {
     queueRef.current = []; idRef.current = 0
     setTimeline([]); setAgentStatus(FRESH_STATUS()); setRisk('PENDING')
     setApproval(null); setPlan(null); setElapsed(0); setCompleted(false)
+  }, [])
+
+  // hard kill: halt replay timers AND the live SSE, re-enable the UI, keep the
+  // partial transcript visible so you can see where it stopped.
+  const stopRun = useCallback(() => {
+    clearTimeout(timerRef.current)
+    esRef.current?.close()
+    queueRef.current = []
+    setRunning(false)
+    setPresenting(false)
+    setApproval(null)
+    setAgentStatus((s) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, v === 'active' ? 'idle' : v])))
+    setRunStatus('Stopped')
   }, [])
 
   const pump = useCallback(() => {
@@ -134,12 +163,13 @@ export default function App() {
     es.onmessage = (e) => {
       try { const ev = JSON.parse(e.data); applyEvent(ev); if (ev.type === 'plan') es.close() } catch { /* keep-alive */ }
     }
-    es.onerror = () => { es.close(); setRunStatus('Live backend unavailable — use Replay'); setRunning(false) }
+    es.onerror = () => { es.close(); setRunStatus('Live backend unavailable, use Replay'); setRunning(false) }
   }, [applyEvent])
 
   const run = (scen = scenario, command = null) => {
     reset(); setRunning(true)
-    if (command) pushItem({ kind: 'human', text: `Operator — ${command}` })
+    runMetaRef.current = { id: Date.now(), scenario: scen, mode, command }
+    if (command) pushItem({ kind: 'human', text: `Operator, ${command}` })
     if (mode === 'live') runLive(scen)
     else { queueRef.current = SCENARIOS[scen].map((e) => ({ ...e })); pump() }
   }
@@ -159,14 +189,57 @@ export default function App() {
     queueRef.current = RESOLUTIONS[choice].map((e) => ({ ...e })); setApproval(null); pump()
   }
 
+  // ---- presenter (hands-free) mode ----
+  const present = (scen = scenario) => { setPresenting(true); run(scen) }
+  useEffect(() => {                         // auto-approve the human gate while presenting
+    if (!presenting || !approval) return
+    const id = setTimeout(() => resolve('approve'), 3800)
+    return () => clearTimeout(id)
+  }, [presenting, approval])               // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (completed) setPresenting(false) }, [completed])
+
   useEffect(() => () => { clearTimeout(timerRef.current); esRef.current?.close() }, [])
+
+  const clearHistory = useCallback(() => {
+    setHistory([]); try { localStorage.removeItem('tos.history') } catch { /* ignore */ }
+  }, [])
 
   const doneCount = AGENTS.filter((a) => agentStatus[a.id] === 'done').length
   const exposure = Math.round(elapsed * RATE_PER_S)
   const neutralized = completed && plan?.status === 'complete'
   const showStream = timeline.length > 0 || running
 
-  if (view === 'showcase') return <Showcase onLaunch={() => setView('console')} />
+  // snapshot each finished run into the Run History (persisted to localStorage).
+  // declared after doneCount/exposure so they're initialized before the dep array reads them.
+  useEffect(() => {
+    if (!completed || !plan) return
+    const meta = runMetaRef.current
+    if (!meta || savedRunRef.current === meta.id) return
+    savedRunRef.current = meta.id
+    const entry = {
+      id: meta.id,
+      scenario: meta.scenario,
+      mode: meta.mode,
+      command: meta.command || null,
+      ts: new Date().toISOString(),
+      by: user?.name || 'Guest',
+      risk, status: plan.status, doneCount, exposure,
+      plan,
+      reports: timeline.filter((t) => t.kind === 'block').map((t) => ({
+        agent: t.agent, report: t.report, status: t.status, tools: (t.tools || []).map((x) => x.tool),
+      })),
+      followups: timeline.filter((t) => t.kind === 'note').map((t) => t.text),
+      decisions: timeline.filter((t) => t.kind === 'human').map((t) => t.text),
+    }
+    setHistory((h) => {
+      const next = [entry, ...h].slice(0, 25)
+      try { localStorage.setItem('tos.history', JSON.stringify(next)) } catch { /* quota */ }
+      return next
+    })
+  }, [completed, plan, risk, doneCount, exposure, timeline, user])
+
+  if (view === 'signin') return <SignIn onEnter={(m) => { setUser(m); goView('showcase') }} />
+  if (view === 'showcase') return <Showcase onLaunch={() => goView('console')} user={user} onSignOut={signOut} />
 
   return (
     <>
@@ -176,8 +249,12 @@ export default function App() {
         running={running} completed={completed}
         timeline={timeline} agentStatus={agentStatus} runStatus={runStatus} risk={risk}
         plan={plan} exposure={exposure} doneCount={doneCount}
-        onRun={(scen) => run(scen)} onStop={() => { reset(); setRunStatus('Standing by') }}
-        onBack={() => setView('showcase')} alert={ALERT}
+        onRun={(scen) => run(scen)} onStop={stopRun}
+        onBack={() => goView('showcase')} alert={ALERT}
+        user={user} onSignOut={signOut} onSwitchUser={setUser}
+        onCommand={submitCommand}
+        history={history} onClearHistory={clearHistory}
+        presenting={presenting} onPresent={() => present(scenario)}
       />
       {approval && <ApprovalModal req={approval} onApprove={() => resolve('approve')} onReject={() => resolve('reject')} />}
     </>
@@ -268,7 +345,7 @@ function CommandBar({ idle, running, onSubmit }) {
       <div className="cmd-bar">
         <span className="prompt-glyph">$</span>
         <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
-          placeholder="Describe the situation…  e.g. CNC-07 vibration spiking — handle it" disabled={running} />
+          placeholder="Describe the situation…  e.g. CNC-07 vibration spiking, handle it" disabled={running} />
         <button className="cmd-send" onClick={submit} disabled={running} aria-label="Dispatch agents">→</button>
       </div>
     </div>
@@ -280,7 +357,7 @@ function IdleHero() {
     <div className="console-hero">
       <div className="eyebrow">◈ Standing by · Titan Leipzig Plant 7</div>
       <h1>One alert. Five domains. <em>One costed plan.</em></h1>
-      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan — with a human in the loop on every euro.</p>
+      <p className="lead">Titan Operations Sentinel is an autonomous operations brain. When a machine signals failure, six agents perceive, reason across every domain, and converge on a safety-gated action plan, with a human in the loop on every euro.</p>
       <div className="alert-card">
         <span className="pulse" />
         <div className="ac-body">
@@ -300,7 +377,7 @@ function ApprovalModal({ req, onApprove, onReject }) {
         <div className="body">
           <div className="kicker">◈ Human-in-the-loop · approval required</div>
           <h2>{req.question}</h2>
-          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve — a human must decide.</p>
+          <p>This spend exceeds the agent's autonomous authority. It cannot self-approve, a human must decide.</p>
           <div className="figure">€{(req.amount_eur ?? 0).toLocaleString()}</div>
           <div className="ceiling">€{req.ceiling_eur} autonomous ceiling · routed to Plant Manager</div>
           <div className="actions">

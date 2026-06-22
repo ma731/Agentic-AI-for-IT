@@ -29,6 +29,8 @@
   --d-head: 'Schibsted Grotesk', sans-serif; --d-ui: 'Schibsted Grotesk', sans-serif;
 
   font-family: var(--d-display);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
   background: var(--paper);
   color: var(--ink);
   min-height: 100vh;
@@ -38,6 +40,12 @@
   -webkit-font-smoothing: antialiased;
 }
 .showcase * { box-sizing: border-box; }
+/* subtle paper grain — tactile texture on the light editorial surface */
+.showcase::before {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.025;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 
 /* faint texture so the paper isn't dead-flat */
 .showcase::before {
@@ -71,14 +79,29 @@
 .sc-cta:active { transform: scale(0.97); }
 
 /* --------------------------------------------------------------- hero ----- */
-.sc-hero { text-align: center; padding: 92px 0 46px; }
+.sc-hero { text-align: center; padding: 92px 0 46px; position: relative; }
+/* masked grid backdrop (ibelick technique) — subtle structure behind the hero */
+.sc-hero::before {
+  content: ''; position: absolute; left: 50%; top: -40px; transform: translateX(-50%);
+  width: 100vw; height: 560px; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(to right, rgba(15,30,22,0.05) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(15,30,22,0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(ellipse 60% 70% at 50% 38%, #000 50%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 70% at 50% 38%, #000 50%, transparent 100%);
+}
 .sc-eyebrow { font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-bottom: 26px; }
 .sc-hero h1 {
-  font-weight: 600; font-size: clamp(2.6rem, 6.4vw, 5.4rem); line-height: 1.0; letter-spacing: -0.035em;
+  font-weight: 600; font-size: clamp(2.8rem, 7vw, 6rem); line-height: 0.98; letter-spacing: -0.042em;
   max-width: 15ch; margin: 0 auto; text-wrap: balance;
 }
 .sc-hero h1 .g { color: var(--brand); }
-.sc-hero p { margin: 26px auto 0; max-width: 52ch; color: var(--ink-2); font-size: 16px; line-height: 1.6; font-weight: 400; }
+.sc-reveal .rv-line { display: block; }
+.sc-reveal .rv-line.g { color: var(--brand); }
+.sc-reveal .rv-word { display: inline-block; margin-right: 0.22em; opacity: 0; filter: blur(12px); transform: translateY(10px); animation: rv-word-in 0.75s var(--ease-expo) forwards; animation-delay: var(--d, 0s); }
+@keyframes rv-word-in { to { opacity: 1; filter: blur(0); transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sc-reveal .rv-word { animation: none; opacity: 1; filter: none; transform: none; } }
+.sc-hero p { margin: 26px auto 0; max-width: 52ch; color: var(--ink-2); font-size: 16.5px; line-height: 1.62; font-weight: 400; text-wrap: pretty; }
 .sc-hero .actions { margin-top: 34px; display: flex; gap: 12px; justify-content: center; }
 .sc-btn-primary {
   background: var(--ink); color: var(--paper); border: 0; border-radius: 999px; cursor: pointer;
@@ -103,12 +126,24 @@
 }
 @keyframes sc-stage-in { from { opacity: 0; transform: translateY(40px) scale(0.97); } to { opacity: 1; transform: none; } }
 @media (hover: hover) and (pointer: fine) { .sc-hero-stage:hover { transform: translateY(-4px); box-shadow: 0 50px 100px -50px rgba(10,30,22,0.75); } }
+/* slow border-beam — a faint arc circling the frame says "this is live" */
+@property --beam-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.sc-hero-stage::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; z-index: 4; pointer-events: none;
+  background: conic-gradient(from var(--beam-a), transparent 0 72%, color-mix(in srgb, var(--brand) 85%, #fff) 86%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: sc-beam 7s linear infinite;
+}
+@keyframes sc-beam { to { --beam-a: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .sc-hero-stage::before { animation: none; } }
 .sc-hero-stage .ag-stage { height: 420px; border-radius: 22px; margin: 0; }
 .sc-stage-badge { position: absolute; top: 16px; right: 18px; z-index: 3; display: inline-flex; align-items: center; gap: 7px; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #bdf3dc; background: rgba(8,14,12,0.6); border: 1px solid rgba(20,232,160,0.3); border-radius: 999px; padding: 6px 12px; backdrop-filter: blur(8px); }
 .sc-stage-badge .d { width: 7px; height: 7px; border-radius: 50%; background: #14e8a0; box-shadow: 0 0 8px #14e8a0; }
 
 /* ------------------------------------------------------------ marquee ----- */
-.sc-marquee { overflow: hidden; margin: 40px 0 8px; border-top: 1px solid var(--card-line); border-bottom: 1px solid var(--card-line); padding: 0; }
+.sc-marquee { overflow: hidden; margin: 40px 0 8px; border-top: 1px solid var(--card-line); border-bottom: 1px solid var(--card-line); padding: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent); }
 .sc-marquee-row { display: inline-flex; white-space: nowrap; animation: sc-mq 32s linear infinite; will-change: transform; }
 @media (hover: hover) { .sc-marquee:hover .sc-marquee-row { animation-play-state: paused; } }
 @keyframes sc-mq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -125,7 +160,8 @@
 .sc-stat .l { font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
 
 /* --------------------------------------------------------- filters -------- */
-.sc-section-label { display: flex; align-items: center; gap: 9px; font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 64px 0 22px; }
+.sc-section-label { display: flex; align-items: center; gap: 9px; font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 0 0 22px; padding-top: 40px; border-top: 1px solid var(--card-line); }
+.sc-section-label:first-of-type { margin-top: 30px; }
 .sc-section-label .tick { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
 .sc-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
 .sc-pill {
@@ -150,6 +186,15 @@
   opacity: 0; transform: translateY(26px);
 }
 .sc-card.in { opacity: 1; transform: none; }
+/* spotlight pointer-follow glow (Magic UI / react-bits technique) */
+.sc-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 4;
+  opacity: 0; transition: opacity 0.4s var(--ease-out);
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--brand) 18%, transparent), transparent 68%);
+}
+.sc-card.dark::after { background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.16), transparent 66%); }
+@media (hover: hover) and (pointer: fine) { .sc-card:hover::after { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sc-card::after { display: none; } }
 @media (hover: hover) and (pointer: fine) { .sc-card.in:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(0,0,0,0.45); } }
 .sc-card.in:active { transform: translateY(-2px) scale(0.995); }
 .sc-card.dark { background: var(--c-dark); color: #fff; border-color: rgba(255,255,255,0.08); }
@@ -178,7 +223,7 @@
 
 /* --------------------------------------------------------- footer --------- */
 .sc-footer { border-top: 1px solid var(--card-line); margin-top: 40px; padding: 56px 0 70px; text-align: center; }
-.sc-footer h2 { font-weight: 600; font-size: clamp(1.8rem, 3.6vw, 2.8rem); letter-spacing: -0.02em; }
+.sc-footer h2 { font-weight: 600; font-size: clamp(1.9rem, 3.8vw, 3rem); letter-spacing: -0.03em; text-wrap: balance; }
 .sc-footer h2 .g { color: var(--brand); }
 .sc-footer .sub { color: var(--ink-2); margin: 16px auto 28px; max-width: 46ch; font-size: 15px; line-height: 1.6; }
 .sc-footer .fine { margin-top: 40px; font-family: var(--d-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
@@ -227,3 +272,20 @@
 @media (prefers-reduced-motion: reduce) {
   .sc-card { opacity: 1; transform: none; }
 }
+
+/* ---- anime.js living dot-grid (signature continuous motion) ---- */
+.sc-grid-band { margin: 18px 0 8px; padding: 10px 0 6px; text-align: center; }
+.sc-grid-cap { font-family: var(--d-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+.anime-grid { display: grid; gap: 9px; width: 100%; max-width: 760px; margin: 16px auto 0; place-items: center; }
+.ag-dot { width: 6px; height: 6px; border-radius: 50%; background: #14e8a0; opacity: 0.32; will-change: transform, opacity, background-color; }
+@media (max-width: 640px) { .anime-grid { gap: 7px; } .ag-dot { width: 5px; height: 5px; } }
+
+/* ---- the 8 design-thinking pillars ---- */
+.sc-pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--card-line); border: 1px solid var(--card-line); border-radius: 16px; overflow: hidden; margin-bottom: 8px; }
+.sc-pillar { background: var(--paper); padding: 22px 20px; transition: background 0.2s var(--ease-out); }
+.sc-pillar:hover { background: #fff; }
+.sc-pillar-n { font-family: var(--d-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--brand); margin-bottom: 12px; }
+.sc-pillar-t { font-family: var(--d-display); font-weight: 600; font-size: 16px; letter-spacing: -0.01em; margin-bottom: 8px; }
+.sc-pillar-d { font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+@media (max-width: 900px) { .sc-pillars { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .sc-pillars { grid-template-columns: 1fr; } }

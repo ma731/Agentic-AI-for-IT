@@ -114,7 +114,7 @@ This is your 25-point moment. Script it precisely.
 > Machine: CNC Machining Center #7 (Spindle Assembly)  
 > Time: Friday, 14:32 local  
 > Next scheduled maintenance window: 9 days out  
-> Production impact if down: €162,000/day (at current EUR/USD)
+> Production impact if down: €180,000/day (at current EUR/USD)
 
 ---
 
@@ -184,7 +184,7 @@ Warehouse transfer (Amsterdam→Leipzig): 36h via courier, cost: €420.
 Tool call: expedite_cost_tool(option="warehouse_transfer", parts=["P-4421","P-7803"])
 Result: Option A — Warehouse transfer: €420, 36h. Risk: tight against 52h failure window.
 Option B — Supplier expedite: €3,200, 18h. Risk: very low.
-Downtime cost: €162,000/day = €6,750/hour.
+Downtime cost: €180,000/day = €7,500/hour.
 Cost of 1 hour unplanned downtime = 2.1x cost of Option B.
 ```
 
@@ -208,7 +208,7 @@ Recommended action plan:
   5. [AUTO] Update maintenance log and asset record
 
 Drafting approval request to Plant Manager Schmidt…
-Estimated cost of inaction: €162,000–€324,000 (1–2 day failure event).
+Estimated cost of inaction: €180,000–€360,000 (1–2 day failure event).
 Estimated cost of recommended plan: €3,620 (parts + courier).
 ```
 

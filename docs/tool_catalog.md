@@ -10,7 +10,7 @@ Per-agent tool map (`tools_lc.py` groups):
 
 | Agent | Challenge | Tools |
 |---|---|---|
-| Reliability | 1 Predictive maintenance | alert_triage, sensor_query, rul_predictor, asset_profile |
+| Reliability | 1 Predictive maintenance | alert_triage, sensor_query, rul_predictor, recall_similar_cases, asset_profile |
 | Supply Chain | 2 Supply volatility | parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk |
 | Production & Human-Robot | 3 Coordination | job_reroute, robot_cell_status, shift_conflict_check |
 | Quality & Traceability | 4 Quality | quality_history, telemetry_correlate |
@@ -45,6 +45,13 @@ Per-agent tool map (`tools_lc.py` groups):
 - **Risk if misused:** Hallucinated timeline drives a bad decision.
 - **Fallback:** `confidence < 0.6` → `low_confidence_flag: true` → escalate.
 - **Auth:** READ (autonomous). *Heuristic model in MVP — not a trained ML model (be honest in Q&A).*
+
+### 2b. `recall_similar_cases` *(Learning: case memory)*
+- **What it does:** Retrieves the most similar PAST incidents from case memory (`data/memory/case_library.json`): match %, predicted vs actual RUL, the human decision, and the outcome.
+- **Inputs:** `machine_id: str`, `sensor: str`, `signature: str` · **Outputs:** `matches[]`, `library_size`, `rul_accuracy_pct`
+- **Use when:** After `sensor_query`, to ground the assessment in precedent rather than only the live reading.
+- **Why it matters:** This is the recall step of the Learning loop — the system reasons from experience and validates predicted-vs-actual RUL over time. The audit log appends new closed cases.
+- **Auth:** READ (autonomous).
 
 ### 3. `asset_profile`
 - **What it does:** Returns specs, BOM per failure mode, technicians, safe speed limits, equivalent machines.

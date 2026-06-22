@@ -49,7 +49,7 @@ the professor can ask **anyone** about **any** part). Roles from brief §18.
 ## Per-role deep questions
 
 **1 — Problem & Business Case**
-- Quantify the pain: €162k/day (€6,750/h) downtime; the Friday Cascade persona (plant ops engineer).
+- Quantify the pain: €180k/day (€7,500/h) downtime; the Friday Cascade persona (plant ops engineer).
 - Why is this *specifically* an agent problem? (planning + cross-domain trade-offs + abstention)
 
 **2 — Architecture & Model Choices**

@@ -75,9 +75,9 @@ def test_expedite_cost_prefers_fitting_low_risk_option():
         {"label": "warehouse", "cost_eur": 420, "lead_time_hours": 36, "risk_level": "MEDIUM"},
         {"label": "schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"},
     ]
-    r = expedite_cost(opts, downtime_cost_per_hour=6750, failure_window_hours=52)
+    r = expedite_cost(opts, downtime_cost_per_hour=7500, failure_window_hours=52)
     assert r["recommendation"] == "schaeffler"          # LOW risk fits → ranked first
-    assert r["options_ranked"][0]["roi_ratio"] == 71.7  # (52-18)*6750/3200
+    assert r["options_ranked"][0]["roi_ratio"] == 79.7  # (52-18)*7500/3200
 
 
 def test_maintenance_schedule_exposes_emergency_slot():
@@ -151,9 +151,73 @@ def test_notify_computes_roi_and_links_wo():
         recipient_role="plant_manager", subject="Approve emergency procurement",
         situation_summary="CNC-07-LEI spindle bearing failure predicted 52-76h out",
         recommended_actions=[{"tier": "APPROVE", "action": "expedite P-4421"}],
-        cost_of_inaction_eur=162000, cost_of_recommended_plan_eur=3200,
+        cost_of_inaction_eur=180000, cost_of_recommended_plan_eur=3200,
         decision_deadline_utc="2026-06-13T08:00:00Z", work_order_id="WO-CNC-07-LEI-202606121432",
     )
     assert n["status"] == "DRAFT_PENDING_SEND"
-    assert n["body"]["roi_ratio"] == 50.6                       # 162000 / 3200
+    assert n["body"]["roi_ratio"] == 56.2                       # 180000 / 3200
     assert n["body"]["linked_work_order"] == "WO-CNC-07-LEI-202606121432"
+
+
+# --- Learning loop: case memory recall + write-back ---------------------------- #
+def test_recall_returns_best_precedent():
+    from tools.recall_cases import recall_similar_cases
+    r = recall_similar_cases("CNC-07-LEI", "vibration", "spindle-bearing vibration wear")
+    assert r["matches"][0]["id"] == "INC-0288"      # closest seeded precedent
+    assert r["matches"][0]["match_pct"] >= 90
+    assert r["rul_accuracy_pct"] is not None         # computed over closed cases
+
+
+def test_append_case_grows_library(tmp_path, monkeypatch):
+    import json
+    import tools.recall_cases as rc
+    tmp = tmp_path / "case_library.json"             # temp copy so the seed file isn't polluted
+    tmp.write_text(json.dumps({"cases": []}), encoding="utf-8")
+    monkeypatch.setattr(rc, "_LIB", tmp)
+    assert rc.append_case({"id": "RUN-X", "actual_failure_h": None}) is True
+    assert json.loads(tmp.read_text(encoding="utf-8"))["cases"][-1]["id"] == "RUN-X"
+
+
+# --- Risk: the €500 autonomy ceiling correctly classifies the two scenarios ----- #
+def test_cost_ceiling_gates_over_500_runs_autonomous_under():
+    from graph import COST_CEILING_EUR
+    from tools.expedite_cost import expedite_cost
+    edge = expedite_cost([{"label": "MUC transfer", "cost_eur": 420, "lead_time_hours": 36, "risk_level": "LOW"}], 7500, 52)
+    assert edge["options_ranked"][0]["cost_eur"] <= COST_CEILING_EUR     # €420 → autonomous
+    happy = expedite_cost([{"label": "Schaeffler", "cost_eur": 3200, "lead_time_hours": 18, "risk_level": "LOW"}], 7500, 52)
+    assert happy["options_ranked"][0]["cost_eur"] > COST_CEILING_EUR     # €3,200 → needs approval
+
+
+def test_reconcile_closes_the_loop(tmp_path, monkeypatch):
+    import json
+    import tools.recall_cases as rc
+    tmp = tmp_path / "case_library.json"
+    tmp.write_text(json.dumps({"cases": []}), encoding="utf-8")
+    monkeypatch.setattr(rc, "_LIB", tmp)
+    rc.append_case({"id": "RUN-Z", "predicted_rul_h": [50, 74], "actual_failure_h": None, "in_window": None})
+    assert rc.reconcile_case("RUN-Z", 58) is True          # 58h is inside the 50-74h window
+    case = json.loads(tmp.read_text(encoding="utf-8"))["cases"][-1]
+    assert case["actual_failure_h"] == 58 and case["in_window"] is True
+    assert rc.reconcile_case("RUN-Z", 58) is False         # already reconciled
+
+
+def test_gate_requires_window_fit():
+    """A cheap option (under the ceiling) that does NOT fit the failure window must still
+    route to a human, not run autonomously."""
+    from graph import COST_CEILING_EUR
+    from tools.expedite_cost import expedite_cost
+    r = expedite_cost([{"label": "slow-cheap", "cost_eur": 300, "lead_time_hours": 60, "risk_level": "LOW"}], 7500, 52)
+    top = r["options_ranked"][0]
+    autonomous = top["cost_eur"] <= COST_CEILING_EUR and top["fits_failure_window"]
+    assert autonomous is False                     # €300 but misses the 52h window → gate
+
+
+def test_reconcile_due_resolves_known_outcomes(tmp_path, monkeypatch):
+    import json
+    import tools.recall_cases as rc
+    tmp = tmp_path / "case_library.json"
+    tmp.write_text(json.dumps({"cases": [{"id": "RUN-D", "predicted_rul_h": [50, 74], "actual_failure_h": None, "in_window": None}]}), encoding="utf-8")
+    monkeypatch.setattr(rc, "_LIB", tmp)
+    assert rc.reconcile_due({"RUN-D": 60}) == 1     # 60h inside 50-74 window
+    assert json.loads(tmp.read_text(encoding="utf-8"))["cases"][0]["in_window"] is True
+    assert rc.reconcile_due({}) == 0                # safe no-op without outcomes

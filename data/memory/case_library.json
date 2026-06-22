@@ -1,0 +1,57 @@
+{
+  "_comment": "Experience base for the Learning loop. Each closed incident records the predicted RUL window vs the actual failure time, the human decision, and the outcome. recall_similar_cases() retrieves the closest precedent so the reliability agent reasons from history, not just the current reading. graph.synthesize() appends each closed run via append_case() with a 'pending' outcome; the seeded incidents below have resolved outcomes used for RUL-accuracy validation.",
+  "cases": [
+    {
+      "id": "INC-0288",
+      "date": "2025-06-11",
+      "machine_id": "CNC-07-LEI",
+      "machine_type": "CNC Machining Center",
+      "sensor": "vibration",
+      "signature": "spindle-bearing wear, vibration 7.0 mm/s, +13C bearing temp",
+      "predicted_rul_h": [50, 74],
+      "actual_failure_h": 58,
+      "decision": "approved expedite",
+      "outcome": "avoided ~520k EUR downtime",
+      "in_window": true
+    },
+    {
+      "id": "INC-0312",
+      "date": "2025-09-23",
+      "machine_id": "CNC-03-LEI",
+      "machine_type": "CNC Machining Center",
+      "sensor": "vibration",
+      "signature": "spindle-bearing wear, vibration 6.9 mm/s",
+      "predicted_rul_h": [48, 70],
+      "actual_failure_h": 61,
+      "decision": "approved expedite",
+      "outcome": "avoided ~410k EUR downtime",
+      "in_window": true
+    },
+    {
+      "id": "INC-0344",
+      "date": "2025-11-18",
+      "machine_id": "CNC-07-LEI",
+      "machine_type": "CNC Machining Center",
+      "sensor": "vibration",
+      "signature": "bearing micro-defect, vibration 6.2 mm/s",
+      "predicted_rul_h": [90, 140],
+      "actual_failure_h": 121,
+      "decision": "scheduled into planned window",
+      "outcome": "fixed in planned downtime, no unplanned stop",
+      "in_window": true
+    },
+    {
+      "id": "INC-0241",
+      "date": "2025-02-04",
+      "machine_id": "CNC-05-LEI",
+      "machine_type": "CNC Machining Center",
+      "sensor": "temperature",
+      "signature": "coolant temperature spike, no vibration change",
+      "predicted_rul_h": [120, 160],
+      "actual_failure_h": null,
+      "decision": "monitored, no spend",
+      "outcome": "no failure, correctly de-prioritized (false alarm)",
+      "in_window": null
+    }
+  ]
+}

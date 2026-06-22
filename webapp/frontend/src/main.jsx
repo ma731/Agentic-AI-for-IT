@@ -4,6 +4,7 @@ import App from './App.jsx'
 import './index.css'
 import './showcase.css'
 import './dashboard.css'
+import './signin.css'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

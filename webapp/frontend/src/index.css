@@ -366,3 +366,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ---- View Transitions: morph between sign-in / showcase / console ---- */
+@keyframes vt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vt-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes vt-rise { from { opacity: 0; transform: scale(0.99) translateY(10px); } to { opacity: 1; transform: none; } }
+::view-transition-old(root) { animation: vt-fade-out 0.32s cubic-bezier(0.16,1,0.3,1) both; }
+::view-transition-new(root) { animation: vt-rise 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: vt-fade-in 0.12s both; }
+}

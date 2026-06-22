@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import operator
+import ast
 import re
 import sys
 import time
@@ -103,6 +104,7 @@ class OpsState(TypedDict, total=False):
     pending_followup: str                        # agent name another agent asked for
     next_agent: str
     risk: str                                    # HIGH | LOW | ESCALATE
+    predicted_rul: list                          # [min_h, max_h] from rul_predictor, for case memory
     escalate: bool
     halt: bool
     needs_approval: bool
@@ -121,9 +123,18 @@ def _ev(rid: str, etype: str, agent: str, **detail) -> dict:
 # Read a ReAct agent's run: surface its tool calls + its full natural-language reply.
 # --------------------------------------------------------------------------- #
 def _safe(content):
+    """Parse a tool's ToolMessage content back into a dict when possible (JSON first, then
+    the Python-repr LangChain often emits) so worker decisions can read structured fields
+    instead of substring-matching text. Falls back to the raw content."""
+    if not isinstance(content, str):
+        return content
     try:
-        return json.loads(content) if isinstance(content, str) else content
+        return json.loads(content)
     except (json.JSONDecodeError, TypeError):
+        pass
+    try:
+        return ast.literal_eval(content)
+    except (ValueError, SyntaxError):
         return content
 
 
@@ -138,7 +149,9 @@ def _tool_events(messages, agent, rid):
             blob.append(str(m.content))
             events.append(_ev(rid, "tool_call", agent, tool=name, input=args,
                               result=_safe(m.content)))
-    return events, " ".join(blob).lower()
+    # last structured result per tool, for verdict logic that prefers fields over substrings
+    results = {e["tool"]: e["result"] for e in events if isinstance(e["result"], dict)}
+    return events, " ".join(blob).lower(), results
 
 
 def _agent_report(messages) -> str:
@@ -224,6 +237,13 @@ def _task_for(name: str, state: OpsState) -> str:
 # --------------------------------------------------------------------------- #
 def perceive(state: OpsState) -> dict:
     alert = state["alert"]
+    try:                                  # self-closing learning loop: resolve any cases
+        from tools.recall_cases import reconcile_due  # whose outcome is now known
+        done = reconcile_due()
+        if done:
+            log.info("LEARN         | reconciled %d prior case(s) against known outcomes", done)
+    except Exception:  # noqa: BLE001
+        pass
     log.info("PERCEIVE      | %s on %s (%s=%s%s, threshold %s, trend %s) [scenario=%s]",
              alert.get("alert_id", "?"), alert["machine_id"], alert.get("sensor", "?"),
              alert.get("value", "?"), alert.get("unit", ""), alert.get("threshold", "?"),
@@ -260,7 +280,7 @@ def _make_worker(name: str):
                 update["needs_approval"] = True
             return update
 
-        events, blob = _tool_events(msgs, name, rid)
+        events, blob, results = _tool_events(msgs, name, rid)
         tool_names = [e["tool"] for e in events]
         full_report = _agent_report(msgs)
         followup = _detect_followup(full_report, name)   # detect on FULL text first…
@@ -278,18 +298,36 @@ def _make_worker(name: str):
                                        message=f"{name} asks {followup} a direct follow-up."))
 
         if name == "reliability":
-            if ("interrupted" in blob or "data_unavailable" in blob
-                    or '"low_confidence_flag": true' in blob):
+            # Prefer the rul_predictor structured result; fall back to text if unavailable.
+            rp = results.get("rul_predictor", {})
+            fmode = str(rp.get("failure_mode", "")).lower()
+            rh = rp.get("rul_hours") or {}
+            if rh.get("min") is not None:
+                update["predicted_rul"] = [rh["min"], rh.get("max", rh["min"])]
+            if rp.get("low_confidence_flag") or "interrupted" in blob or "data_unavailable" in blob:
                 update["escalate"], update["risk"] = True, "ESCALATE"
-            elif "spindle_bearing_failure" in blob:
+            elif "bearing_failure" in fmode or "spindle_bearing_failure" in blob:
                 update["risk"] = "HIGH"
             else:
                 update["risk"] = "LOW"
             log.info("  ↳ reliability verdict: risk=%s", update["risk"])
         if name == "supply_chain":
-            update["needs_approval"] = True
+            # Code-enforced €500 ceiling: read the recommended option's cost and gate only
+            # when it exceeds the autonomy ceiling (so sub-ceiling actions run autonomously).
+            top = (results.get("expedite_cost", {}).get("options_ranked") or [{}])[0]
+            cost = top.get("cost_eur")
+            fits = top.get("fits_failure_window", True)
+            # autonomous only when the recommended option is BOTH under the ceiling AND
+            # actually fits the failure window; otherwise a human decides.
+            update["needs_approval"] = (cost is None) or (cost > COST_CEILING_EUR) or (not fits)
+            log.info("  ↳ supply_chain spend=%s fits_window=%s ceiling=%d → %s", cost, fits,
+                     COST_CEILING_EUR, "needs approval" if update["needs_approval"] else "autonomous")
         if name == "compliance_safety":
-            update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
+            sg = results.get("safety_gate", {})
+            if sg:
+                update["halt"] = str(sg.get("verdict", "")).upper() == "HALT"
+            else:
+                update["halt"] = ('"verdict": "halt"' in blob or "verdict: halt" in report.lower())
             log.info("  ↳ compliance verdict: %s", "HALT" if update["halt"] else "cleared")
         return update
     return node
@@ -336,7 +374,7 @@ def supervisor(state: OpsState) -> dict:
     log.info("ROUTE         | → %s  (%s; allowed=%s)",
              "FINISH" if choice == "FINISH" else choice, how, allowed)
     ev = _ev(state["run_id"], "route", "orchestrator",
-             message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice)
+             message=f"Orchestrator routes → {choice}", allowed=allowed, to=choice, how=how)
     return {"next_agent": choice, "trace": [ev]}
 
 
@@ -389,12 +427,37 @@ def _escalation_plan(state: OpsState) -> str:
     )
 
 
+def _log_closed_case(state: OpsState, status: str) -> None:
+    """Append the finished run to case memory so recall/outcome-validation grow over time.
+    Outcome is 'pending' until the predicted failure window resolves. Never raises."""
+    try:
+        from datetime import datetime, timezone
+        from tools.recall_cases import append_case
+        a = state.get("alert", {})
+        append_case({
+            "id": "RUN-" + str(state.get("run_id", "?")),
+            "date": datetime.now(timezone.utc).date().isoformat(),
+            "machine_id": a.get("machine_id", "?"),
+            "machine_type": "CNC Machining Center",
+            "sensor": a.get("sensor", "?"),
+            "signature": f"{a.get('sensor', '?')} {a.get('value', '')}{a.get('unit', '')}".strip(),
+            "predicted_rul_h": state.get("predicted_rul"),
+            "actual_failure_h": None,
+            "decision": str(state.get("approval", status)),
+            "outcome": "pending (reconciled when the predicted window resolves)",
+            "in_window": None,
+        })
+    except Exception:  # noqa: BLE001 — logging must never break a run
+        pass
+
+
 def synthesize(state: OpsState) -> dict:
     rid = state["run_id"]
     if state.get("escalate"):
         log.info("PLAN          | escalation handoff (deterministic, no LLM)")
         plan = _escalation_plan(state)
         ev = _ev(rid, "plan", "orchestrator", plan=plan)
+        _log_closed_case(state, "escalated")
         log.info("END           | status=escalated")
         return {"final_plan": plan, "status": "escalated", "trace": [ev]}
     log.info("PLAN          | composing final action plan…")
@@ -408,6 +471,7 @@ def synthesize(state: OpsState) -> dict:
     )
     status = "halted" if state.get("halt") else "complete"
     ev = _ev(rid, "plan", "orchestrator", plan=plan)
+    _log_closed_case(state, status)
     log.info("END           | status=%s", status)
     return {"final_plan": plan, "status": status, "trace": [ev]}
 

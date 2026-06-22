@@ -19,6 +19,7 @@ from .maintenance_schedule import maintenance_schedule as _maintenance_schedule
 from .notify import notify as _notify
 from .parts_inventory import parts_inventory as _parts_inventory
 from .quality_history import quality_history as _quality_history
+from .recall_cases import recall_similar_cases as _recall_similar_cases
 from .robot_cell_status import robot_cell_status as _robot_cell_status
 from .rul_predictor import rul_predictor as _rul_predictor
 from .safety_gate import safety_gate as _safety_gate
@@ -57,6 +58,15 @@ def asset_profile(machine_id: str) -> dict:
     """Get machine specs, the bill of materials per failure mode, technicians, safe speed
     limits, and equivalent machines."""
     return _asset_profile(machine_id)
+
+
+@tool
+def recall_similar_cases(machine_id: str, sensor: str, signature: str) -> dict:
+    """Recall the most similar PAST incidents from case memory (predicted vs actual RUL,
+    the decision taken, and the outcome). Call after sensor_query to ground your
+    assessment in precedent. Pass the failure signature you observed, e.g.
+    'spindle-bearing vibration'."""
+    return _recall_similar_cases(machine_id, sensor, signature)
 
 
 @tool
@@ -172,8 +182,8 @@ def audit_assemble(run_id: str) -> dict:
 
 
 # Grouped per agent — imported by agents/factory.py.
-RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, asset_profile,
-                     maintenance_schedule]
+RELIABILITY_TOOLS = [alert_triage, sensor_query, rul_predictor, recall_similar_cases,
+                     asset_profile, maintenance_schedule]
 SUPPLY_CHAIN_TOOLS = [parts_inventory, supplier_catalog, expedite_cost, tier2_supplier_risk,
                       work_order_draft, notify]
 PRODUCTION_TOOLS = [job_reroute, robot_cell_status, shift_conflict_check]

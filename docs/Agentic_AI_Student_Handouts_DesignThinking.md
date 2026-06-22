@@ -221,7 +221,7 @@ Provide a short, concrete example of your agent in action.
 4. **Supply Chain agent:**
    - `parts_inventory(parts=["P-4421","P-7803"], plant_id="LEI")` → P-4421: 0 on-site, 3 in Amsterdam (AMS). P-7803: 1 on-site (need 2), 4 in AMS.
    - `supplier_catalog(part_ids=["P-4421","P-7803"])` → Schaeffler: combined expedite 18h, €3,200, LOW risk. Amsterdam transfer: 36h, €420, MEDIUM risk.
-   - `expedite_cost(options=[...], downtime_cost_per_hour=7500, failure_window_hours=52)` → Schaeffler ranks #1: fits window (18h < 52h), ROI 71.7:1. Transfer misses window.
+   - `expedite_cost(options=[...], downtime_cost_per_hour=7500, failure_window_hours=52)` → Schaeffler ranks #1: fits window (18h < 52h), ROI 79.7:1. Transfer misses window.
    - `tier2_supplier_risk(supplier_ids=["SCH-001"])` → Schaeffler Tier-2: low single-source exposure.
    - Report: recommends Schaeffler expedite, €3,200, 18h delivery. Sets `needs_approval=True`.
 
@@ -246,7 +246,7 @@ Provide a short, concrete example of your agent in action.
    ```
    SITUATION SUMMARY
    CNC-07-LEI spindle bearing failure predicted in 52–76h (95% confidence). Emergency Saturday window
-   fits; Schaeffler expedite delivers in 18h (ROI 71.7:1 vs inaction). Production rerouted to
+   fits; Schaeffler expedite delivers in 18h (ROI 79.7:1 vs inaction). Production rerouted to
    CNC-05 and CNC-08; quality safe.
 
    ACTION PLAN
@@ -259,7 +259,7 @@ Provide a short, concrete example of your agent in action.
    COST ANALYSIS
    Cost of inaction: €180,000 (24h) / €283,500 (42h to next regular window)
    Cost of recommended plan: €3,200
-   ROI ratio: 71.7:1
+   ROI ratio: 79.7:1
    ```
 
 **Final outcome:** Plant manager has a complete, costed, safety-gated action plan 4 minutes after the alert. Parts are on order, jobs are rerouted, Saturday window is booked. CNC-07-LEI bearing is replaced before failure. Zero unplanned downtime.

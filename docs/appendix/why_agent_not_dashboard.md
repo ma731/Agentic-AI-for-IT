@@ -25,7 +25,7 @@ adapting when the data is messy — then hands the human a decision, not a probl
 | Messy data | Shows a gap | Breaks or proceeds blindly | **Escalates**: "insufficient data — human review" |
 
 ## Why each non-agentic option falls short
-- **Dashboard:** shifts the cognitive load onto a human under time pressure (€6,750/hour of downtime). It *describes*; it doesn't *decide* or *act*. Five dashboards across five teams = no single coherent plan.
+- **Dashboard:** shifts the cognitive load onto a human under time pressure (€7,500/hour of downtime). It *describes*; it doesn't *decide* or *act*. Five dashboards across five teams = no single coherent plan.
 - **RPA / rules:** brittle. It can't weigh ROI vs risk, can't adapt a reroute around an operator conflict, and has no notion of "I'm not confident — escalate." Every new situation needs a new rule.
 - **Single LLM chatbot:** can talk about the problem but has no tools, no autonomy tiers, no human gate, no audit trail — it can't *act* safely.
 

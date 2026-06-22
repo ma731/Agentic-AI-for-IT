@@ -11,9 +11,19 @@ Run (from webapp/backend, with GOOGLE_API_KEY in the repo-root .env):
     uvicorn main:app --reload --port 8000
 """
 import json
+import os
 import sys
 import threading
 from pathlib import Path
+
+# Windows guard: uvicorn's stdout is often ASCII/cp1252, so prints/logs containing
+# em-dashes (—) inside the agent prompts crash the worker with a UnicodeEncodeError
+# ("'ascii' codec can't encode '—'"). Force UTF-8 like the terminal runners do.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -61,29 +71,82 @@ def providers():
     return {"active": llm.active_provider(), "model": llm.resolve_model(), "providers": llm.supported()}
 
 
+_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
+
+
+def _upsert_env(pairs: dict[str, str]) -> None:
+    """Insert/update KEY=value lines in the repo-root .env (created if missing)."""
+    lines = _ENV_PATH.read_text(encoding="utf-8").splitlines() if _ENV_PATH.exists() else []
+    for key, value in pairs.items():
+        row = f"{key}={value}"
+        for i, ln in enumerate(lines):
+            if ln.strip().startswith(f"{key}="):
+                lines[i] = row
+                break
+        else:
+            lines.append(row)
+    _ENV_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 class Config(BaseModel):
     provider: str
     model: str
     apiKey: str | None = None
+    persist: bool = False           # also write the key + model to repo-root .env
+    azureEndpoint: str | None = None  # azure_openai only
+    apiVersion: str | None = None     # azure_openai only
 
 
 @app.post("/api/config")
 def configure(c: Config):
-    """Switch provider/model live (key held in memory only — never written to disk)."""
+    """Switch provider/model live. Key is held in memory; with persist=true it's also
+    written to the gitignored repo-root .env so it survives a restart."""
     import llm
     p = llm.PROVIDER_BY_ID.get(c.provider)
     if not p:
         return {"ok": False, "error": f"unknown provider '{c.provider}'"}
     if c.apiKey:
-        os.environ[p["keys"][0]] = c.apiKey            # in-memory for this process only
+        # strip stray whitespace/newlines/quotes a paste often carries — a common
+        # cause of a valid key being rejected as API_KEY_INVALID.
+        c.apiKey = c.apiKey.strip().strip('"').strip("'").strip()
+        os.environ[p["keys"][0]] = c.apiKey            # live, in-memory for this process
+    # Azure needs endpoint + api-version alongside the key (model = deployment name)
+    if c.provider == "azure_openai":
+        if c.azureEndpoint:
+            os.environ["AZURE_OPENAI_ENDPOINT"] = c.azureEndpoint.strip().rstrip("/") + "/"
+        if c.apiVersion:
+            os.environ["OPENAI_API_VERSION"] = c.apiVersion.strip()
     os.environ["TOS_MODEL"] = f"{c.provider}:{c.model}"
     llm.get_chat_model.cache_clear()
     llm.get_llm.cache_clear()
+    # the ReAct agents are @lru_cache'd bound to the model they were first built with —
+    # clear them too, or a provider switch keeps calling the old provider.
+    try:
+        import agents
+        agents.build_agents.cache_clear()
+    except Exception:
+        pass
     try:
         llm.get_chat_model()                            # validate it builds with the given key
-        return {"ok": True, "active": llm.active_provider(), "model": llm.resolve_model()}
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": str(exc)[:200]}
+    persisted = False
+    if c.persist:
+        try:
+            pairs = {"TOS_MODEL": f"{c.provider}:{c.model}"}
+            if c.apiKey:
+                pairs[p["keys"][0]] = c.apiKey
+            if c.provider == "azure_openai":
+                if os.getenv("AZURE_OPENAI_ENDPOINT"):
+                    pairs["AZURE_OPENAI_ENDPOINT"] = os.environ["AZURE_OPENAI_ENDPOINT"]
+                if os.getenv("OPENAI_API_VERSION"):
+                    pairs["OPENAI_API_VERSION"] = os.environ["OPENAI_API_VERSION"]
+            _upsert_env(pairs)
+            persisted = True
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": True, "active": llm.active_provider(), "model": llm.resolve_model(),
+                    "persisted": False, "persistError": str(exc)[:160]}
+    return {"ok": True, "active": llm.active_provider(), "model": llm.resolve_model(), "persisted": persisted}
 
 
 @app.get("/api/run")
