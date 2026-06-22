@@ -389,12 +389,37 @@ def _escalation_plan(state: OpsState) -> str:
     )
 
 
+def _log_closed_case(state: OpsState, status: str) -> None:
+    """Append the finished run to case memory so recall/outcome-validation grow over time.
+    Outcome is 'pending' until the predicted failure window resolves. Never raises."""
+    try:
+        from datetime import datetime, timezone
+        from tools.recall_cases import append_case
+        a = state.get("alert", {})
+        append_case({
+            "id": "RUN-" + str(state.get("run_id", "?")),
+            "date": datetime.now(timezone.utc).date().isoformat(),
+            "machine_id": a.get("machine_id", "?"),
+            "machine_type": "CNC Machining Center",
+            "sensor": a.get("sensor", "?"),
+            "signature": f"{a.get('sensor', '?')} {a.get('value', '')}{a.get('unit', '')}".strip(),
+            "predicted_rul_h": None,
+            "actual_failure_h": None,
+            "decision": str(state.get("approval", status)),
+            "outcome": "pending (reconciled when the predicted window resolves)",
+            "in_window": None,
+        })
+    except Exception:  # noqa: BLE001 — logging must never break a run
+        pass
+
+
 def synthesize(state: OpsState) -> dict:
     rid = state["run_id"]
     if state.get("escalate"):
         log.info("PLAN          | escalation handoff (deterministic, no LLM)")
         plan = _escalation_plan(state)
         ev = _ev(rid, "plan", "orchestrator", plan=plan)
+        _log_closed_case(state, "escalated")
         log.info("END           | status=escalated")
         return {"final_plan": plan, "status": "escalated", "trace": [ev]}
     log.info("PLAN          | composing final action plan…")
@@ -408,6 +433,7 @@ def synthesize(state: OpsState) -> dict:
     )
     status = "halted" if state.get("halt") else "complete"
     ev = _ev(rid, "plan", "orchestrator", plan=plan)
+    _log_closed_case(state, status)
     log.info("END           | status=%s", status)
     return {"final_plan": plan, "status": status, "trace": [ev]}
 

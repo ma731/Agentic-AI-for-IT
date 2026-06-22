@@ -504,7 +504,8 @@ function PlanView({ plan }) {
 }
 
 // ---- Learning subsystem (Section 4: Perception -> Reasoning -> Action -> LEARNING) ----
-// Seeded experience base; in live runs the recall_similar_cases tool + audit log extend it.
+// Mirrors the backend case library; in live runs recall_similar_cases reads it and
+// graph.synthesize appends each closed run via append_case().
 const CASE_LIBRARY = [
   { id: 'INC-0288', date: '2025-06-11', machine: 'CNC-07-LEI', signature: 'spindle-bearing, vibration 7.0 mm/s, +13C', predRul: '50-74 h', actual: 'failed at 58 h', decision: 'approved expedite', outcome: 'avoided ~€520k downtime', match: 93 },
   { id: 'INC-0312', date: '2025-09-23', machine: 'CNC-03-LEI', signature: 'spindle-bearing, vibration 6.9 mm/s', predRul: '48-70 h', actual: 'failed at 61 h', decision: 'approved expedite', outcome: 'avoided ~€410k downtime', match: 88 },
@@ -530,9 +531,10 @@ function LearningView({ history = [], alert: ALERT }) {
     <>
       <div className="dash-h">Learning <span className="learn-badge">experience + feedback</span></div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '66ch' }}>
-        The system improves over time without retraining the model: it recalls precedent (case memory),
-        adapts to the operator's decisions (human feedback), critiques its own plans (reflection), and
-        validates its predictions against what actually happened (outcome validation).
+        The system improves over time without retraining the model. Two mechanisms run today: it
+        recalls precedent (case memory) and adapts to the operator's decisions (human feedback). Two
+        more are built into the loop's design: self-critique (reflection) and prediction validation
+        (outcome), marked "design" below.
       </p>
 
       {/* 1. Case memory / precedent recall */}
@@ -557,35 +559,35 @@ function LearningView({ history = [], alert: ALERT }) {
         <div className="stat-row" style={{ marginBottom: 14 }}>
           <Stat lbl="Gate approvals" chip="green" ic="✓" val={`${approvals}`} sub="expedites cleared across runs" deltaUp />
           <Stat lbl="Gate rejections" chip="red" ic="✕" val={`${rejections}`} sub="paths declined" />
-          <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="feed the decision model" />
+          <Stat lbl="Runs logged" chip="blue" ic="≣" val={`${totalRuns}`} sub="in the decision history" />
           <Stat lbl="Recommendation" chip="purple" ic="◈" val={approvals >= rejections ? 'EXPEDITE' : 'HOLD'} sub="biased by your history" />
         </div>
-        <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite under €3,500 has been approved {Math.max(approvals, 4)}/{Math.max(approvals, 4)} times. The agent now leads with it as the recommended path (still gated).</span></div>
-        <div className="learn-foot">Every approve/reject is appended to the case log, so the autonomy recommendation adapts to how this plant manager actually decides.</div>
+        <div className="pl"><span className="tier APPROVE">PATTERN</span><span className="tx">Emergency expedite under €3,500 has been approved {Math.max(approvals, 4)}/{Math.max(approvals, 4)} times. This informs the recommended path shown above (still gated).</span></div>
+        <div className="learn-foot">Each closed run is appended to the case library (append_case); the approve/reject tally above biases the recommended path toward how this plant manager actually decides.</div>
       </div>
 
       {/* 3. Reflection (Reflexion) */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Self-critique (reflection)</span><span className="sub">self_eval after each run</span></div>
+        <div className="panel-h"><span className="t">Self-critique (reflection) <span className="learn-concept">design</span></span><span className="sub">self_eval prompt exists today</span></div>
         {REFLECTIONS.map((r, i) => (
           <div className="learn-reflect" key={i}>
             <span className="learn-reflect-ic">✎</span>
             <div><div className="learn-reflect-n">{r.note}</div><div className="learn-reflect-d">{r.date}</div></div>
           </div>
         ))}
-        <div className="learn-foot">The self_eval prompt scores each plan; the critique is stored and prepended to the next run, so recurring mistakes get corrected.</div>
+        <div className="learn-foot">Today the self_eval prompt scores each plan. Persisting these critiques and replaying them into the next run is the production design (shown here as worked examples).</div>
       </div>
 
       {/* 4. Outcome validation */}
       <div className="panel">
-        <div className="panel-h"><span className="t">Prediction accuracy</span><span className="sub">predicted RUL vs actual failure</span></div>
+        <div className="panel-h"><span className="t">Prediction accuracy <span className="learn-concept">design</span></span><span className="sub">over the seeded case library</span></div>
         <div className="stat-row" style={{ marginBottom: 12 }}>
           <Stat lbl="RUL accuracy" chip="green" ic="◉" val={`${acc}%`} sub={`${hits}/${closedN} closed cases inside window`} deltaUp />
           <Stat lbl="False alarms" chip="orange" ic="⚠" val="2" sub="caught and de-prioritized" />
           <Stat lbl="Cases closed" chip="blue" ic="✓" val={`${closedN}`} sub="with a confirmed outcome" />
           <Stat lbl="Avg lead time" chip="purple" ic="◔" val="59 h" sub="warning before failure" />
         </div>
-        <div className="learn-foot">Each closed case validates (or corrects) the RUL model. Predictions that land outside the window down-weight that signature next time.</div>
+        <div className="learn-foot">Each closed case validates the predicted RUL window (accuracy above is over the seeded library). Automatically down-weighting a signature that misses is the production design.</div>
       </div>
     </>
   )

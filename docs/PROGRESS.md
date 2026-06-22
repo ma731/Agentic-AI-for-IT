@@ -14,7 +14,7 @@ cover **all five** TMC challenges (not just maintenance + supply chain).
 - **Safety override:** compliance_safety can HALT. **HITL:** `interrupt()` approval gate kept.
 - New prompts: production / quality / compliance agents + supervisor.
 - Resilience: per-agent try/except (a flaky Llama tool call degrades, doesn't crash the run);
-  `SHARED_FOOTER` tells agents to pass plain numeric args (Llama emits `162000/24` otherwise).
+  `SHARED_FOOTER` tells agents to pass plain numeric args (Llama emits `180000/24` otherwise).
 
 **Verified LIVE on Groq:** happy path end-to-end through all 5 agents — reliability (RISK:HIGH)
 → supply_chain → production (autonomously rerouted to CNC-08 to dodge the op_Keller conflict)
@@ -55,7 +55,7 @@ the direct Anthropic SDK to **LangGraph** orchestration on **Groq / Llama 3.3 70
 - Memory — `MemorySaver` checkpointer = episodic; labelled deterministic vs model-driven.
 
 **Verified offline (no key):** `pytest` 14/14 green; happy → approval → complete;
-edge → adapts to cross-plant MUC (ROI 290.8) → complete; escalation → escalated, no supply.
+edge → adapts to cross-plant MUC (ROI 323.1) → complete; escalation → escalated, no supply.
 
 **Still TODO:** add a real `GROQ_API_KEY` and rehearse the live on-stage run; slides.
 
@@ -196,8 +196,8 @@ Every step emits to `stream_callback` — that's what the Streamlit UI renders l
 | Parts needed | P-4421 (spindle bearing kit), P-7803 (hydraulic seal set x2) |
 | Parts gap | P-4421: 0 on-site. P-7803: 1 on-site, need 2 |
 | Recommended option | Schaeffler expedite, 18h, €3,200 (LOW risk) |
-| Cost of inaction | €162,000/day = €6,750/hour |
-| ROI of recommended plan | 71.7:1 |
+| Cost of inaction | €180,000/day = €7,500/hour |
+| ROI of recommended plan | 79.7:1 |
 | Emergency window | Saturday 06:00 (requires plant manager approval) |
 
 ---

@@ -25,7 +25,7 @@ in production, across product, agent, and business layers. Targets are illustrat
 ## Layer 3 — Business metrics
 | Metric | Definition | Target |
 |---|---|---|
-| Downtime cost avoided | €/incident vs the €162k/day baseline | primary KPI |
+| Downtime cost avoided | €/incident vs the €180k/day baseline | primary KPI |
 | Expedite ROI realised | actual vs predicted sourcing ROI | within ±15% of estimate |
 | SLA / on-time maintenance | windows hit before predicted failure | ≥ 95% |
 | Cost to run | LLM spend per incident | < €0.10 (free-tier / pay-as-you-go) |

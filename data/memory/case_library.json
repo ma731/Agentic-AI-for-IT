@@ -1,5 +1,5 @@
 {
-  "_comment": "Experience base for the Learning loop. Each closed incident records the predicted RUL window vs the actual failure time, the human decision, and the outcome. recall_similar_cases() retrieves the closest precedent so the reliability agent reasons from history, not just the current reading. New runs are appended by the audit log.",
+  "_comment": "Experience base for the Learning loop. Each closed incident records the predicted RUL window vs the actual failure time, the human decision, and the outcome. recall_similar_cases() retrieves the closest precedent so the reliability agent reasons from history, not just the current reading. graph.synthesize() appends each closed run via append_case() with a 'pending' outcome; the seeded incidents below have resolved outcomes used for RUL-accuracy validation.",
   "cases": [
     {
       "id": "INC-0288",

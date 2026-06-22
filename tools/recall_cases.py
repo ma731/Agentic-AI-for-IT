@@ -2,8 +2,10 @@
 
 This is the Learning loop's recall step. The reliability agent calls it so its
 assessment is grounded in precedent (predicted vs actual RUL, the human decision, and
-the outcome), not just the live reading. The store is data/memory/case_library.json,
-which the audit log appends to as new runs close.
+the outcome), not just the live reading. The store is data/memory/case_library.json.
+When a run finalizes, graph.synthesize() calls append_case() to add the closed run; its
+outcome is "pending" until the predicted failure window resolves and a later
+reconciliation fills in the actual failure time.
 """
 from __future__ import annotations
 
@@ -54,3 +56,17 @@ def recall_similar_cases(machine_id: str = "", sensor: str = "", signature: str 
         "library_size": len(lib),
         "rul_accuracy_pct": round(100 * len(in_win) / len(closed)) if closed else None,
     }
+
+
+def append_case(case: dict) -> bool:
+    """Append a closed run to the case library so recall and outcome-validation grow over
+    time. Called by graph.synthesize() when a run finalizes. The new case starts with a
+    'pending' outcome (actual_failure_h=None); a later reconciliation fills it in once the
+    predicted window resolves. Never raises (a logging failure must not break a run)."""
+    try:
+        data = json.loads(_LIB.read_text(encoding="utf-8"))
+        data.setdefault("cases", []).append(case)
+        _LIB.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        return True
+    except Exception:  # noqa: BLE001
+        return False
