@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Titan Operations Sentinel — Deck</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.css" />
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Fira+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0b1118; --bg2:#0e1620; --ink:#eaf2ec; --ink2:#9fb3ad; --accent:#14e8a0; --accent2:#0fbe85;
+    --line:rgba(255,255,255,.12); --mono:'JetBrains Mono',monospace; --disp:'Schibsted Grotesk',sans-serif; --ui:'Fira Sans',sans-serif;
+  }
+  .reveal{font-family:var(--ui);font-size:30px;color:var(--ink);}
+  .reveal .slides{text-align:left;}
+  .reveal section{background:radial-gradient(120% 90% at 50% 0%,var(--bg2),var(--bg) 70%);}
+  /* film grain + masked grid, like the app */
+  .reveal .backgrounds{background:var(--bg);}
+  .reveal h1,.reveal h2,.reveal h3{font-family:var(--disp);color:var(--ink);letter-spacing:-.02em;text-transform:none;line-height:1.04;font-weight:700;}
+  .reveal h1{font-size:2.0em;} .reveal h2{font-size:1.35em;margin-bottom:.4em;}
+  .reveal .g{color:var(--accent);}
+  .reveal .eyebrow{font-family:var(--mono);font-size:.5em;letter-spacing:.26em;text-transform:uppercase;color:var(--ink2);margin-bottom:.6em;}
+  .reveal .lead{color:var(--ink2);font-size:.78em;line-height:1.5;max-width:24ch;}
+  .reveal strong{color:var(--ink);font-weight:600;}
+  .reveal .mono{font-family:var(--mono);}
+  .reveal ul{margin-left:1em;} .reveal li{margin:.35em 0;color:var(--ink2);}
+  .reveal li strong{color:var(--ink);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;}
+  .stat{font-family:var(--disp);font-weight:800;font-size:1.5em;color:var(--accent);line-height:1;}
+  .statl{font-family:var(--mono);font-size:.42em;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-top:.5em;}
+  .statrow{display:flex;gap:40px;margin-top:.4em;}
+  .chip{display:inline-block;font-family:var(--mono);font-size:.42em;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:.5em 1em;}
+  .shot{border-radius:14px;border:1px solid var(--line);box-shadow:0 30px 70px -30px rgba(0,0,0,.7);max-height:62vh;}
+  .note{font-family:var(--mono);font-size:.4em;color:var(--ink2);} .fill{color:var(--accent);}
+  .reveal .footer{position:fixed;bottom:14px;left:24px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);opacity:.6;}
+  .script{font-family:'Great Vibes',cursive;font-size:1.1em;color:var(--accent);}
+  .pill{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:.42em;color:#bdf3dc;border:1px solid rgba(20,232,160,.3);border-radius:999px;padding:.45em 1em;background:rgba(8,14,12,.5);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+  <!-- 0 · TITLE -->
+  <section data-auto-animate>
+    <div class="eyebrow">◈ IE University · Agentic AI for IT · 2026</div>
+    <h1>Titan Operations<br><span class="g">Sentinel</span></h1>
+    <p class="lead" style="margin-top:.6em">An autonomous, multi-agent operations brain for manufacturing. One sensor alert, six AI agents, one costed and safety-gated plan.</p>
+    <div class="statrow" style="margin-top:1em">
+      <div><div class="stat">6</div><div class="statl">agents</div></div>
+      <div><div class="stat">5</div><div class="statl">TMC challenges</div></div>
+      <div><div class="stat">79.7<span style="font-size:.5em">:1</span></div><div class="statl">action ROI</div></div>
+      <div><div class="stat">€0</div><div class="statl">runs on free tier</div></div>
+    </div>
+    <p class="note" style="margin-top:1.2em">Team 3 · <span class="fill">Marco · David · Nuria · Marian · Ignacio</span></p>
+  </section>
+
+  <!-- 1 · PROBLEM -->
+  <section>
+    <div class="eyebrow">01 · The problem</div>
+    <h2>A failing CNC, and no one decides in time</h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li><strong>22,000+ alerts/day</strong> with no prioritisation.</li>
+          <li>When CNC-07-LEI goes down: <strong>€180,000/day</strong> (€7,500/h) of lost production.</li>
+          <li>Five teams (reliability, supply, production, quality, safety) each see one slice; <strong>no single coherent plan</strong> under time pressure.</li>
+          <li>Failures that "<strong>should have been predicted</strong>" still cause unplanned stops.</li>
+        </ul>
+        <p class="note" style="margin-top:1em">Persona: the <span class="fill">Plant Manager, Titan Leipzig (Plant 7)</span>.</p>
+      </div>
+      <div style="text-align:center"><span class="pill"><span class="dot"></span>Friday 14:32 · vibration 7.2 mm/s ▲</span></div>
+    </div>
+    <div class="footer">01 · Problem</div>
+  </section>
+
+  <!-- 2 · SOLUTION + ARCHITECTURE -->
+  <section>
+    <div class="eyebrow">02 · The solution</div>
+    <h2>Six agents that <span class="g">decide</span>, not just dashboards that show</h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li><strong>Orchestrator</strong> (LLM) routes 5 autonomous <strong>ReAct specialists</strong>.</li>
+          <li>They converse through one shared transcript; agents can ask each other follow-ups.</li>
+          <li><strong>Guided autonomy:</strong> a policy guarantees coverage + termination; the LLM picks order and each agent chooses its own tools.</li>
+          <li>Built on <strong>LangGraph</strong> (StateGraph + interrupt + checkpointer).</li>
+        </ul>
+      </div>
+      <div style="text-align:center"><img class="shot" src="/shots/agents.png" alt="orchestration graph"></div>
+    </div>
+    <div class="footer">02 · Architecture</div>
+  </section>
+
+  <!-- 3 · DEMO -->
+  <section>
+    <div class="eyebrow">03 · The demo — the Friday Cascade</div>
+    <h2>Perceive → reason → act → <span class="g">learn</span></h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li><strong>Perceive:</strong> triage 22k alerts → CNC-07-LEI, RUL 52–76h.</li>
+          <li><strong>Reason:</strong> recall precedent (INC-0288), source parts by ROI, reroute, gate vs OSHA.</li>
+          <li><strong>Act:</strong> one costed plan; spend over <strong>€500</strong> pauses for a human (code-enforced).</li>
+          <li><strong>Learn:</strong> each closed run is logged to case memory and reconciled against the outcome.</li>
+        </ul>
+        <p class="note" style="margin-top:.8em">Three paths: <span class="fill">Cascade</span> (human gate) · <span class="fill">Edge</span> (autonomous under €500) · <span class="fill">Escalation</span> (abstains on thin data).</p>
+        <p class="note">▶ <strong>Switch to the live console now.</strong> (Replay = €0, can't-fail.)</p>
+      </div>
+      <div style="text-align:center"><img class="shot" src="/shots/console.png" alt="live console"></div>
+    </div>
+    <div class="footer">03 · Demo</div>
+  </section>
+
+  <!-- 4 · BUSINESS BENEFITS -->
+  <section>
+    <div class="eyebrow">04 · Business benefits</div>
+    <h2>Minutes, not meetings — and a human still owns the euro</h2>
+    <div class="statrow">
+      <div><div class="stat">79.7:1</div><div class="statl">ROI vs €3,200 expedite</div></div>
+      <div><div class="stat">€180k</div><div class="statl">/day downtime avoided</div></div>
+      <div><div class="stat">&lt;2 min</div><div class="statl">alert → costed plan</div></div>
+      <div><div class="stat">5/5</div><div class="statl">TMC challenges covered</div></div>
+    </div>
+    <ul style="margin-top:1em">
+      <li>Cross-domain plan in one place; <strong>safety can HALT</strong>, spend over €500 escalates.</li>
+      <li>Auditable: every action and decision is logged; runs export to a report.</li>
+      <li><strong>Feasible today:</strong> runs on free-tier Gemini/Groq, or Azure for production limits.</li>
+    </ul>
+    <div class="footer">04 · Benefits</div>
+  </section>
+
+  <!-- 5 · NEXT STEPS -->
+  <section>
+    <div class="eyebrow">05 · Next steps</div>
+    <h2>From MVP to plant-wide</h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li>Wire real telemetry + CMMS/ERP tools (today's tools are scenario-faithful stubs).</li>
+          <li>Train the RUL estimator on real failure history (today: transparent heuristic + pattern-match).</li>
+          <li>Close the learning loop in production: auto-reconcile outcomes, tune confidence from human decisions.</li>
+          <li>Roll out across the fleet (CNC-03/05/08, robot cells) and other plants.</li>
+        </ul>
+      </div>
+      <div>
+        <p class="lead">The architecture is the contribution. The model, the tools, and the data sources are swappable.</p>
+        <p class="script" style="margin-top:.6em">Agentic AI for IT</p>
+      </div>
+    </div>
+    <div class="footer">05 · Next steps</div>
+  </section>
+
+  <!-- 6 · APPENDIX POINTER -->
+  <section>
+    <div class="eyebrow">Appendix (for Q&A, not presented)</div>
+    <h2>Prepared to defend any part</h2>
+    <ul>
+      <li><strong>Prompt pack</strong> — system / task / guardrail / self-eval (<span class="mono">docs/appendix/prompt_pack.md</span>).</li>
+      <li><strong>Tool catalog</strong> — 19 tools, when / when-NOT / fallback (<span class="mono">docs/tool_catalog.md</span>).</li>
+      <li><strong>Risk matrix · FMEA · confidence policy</strong> (<span class="mono">docs/appendix/</span>).</li>
+      <li><strong>Evidence checklist + honest caveats</strong> (<span class="mono">docs/appendix/evidence_checklist.md</span>).</li>
+    </ul>
+    <p class="note" style="margin-top:1em">Honest by design: Replay is a recording; RUL is a heuristic; learning recall + write-back are live, reflection is the production design.</p>
+    <div class="footer">Appendix</div>
+  </section>
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({ hash:true, transition:'slide', backgroundTransition:'fade', controls:true, progress:true, slideNumber:'c/t' });
+</script>
+</body>
+</html>
