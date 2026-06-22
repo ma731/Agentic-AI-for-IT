@@ -199,3 +199,25 @@ def test_reconcile_closes_the_loop(tmp_path, monkeypatch):
     case = json.loads(tmp.read_text(encoding="utf-8"))["cases"][-1]
     assert case["actual_failure_h"] == 58 and case["in_window"] is True
     assert rc.reconcile_case("RUN-Z", 58) is False         # already reconciled
+
+
+def test_gate_requires_window_fit():
+    """A cheap option (under the ceiling) that does NOT fit the failure window must still
+    route to a human, not run autonomously."""
+    from graph import COST_CEILING_EUR
+    from tools.expedite_cost import expedite_cost
+    r = expedite_cost([{"label": "slow-cheap", "cost_eur": 300, "lead_time_hours": 60, "risk_level": "LOW"}], 7500, 52)
+    top = r["options_ranked"][0]
+    autonomous = top["cost_eur"] <= COST_CEILING_EUR and top["fits_failure_window"]
+    assert autonomous is False                     # €300 but misses the 52h window → gate
+
+
+def test_reconcile_due_resolves_known_outcomes(tmp_path, monkeypatch):
+    import json
+    import tools.recall_cases as rc
+    tmp = tmp_path / "case_library.json"
+    tmp.write_text(json.dumps({"cases": [{"id": "RUN-D", "predicted_rul_h": [50, 74], "actual_failure_h": None, "in_window": None}]}), encoding="utf-8")
+    monkeypatch.setattr(rc, "_LIB", tmp)
+    assert rc.reconcile_due({"RUN-D": 60}) == 1     # 60h inside 50-74 window
+    assert json.loads(tmp.read_text(encoding="utf-8"))["cases"][0]["in_window"] is True
+    assert rc.reconcile_due({}) == 0                # safe no-op without outcomes

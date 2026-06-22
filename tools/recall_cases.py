@@ -80,6 +80,29 @@ def reconcile_case(case_id: str, actual_failure_h) -> bool:
         return False
 
 
+_OUTCOMES = _LIB.parent / "outcomes.json"
+
+
+def reconcile_due(outcomes: dict | None = None) -> int:
+    """Self-closing step, invoked each cycle (graph.perceive). Resolves any 'pending' case
+    for which an actual outcome is now known — passed in `outcomes` {case_id: hours|None},
+    or read from data/memory/outcomes.json which a telemetry/maintenance feed would write.
+    With no outcomes available it is a safe no-op (cases stay honestly pending). Returns the
+    number reconciled."""
+    if outcomes is None:
+        try:
+            outcomes = json.loads(_OUTCOMES.read_text(encoding="utf-8")) if _OUTCOMES.exists() else {}
+        except Exception:  # noqa: BLE001
+            outcomes = {}
+    if not outcomes:
+        return 0
+    n = 0
+    for cid, actual in outcomes.items():
+        if reconcile_case(cid, actual):
+            n += 1
+    return n
+
+
 def append_case(case: dict) -> bool:
     """Append a closed run to the case library so recall and outcome-validation grow over
     time. Called by graph.synthesize() when a run finalizes. The new case starts with a

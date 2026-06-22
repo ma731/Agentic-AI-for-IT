@@ -120,7 +120,7 @@ python scripts/run_demo.py             # happy path (auto-approves)
 python scripts/run_demo.py edge        # cross-plant adaptation path
 python scripts/run_demo.py escalation  # telemetry dropout → human review
 python scripts/view_run.py             # replay the last recorded run (no tokens)
-python -m pytest tests/test_tools.py   # 17 offline tool tests — no key needed
+python -m pytest tests/test_tools.py   # 26 offline tool tests — no key needed
 
 cd webapp/frontend && npm install && npm run dev   # demo UI: live multi-agent trace + approval gate (see webapp/README.md)
 ```
@@ -137,7 +137,7 @@ Run commands **from the repo root**. The model is set by `TOS_MODEL`
 ```
 graph.py            orchestration: supervisor + worker nodes + shared transcript + approval gate
 agents/             the 5 specialist ReAct agents (factory.py builds them from prompts + tools)
-tools/              18 tool functions + lc.py (the @tool wrappers); see docs/tool_catalog.md
+tools/              19 tool functions + lc.py (the @tool wrappers); see docs/tool_catalog.md
 prompts/            5 agent prompts + supervisor + guardrails + self-eval
 data/               scenario data per challenge (alerts, sensors, assets, suppliers,
                     production, quality, compliance)
@@ -156,14 +156,14 @@ CLAUDE.md           project guide for contributors / Claude Code — read first
   the final plan). The *guarantees* are code (coverage, termination, the €500 ceiling, the safety
   gate) — so the system is autonomous but can't run away.
 - **Why multi-agent, not one big agent.** Five focused agents with ~3 tools each make far better
-  tool choices than one agent juggling 18 tools — and they mirror the real org silos the case study
+  tool choices than one agent juggling 19 tools — and they mirror the real org silos the case study
   is about uniting.
 - **Why simulated data.** Real SCADA/SAP integration needs OT access and months of pipelines; the
   tools read realistic JSON with production-shaped schemas, so the *agent behaviour* is representative.
 
 ## Status & limitations
 
-- ✅ Tools, graph, all 5 challenges, audit log, web console, 17 offline tool tests passing.
+- ✅ Tools, graph, all 5 challenges, audit log, web console, 26 offline tool tests passing.
 - ✅ Happy + edge paths verified live on Groq end-to-end.
 - ⚠️ Heuristic RUL (not a trained model) — honest MVP stub. Simulated data only. English-only.
 - ⚠️ Live runs are bounded by the Groq free-tier daily token budget.

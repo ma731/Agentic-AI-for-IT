@@ -29,7 +29,7 @@ perceive → SUPERVISOR ⇄ { reliability        (challenge 1)
 
 **Pattern:** Orchestrator/supervisor + 5 autonomous specialist agents, as a LangGraph `StateGraph`.
 
-**Agents are real ReAct agents** (`agents.py`, `create_react_agent`): each specialist's LLM
+**Agents are real ReAct agents** (`agents/factory.py`, `create_react_agent`): each specialist's LLM
 **chooses its own tools** and loops until done. The **orchestrator controls routing** between
 agents (`supervisor` node) — "autonomous tools, guided handoffs".
 
@@ -81,7 +81,7 @@ webapp/
   backend/main.py        # FastAPI SSE server wrapping graph.py
   frontend/              # React/Vite web console — live multi-agent trace + human approval gate
 tests/
-  test_tools.py          # 17 tool unit tests (offline)
+  test_tools.py          # 26 tool unit tests (offline)
   test_agent_flow.py     # 3 multi-agent flow tests (skip without GROQ_API_KEY)
 docs/                    # brief, brainstorm, case study, PROGRESS.md, tool_catalog.md, architecture.mmd
 ```
@@ -190,13 +190,13 @@ Only the routing/synthesis `llm.complete()` calls can fall back to the offline s
 |-----------|--------|
 | 6-agent architecture (orchestrator + 5 ReAct specialists) | Done |
 | All 5 TMC challenges covered (1–5) | Done |
-| Tool functions (18) + `@tool` wrappers | Done |
+| Tool functions (19) + `@tool` wrappers | Done |
 | Data files incl. challenge 3/4/5 + edge + dropout | Done |
 | Agent prompts (5) + supervisor + guardrails + self-eval | Done |
 | Shared blackboard, guided routing, safety HALT, interrupt approval | Done |
 | Audit log + `audit_assemble` reconstruction | Done |
 | Web console (React/Vite + FastAPI SSE; live multi-agent trace + approval) | Done |
-| Tool tests (17, offline) | Done |
+| Tool tests (26, offline) | Done |
 | Live Groq run verified (happy path end-to-end) | Done |
 | Full flow tests (happy/edge/escalation) live | In progress / verify |
 | Slides | TODO |

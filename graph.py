@@ -237,6 +237,13 @@ def _task_for(name: str, state: OpsState) -> str:
 # --------------------------------------------------------------------------- #
 def perceive(state: OpsState) -> dict:
     alert = state["alert"]
+    try:                                  # self-closing learning loop: resolve any cases
+        from tools.recall_cases import reconcile_due  # whose outcome is now known
+        done = reconcile_due()
+        if done:
+            log.info("LEARN         | reconciled %d prior case(s) against known outcomes", done)
+    except Exception:  # noqa: BLE001
+        pass
     log.info("PERCEIVE      | %s on %s (%s=%s%s, threshold %s, trend %s) [scenario=%s]",
              alert.get("alert_id", "?"), alert["machine_id"], alert.get("sensor", "?"),
              alert.get("value", "?"), alert.get("unit", ""), alert.get("threshold", "?"),
@@ -307,12 +314,14 @@ def _make_worker(name: str):
         if name == "supply_chain":
             # Code-enforced €500 ceiling: read the recommended option's cost and gate only
             # when it exceeds the autonomy ceiling (so sub-ceiling actions run autonomously).
-            ec = results.get("expedite_cost", {})
-            ranked = ec.get("options_ranked") or []
-            cost = ranked[0].get("cost_eur") if ranked else None
-            update["needs_approval"] = True if cost is None else cost > COST_CEILING_EUR
-            log.info("  ↳ supply_chain spend=%s ceiling=%d → %s", cost, COST_CEILING_EUR,
-                     "needs approval" if update["needs_approval"] else "autonomous")
+            top = (results.get("expedite_cost", {}).get("options_ranked") or [{}])[0]
+            cost = top.get("cost_eur")
+            fits = top.get("fits_failure_window", True)
+            # autonomous only when the recommended option is BOTH under the ceiling AND
+            # actually fits the failure window; otherwise a human decides.
+            update["needs_approval"] = (cost is None) or (cost > COST_CEILING_EUR) or (not fits)
+            log.info("  ↳ supply_chain spend=%s fits_window=%s ceiling=%d → %s", cost, fits,
+                     COST_CEILING_EUR, "needs approval" if update["needs_approval"] else "autonomous")
         if name == "compliance_safety":
             sg = results.get("safety_gate", {})
             if sg:
