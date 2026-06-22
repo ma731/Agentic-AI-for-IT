@@ -47,7 +47,9 @@ export default function Dashboard(props) {
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [assetOpen, setAssetOpen] = useState(false)
-  const [assetMachine, setAssetMachine] = useState(null)
+  const [selectedMachine, setSelectedMachine] = useState(FLEET[0])
+  const sel = selectedMachine || FLEET[0]
+  const selCritical = sel.id === ALERT.machine_id
   const [coach, setCoach] = useState(() => { try { return !localStorage.getItem('tos.coach') } catch { return false } })
   const closeCoach = () => { setCoach(false); try { localStorage.setItem('tos.coach', '1') } catch { /* ignore */ } }
   const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
@@ -180,8 +182,8 @@ export default function Dashboard(props) {
           <div className="info-h">Plant Fleet <span className="info-h-note">Titan Leipzig · 1 alert · 4 nominal</span></div>
           <div className="fleet">
             {FLEET.map((m) => (
-              <button key={m.id} className={`fleet-row ${m.status} ${m.id === ALERT.machine_id ? 'active' : ''}`}
-                onClick={() => { setAssetMachine(m); setAssetOpen(true) }}
+              <button key={m.id} className={`fleet-row ${m.status} ${m.id === ALERT.machine_id ? 'active' : ''} ${sel.id === m.id ? 'sel' : ''}`}
+                onClick={() => { setSelectedMachine(m); setAssetOpen(true) }}
                 title={m.id === ALERT.machine_id ? 'Open full asset profile' : 'Inspect this machine'}>
                 <span className="fleet-dot" />
                 <div className="fleet-bd"><div className="fleet-id">{m.id}</div><div className="fleet-nm">{m.name}</div></div>
@@ -192,15 +194,24 @@ export default function Dashboard(props) {
 
           <div className="info-h mt">Asset Information</div>
           <div className="asset">
-            <span className="ic">⚙</span>
-            <div><div className="nm">{ALERT.machine_id}</div><div className="sub">{ALERT.plant_name}</div></div>
+            <span className="ic">{sel.id.startsWith('ROB') ? '🦾' : '⚙'}</span>
+            <div><div className="nm">{sel.id}</div><div className="sub">{selCritical ? ALERT.plant_name : sel.name}</div></div>
           </div>
-          <div className="kv">
-            <div><div className="k">Sensor</div><div className="v">{ALERT.sensor} {ALERT.value} {ALERT.unit}</div></div>
-            <div><div className="k">Threshold</div><div className="v">{ALERT.threshold} {ALERT.unit}</div></div>
-            <div><div className="k">Trend</div><div className="v">{ALERT.trend} (from {ALERT.baseline})</div></div>
-            <div><div className="k">Window</div><div className="v">{ALERT.trend_window}</div></div>
-          </div>
+          {selCritical ? (
+            <div className="kv">
+              <div><div className="k">Sensor</div><div className="v">{ALERT.sensor} {ALERT.value} {ALERT.unit}</div></div>
+              <div><div className="k">Threshold</div><div className="v">{ALERT.threshold} {ALERT.unit}</div></div>
+              <div><div className="k">Trend</div><div className="v">{ALERT.trend} (from {ALERT.baseline})</div></div>
+              <div><div className="k">Window</div><div className="v">{ALERT.trend_window}</div></div>
+            </div>
+          ) : (
+            <div className="kv">
+              <div><div className="k">Vibration</div><div className="v">{sel.vib} mm/s</div></div>
+              <div><div className="k">Bearing temp</div><div className="v">{sel.temp} °C</div></div>
+              <div><div className="k">Status</div><div className="v">{sel.status === 'idle' ? 'Idle' : 'Nominal'}</div></div>
+              <div><div className="k">Utilisation</div><div className="v">{sel.util}</div></div>
+            </div>
+          )}
           <button className="info-btn" onClick={() => setAssetOpen(true)}>View Full Asset Profile</button>
 
           <div className="info-h mt">Run History</div>
@@ -232,7 +243,7 @@ export default function Dashboard(props) {
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
 
-      {assetOpen && <AssetModal machine={assetMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
+      {assetOpen && <AssetModal machine={selectedMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
       {coach && <Coachmark onClose={closeCoach} />}
     </div>
   )
