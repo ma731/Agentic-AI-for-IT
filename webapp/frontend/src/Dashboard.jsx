@@ -27,10 +27,10 @@ const WORKFLOW_NAV = [
 ]
 const FLEET = [
   { id: 'CNC-07-LEI', name: 'CNC Machining Center #7', status: 'critical' },
-  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle' },
-  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok' },
-  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok' },
-  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok' },
+  { id: 'CNC-08-LEI', name: 'CNC Machining Center #8', status: 'idle', vib: '2.1', temp: '+1', util: '0% (idle)', note: 'Available as reroute target for CNC-07.' },
+  { id: 'CNC-05-LEI', name: 'CNC Machining Center #5', status: 'ok', vib: '3.4', temp: '+3', util: '82%', note: 'Operating within all OEM limits.' },
+  { id: 'CNC-03-LEI', name: 'CNC Machining Center #3', status: 'ok', vib: '2.9', temp: '+2', util: '76%', note: 'Bearing replaced Sept 2025 (INC-0312).' },
+  { id: 'ROB-02-LEI', name: 'Robot Cell #2', status: 'ok', vib: '1.8', temp: '+1', util: '68%', note: 'Pick-and-place cell, nominal.' },
 ]
 const SCENARIOS = [
   { id: 'happy', label: 'Cascade', desc: 'Full team → costed plan → human approval' },
@@ -47,6 +47,7 @@ export default function Dashboard(props) {
   const [nav, setNav] = useState('dashboard')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [assetOpen, setAssetOpen] = useState(false)
+  const [assetMachine, setAssetMachine] = useState(null)
   const [coach, setCoach] = useState(() => { try { return !localStorage.getItem('tos.coach') } catch { return false } })
   const closeCoach = () => { setCoach(false); try { localStorage.setItem('tos.coach', '1') } catch { /* ignore */ } }
   const me = user || { name: 'Guest', initials: 'G', color: '#f97316' }
@@ -180,8 +181,8 @@ export default function Dashboard(props) {
           <div className="fleet">
             {FLEET.map((m) => (
               <button key={m.id} className={`fleet-row ${m.status} ${m.id === ALERT.machine_id ? 'active' : ''}`}
-                onClick={m.id === ALERT.machine_id ? () => setAssetOpen(true) : undefined}
-                title={m.id === ALERT.machine_id ? 'Open full asset profile' : 'Nominal, no action needed'}>
+                onClick={() => { setAssetMachine(m); setAssetOpen(true) }}
+                title={m.id === ALERT.machine_id ? 'Open full asset profile' : 'Inspect this machine'}>
                 <span className="fleet-dot" />
                 <div className="fleet-bd"><div className="fleet-id">{m.id}</div><div className="fleet-nm">{m.name}</div></div>
                 <span className="fleet-st">{m.status === 'critical' ? 'ALERT' : m.status === 'idle' ? 'idle' : 'nominal'}</span>
@@ -231,7 +232,7 @@ export default function Dashboard(props) {
         me={me} onSwitchUser={onSwitchUser} onSignOut={onSignOut}
       />
 
-      {assetOpen && <AssetModal alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
+      {assetOpen && <AssetModal machine={assetMachine} alert={ALERT} risk={risk} onClose={() => setAssetOpen(false)} />}
       {coach && <Coachmark onClose={closeCoach} />}
     </div>
   )
@@ -305,12 +306,61 @@ const ASSET_HISTORY = [
   { d: '2025-07-09', t: 'Controller firmware update SINUMERIK 4.95', tag: 'service' },
 ]
 
-function AssetModal({ alert: ALERT, risk, onClose }) {
+function NominalAssetModal({ machine: m, plant, onClose }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+  return (
+    <div className="asset-scrim" onClick={onClose}>
+      <div className="asset-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="asset-close" onClick={onClose} aria-label="Close">✕</button>
+        <div className="asset-head">
+          <span className="asset-ic">{m.id.startsWith('ROB') ? '🦾' : '⚙'}</span>
+          <div><div className="asset-id">{m.id}</div><div className="asset-sub">{m.name} · {plant}</div></div>
+          <span className="asset-risk risk-LOW">{m.status === 'idle' ? 'IDLE' : 'NOMINAL'}</span>
+        </div>
+        <div className="asset-body">
+          <div className="asset-col">
+            <div className="asset-sec">Specifications</div>
+            <div className="asset-kv">
+              <div><span>OEM / Model</span>{m.id.startsWith('ROB') ? 'KUKA · KR 10' : 'DMG MORI · DMU 50'}</div>
+              <div><span>Controller</span>{m.id.startsWith('ROB') ? 'KUKA KR C5' : 'Siemens SINUMERIK 840D sl'}</div>
+              <div><span>Criticality</span>B · standard</div>
+              <div><span>Utilisation</span>{m.util}</div>
+            </div>
+            <div className="asset-sec">Live sensors</div>
+            <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Vibration (RMS)</div><div className="asset-sensor-n">within OEM limit (6.0)</div></div><span className="asset-sensor-v ok">{m.vib} mm/s</span></div>
+            <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Bearing temp</div><div className="asset-sensor-n">nominal vs baseline</div></div><span className="asset-sensor-v ok">{m.temp} °C</span></div>
+            <div className="asset-sensor"><span className="asset-dot ok" /><div className="asset-sensor-bd"><div className="asset-sensor-k">Spindle load</div><div className="asset-sensor-n">within envelope</div></div><span className="asset-sensor-v ok">nominal</span></div>
+          </div>
+          <div className="asset-col">
+            <div className="asset-sec">Health</div>
+            <div className="asset-rul" style={{ background: 'var(--green-bg)', borderColor: 'color-mix(in srgb, var(--green) 25%, transparent)' }}>
+              <div className="asset-rul-big" style={{ color: '#0c6b3f' }}>No alert</div>
+              <div className="asset-rul-sub">{m.note} No failure predicted; not currently routed by the orchestrator.</div>
+            </div>
+            <div className="asset-sec">Status</div>
+            <div className="asset-part">
+              <span className="asset-part-id">OK</span>
+              <div className="asset-part-bd"><div className="asset-part-n">Operating within all limits</div><div className="asset-part-note">{m.status === 'idle' ? 'Idle and available' : 'In production'}</div></div>
+              <span className="asset-part-stock">{m.util}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AssetModal({ machine, alert: ALERT, risk, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  if (machine && machine.id !== ALERT.machine_id) return <NominalAssetModal machine={machine} plant={ALERT.plant_name} onClose={onClose} />
   return (
     <div className="asset-scrim" onClick={onClose}>
       <div className="asset-modal" onClick={(e) => e.stopPropagation()}>
