@@ -1,0 +1,3 @@
+{
+  "__doc__": "Outcome feed for the learning loop. A telemetry / maintenance system writes entries here as predicted failures resolve: map a closed-run case id to its actual failure time in hours (integer), or null for 'no failure within the window'. On each run, graph.perceive() calls tools.recall_cases.reconcile_due(), which resolves any matching pending case and updates RUL accuracy. Empty (only this note) = no outcomes yet, a safe no-op. Example entry: \"RUN-1730000000000\": 58"
+}
