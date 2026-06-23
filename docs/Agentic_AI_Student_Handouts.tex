@@ -1,0 +1,874 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Encoding & fonts ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{eurosym}
+\DeclareUnicodeCharacter{20AC}{\euro{}}   % lets you type € directly
+
+% ---------- Layout ----------
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.1}
+\usepackage{enumitem}
+\setlist{leftmargin=1.4em,topsep=3pt,itemsep=2.5pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em plus 2pt minus 1pt}
+\usepackage{needspace}
+\usepackage{ragged2e}
+\raggedbottom
+
+% avoid orphan/widow lines
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+% ---------- Colour palette ----------
+\usepackage{xcolor}
+\definecolor{titan}{HTML}{1F3A5F}     % deep navy
+\definecolor{titanlt}{HTML}{2E5E8C}   % lighter accent
+\definecolor{rulec}{HTML}{C9D6E5}
+
+% ---------- Section styling ----------
+\usepackage{titlesec}
+\titleformat{\section}
+  {\color{titan}\Large\bfseries\sffamily}{\thesection.}{0.6em}{}
+  [\vspace{2pt}\color{rulec}\titlerule]
+\titleformat{\subsection}
+  {\color{titanlt}\large\bfseries\sffamily}{}{0em}{}
+\titlespacing*{\section}{0pt}{18pt}{9pt}
+\titlespacing*{\subsection}{0pt}{11pt}{4pt}
+
+% keep headings from landing at the very bottom of a page
+\let\oldsection\section
+\renewcommand{\section}{\needspace{6\baselineskip}\oldsection}
+\let\oldsubsection\subsection
+\renewcommand{\subsection}{\needspace{4.5\baselineskip}\oldsubsection}
+
+% ---------- Tables ----------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\renewcommand{\arraystretch}{1.28}
+
+% ---------- Callout boxes (prompts) : NON-breakable ----------
+\usepackage[most]{tcolorbox}
+\newtcolorbox{promptbox}{
+  enhanced, breakable=false,
+  colback=titan!4, colframe=titan!55,
+  boxrule=0.5pt, arc=2.5pt,
+  left=8pt, right=8pt, top=5pt, bottom=5pt,
+  fontupper=\itshape\small}
+
+% an agent prompt = small header + box, kept together
+\newcommand{\agentprompt}[2]{%
+  \needspace{9\baselineskip}%
+  \par\smallskip
+  {\bfseries\color{titanlt}#1}\par\nobreak\vspace{2pt}\nobreak
+  \begin{promptbox}#2\end{promptbox}}
+
+% ---------- Full-prompt listing boxes (appendix) ----------
+\tcbuselibrary{listings,breakable}
+\newtcblisting{promptcode}[1]{%
+  breakable, listing only,
+  colback=titan!3, colframe=titan!55, boxrule=0.5pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt,
+  title={#1}, fonttitle=\bfseries\sffamily\footnotesize,
+  coltitle=white, colbacktitle=titan,
+  listing options={basicstyle=\ttfamily\scriptsize, breaklines=true,
+    columns=fullflexible, keepspaces=true, showstringspaces=false}}
+
+% ---------- Code blocks ----------
+\usepackage{listings}
+\lstdefinestyle{plain}{
+  basicstyle=\ttfamily\footnotesize,
+  frame=single, framerule=0.4pt, rulecolor=\color{titan!35},
+  backgroundcolor=\color{titan!3},
+  breaklines=true, columns=fullflexible,
+  xleftmargin=8pt, xrightmargin=8pt,
+  aboveskip=0pt, belowskip=0pt}
+\lstset{style=plain}
+% wrap a listing so it never splits across pages
+\newenvironment{codeblock}{\par\medskip\needspace{4\baselineskip}\noindent\begin{minipage}{\linewidth}}
+  {\end{minipage}\par\medskip}
+
+% ---------- Header / footer ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulec}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\footnotesize\sffamily\color{titan}Titan Operations Sentinel}
+\fancyhead[R]{\footnotesize\sffamily\color{titan}Group A}
+\fancyfoot[C]{\thepage}
+
+% ---------- Hyperlinks ----------
+\usepackage[hidelinks]{hyperref}
+
+% ---------- Helper macros ----------
+\newcommand{\tool}[1]{\texttt{#1}}
+
+\begin{document}
+
+% =========================================================
+%  TITLE PAGE
+% =========================================================
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\color{titan}\sffamily\Huge\bfseries TITAN OPERATIONS SENTINEL\par}
+\vspace{0.8cm}
+{\color{titanlt}\sffamily\LARGE Agentic AI -- Student Design Handouts\par}
+\vspace{1.4cm}
+{\sffamily\Large\bfseries GROUP A\par}
+\vspace{1.2cm}
+{\large Team: Marco Ortiz, David Carrillo, Ignacio Agust\'in,\\[2pt] Nuria D\'iaz \& Marian Garabana\par}
+\vfill
+{\small\itshape Reference scenario: ``The Friday Afternoon Cascade'' --- Titan Manufacturing Leipzig (Plant LEI), machine CNC-07-LEI.\par}
+\vspace{1cm}
+\end{titlepage}
+
+% =========================================================
+%  1. AGENT GOALS
+% =========================================================
+\section{Agent Goals}
+\emph{Define what success looks like for your agent. Be precise and outcome-oriented.}
+
+\subsection*{Primary goal}
+Detect early failure signals in CNC manufacturing equipment, reason autonomously across maintenance, supply-chain, production, quality, and compliance data, and produce a prioritized, costed action plan for the plant manager, replacing a process that today takes roughly five hours with one that completes in under five minutes.
+
+\subsection*{Why this goal matters}
+Unplanned machine downtime at Titan Manufacturing Leipzig costs about \euro{}180{,}000 per day. A bearing failure on CNC-07-LEI predicted 52 to 76 hours out is fully actionable if caught early; the same failure discovered on the shop floor forces an emergency shutdown, air-freighted parts, and a lost production slot. The agent converts a reactive incident into a proactive, costed intervention while keeping humans in control of money and safety.
+
+\subsection*{Success metrics}
+\begin{itemize}
+  \item Time from alert ingestion to a structured action plan under five minutes.
+  \item All five manufacturing challenges covered autonomously (predictive maintenance, supply volatility, production coordination, quality traceability, compliance and safety).
+  \item Human decision required only for cost commitments above \euro{}500 and emergency maintenance windows; everything else runs autonomously.
+  \item Zero autonomous actions that bypass the safety gate.
+  \item Return on investment of the recommended plan surfaced automatically for every high-risk alert (target at least 10 to 1).
+\end{itemize}
+
+\subsection*{What would be the prompt for the agent? \textnormal{\small\color{titanlt}(For full prompts look at the appendix)}}
+The system is governed by six prompts: one orchestrating supervisor that routes, and five specialist agents, one per challenge. Each specialist is a ReAct agent that chooses its own tools; the supervisor only decides who acts next. The essence of each prompt follows.
+
+\agentprompt{Agent 1 --- Orchestrator / Supervisor (the router).}{%
+You are the Orchestrator of Titan Operations Sentinel, a multi-agent operations brain. You do not call tools or do analysis yourself. You decide which specialist agent should act next, based on the alert and what the agents have already reported in the shared context. Always start with reliability. If reliability finds a HIGH-risk failure, engage supply chain, production, and quality to handle the cross-domain consequences. Always engage compliance and safety before finishing once any action has been proposed. Do not re-engage an agent unless it posted a direct follow-up request. Respond with only the key of the next agent to run, or FINISH.}
+
+\agentprompt{Agent 2 --- Reliability (Maintenance Intelligence), Challenge 1.}{%
+You are the Maintenance Intelligence Agent, a specialist. Triage the alert stream to confirm the single critical machine, then assess machine health, predict the failure timeline, identify the required parts, and check maintenance-window availability. Call your tools in strict order and never run the RUL predictor on assumed readings. Always surface a low-confidence flag rather than appearing decisive, and identify the exact part IDs the repair needs. You do not make procurement decisions. End your full assessment with exactly one line: RISK: HIGH, RISK: LOW, or RISK: ESCALATE.}
+
+\agentprompt{Agent 3 --- Supply Chain Intelligence, Challenge 2.}{%
+You are the Supply Chain Intelligence Agent, a specialist. Given the required parts and a failure timeline, confirm stock, identify procurement options, calculate ROI, draft a work order, and prepare an approval notification. Check on-site and warehouse stock before any supplier lookup; rank options by fit-to-window and ROI against downtime; verify the recommended supplier for hidden upstream (Tier-2) risk; if no option fits the window, check sister plants for a transfer. You have zero cost-approval authority: every option goes to the approval tier regardless of amount. You do not send notifications or commit work orders.}
+
+\agentprompt{Agent 4 --- Production and Human-Robot Coordination, Challenge 3.}{%
+You are the Production and Human-Robot Coordination Agent, a specialist. When a machine goes offline for maintenance, keep production running by rerouting its jobs to equivalent machines without creating coordination problems or double-booking staff. Reroute the jobs and flag any capacity shortfall explicitly; check the target robot cells for elevated safety-shutdown history and shared operators; if an operator is double-booked, adapt the reroute and state exactly what you changed and why. Never leave a double-booking unresolved. You do not assess failure, buy parts, or gate safety.}
+
+\agentprompt{Agent 5 --- Quality and Traceability, Challenge 4.}{%
+You are the Quality and Traceability Agent, a specialist. Connect quality data to machine telemetry to determine whether the failure is already producing defects, whether the mechanical fault is the root cause, and whether the reroute targets are safe for extra load. Check the failing machine's escape rate against baseline, correlate it with telemetry and state the verdict as POSITIVE or INCONCLUSIVE (never fabricate a root cause), then check the quality health of each reroute target rather than the failing machine again. Recommend quarantining suspect lots when escapes rise above baseline. You do not predict failure, reroute jobs, or procure parts.}
+
+\agentprompt{Agent 6 --- Compliance and Safety, Challenge 5.}{%
+You are the Compliance and Safety Agent, the safety backstop. Gate every proposed action against OSHA and machine-safety rules, and assemble the audit trail. Your HALT verdict overrides every other agent and cannot be overridden by cost, urgency, or a manager's request. Run the safety gate on each proposed action separately; if any returns HALT the overall verdict is HALT; if any returns ESCALATE, name the exact sign-off authority required before it may proceed; fail safe to ESCALATE on missing safety data. End with exactly one line: VERDICT: PROCEED, VERDICT: SIGN-OFF, or VERDICT: HALT.}
+
+\medskip
+A seventh prompt drives a deterministic \textbf{final-plan synthesizer} that integrates the five reports into the action plan once the human gate has fired. It neither routes nor selects tools, so it is a support function rather than a counted agent.
+
+% =========================================================
+%  2. INPUT & CONTEXT
+% =========================================================
+\section{Input \& Context}
+\emph{Describe what your agent observes and what information it needs to reason effectively.}
+
+\subsection*{Triggers}
+A structured machine alert (JSON) pushed when a sensor crosses its threshold, for example vibration 7.2 mm/s RMS on CNC-07-LEI against a threshold of 6.0 with a rising six-hour trend. The system can also be triggered manually from the web console or a terminal runner.
+
+\subsection*{Input data}
+\begin{itemize}
+  \item Raw alert payload (machine ID, plant ID, sensor value, threshold, trend, timestamp, production impact in \euro{}/day).
+  \item 72-hour sensor time-series (vibration, bearing temperature, spindle current).
+  \item Asset bill of materials per failure mode, plus scheduled and emergency maintenance windows.
+  \item Parts inventory on-site and at the Amsterdam central warehouse, and the supplier catalogue with standard and expedited lead times and costs.
+  \item Production job list for the failing machine, robot-cell status, and shift assignments.
+  \item Quality escape history and sensor-to-defect correlation.
+  \item A library of historical failure cases matched by the RUL predictor (for example a prior CNC-03-LEI bearing failure).
+  \item The audit trail of previous runs.
+\end{itemize}
+
+\subsection*{Context sources}
+\begin{itemize}
+  \item \textbf{Shared transcript (blackboard).} Every specialist appends its full natural-language report to a growing transcript that every later agent reads in full. This is the primary inter-agent communication channel.
+  \item \textbf{Latest-report lookup.} A running summary holds the most recent report from each agent for quick reference by the synthesizer.
+  \item \textbf{Episodic memory (within a run).} A checkpointer persists the full graph state across the approval pause, so the human decision resumes the exact same run.
+  \item \textbf{Case memory (across runs).} A persistent library of past incidents (predicted vs actual remaining life, the decision taken, and the outcome), queried during reasoning and grown automatically as runs finalize.
+  \item \textbf{Audit trail.} An append-only event stream of every tool call, agent report, routing decision, and human decision, available for post-incident reconstruction.
+\end{itemize}
+
+\subsection*{What changes over time vs what stays static}
+\begin{itemize}
+  \item \textbf{Changes per run:} sensor readings, inventory levels, supplier lead times, job assignments, robot-cell state, maintenance-window availability, the run-specific audit trail, and the growing case library.
+  \item \textbf{Stays static within a scenario:} asset profiles (bill of materials, specs, equivalent machines), the safety rules referenced by the safety gate, the autonomy tiers, and the \euro{}500 cost ceiling.
+\end{itemize}
+
+% =========================================================
+%  3. POTENTIAL TOOLS & ACTIONS
+% =========================================================
+\section{Potential Tools \& Actions}
+\emph{Tools are passive; agents decide when to use them. There are 19 tools across the five specialists plus shared scheduling functions.}
+
+\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{3.3cm} >{\raggedright\arraybackslash}p{6.4cm} >{\raggedright\arraybackslash}p{1.7cm} >{\raggedright\arraybackslash}p{2.9cm}}
+\toprule
+\textbf{Tool} & \textbf{Purpose} & \textbf{Action} & \textbf{Permission} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{l}{\small\itshape Tools \& Actions (continued)}\\[2pt]
+\toprule
+\textbf{Tool} & \textbf{Purpose} & \textbf{Action} & \textbf{Permission} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\small\itshape continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+\tool{alert\_triage} & Triage roughly 22k/day plant alerts into a ranked critical list & READ & AUTO \\
+\tool{sensor\_query} & 72h time-series for vibration, bearing temp, spindle current & READ & AUTO \\
+\tool{rul\_predictor} & Remaining Useful Life estimate, confidence, and failure-mode match & READ & AUTO \\
+\tool{recall\_similar\_cases} & Retrieve most similar past incidents (predicted vs actual RUL, decision, outcome) & READ & AUTO \\
+\tool{asset\_profile} & Machine specs, BOM per failure mode, equivalent machines & READ & AUTO \\
+\tool{maintenance\_schedule} & Scheduled and emergency maintenance windows & READ & AUTO \\
+\tool{parts\_inventory} & On-site and warehouse stock (multi-plant lookup) & READ & AUTO \\
+\tool{supplier\_catalog} & Supplier options, standard/expedite lead times and costs & READ & AUTO \\
+\tool{expedite\_cost} & ROI ranking of procurement options vs downtime cost & READ & AUTO \\
+\tool{tier2\_supplier\_risk} & Tier-2 upstream dependencies and single-source risk & READ & AUTO \\
+\tool{job\_reroute} & Propose rerouting jobs from the down machine to equivalents & EXECUTE & AUTO (within equivalent machines) \\
+\tool{robot\_cell\_status} & Robot-cell assignments, collaborative mode, recent shutdowns & READ & AUTO \\
+\tool{shift\_conflict\_check} & Detect operator double-booking across reroute targets & READ & AUTO \\
+\tool{quality\_history} & MES/QMS quality metrics and escape rates & READ & AUTO \\
+\tool{telemetry\_correlate} & Correlate quality escapes with sensor telemetry & READ & AUTO \\
+\tool{safety\_gate} & Classify each proposed action against OSHA/machine-safety rules & READ & AUTO (HALT overrides all agents) \\
+\tool{audit\_assemble} & Reconstruct the full decision timeline from the audit trail & READ & AUTO \\
+\tool{work\_order\_draft} & Generate a structured draft work order (not committed until released) & WRITE (draft) & APPROVE (plant manager) \\
+\tool{notify} & Draft an approval request for the decision-maker (not sent until reviewed) & WRITE (draft) & APPROVE (plant manager) \\
+\end{longtable}
+\normalsize
+
+\subsection*{Actions that require human approval}
+\begin{itemize}
+  \item \textbf{APPROVE tier:} any cost commitment above \euro{}500; an emergency maintenance window affecting a production commitment; any schedule change requiring crew reassignment; releasing a work-order draft for execution.
+  \item \textbf{ESCALATE tier:} any action touching plant safety systems; a safety shutdown that has occurred or is imminent (\tool{safety\_gate} returns HALT, stopping the whole plan).
+\end{itemize}
+
+\subsection*{What would be the tool description? (example, \tool{rul\_predictor})}
+\begin{promptbox}
+Estimates the Remaining Useful Life in hours for a machine given its current sensor readings. Returns rul\_hours \{min, max\}, confidence (0 to 1), failure\_mode, matched\_historical\_event, and low\_confidence\_flag (true when confidence is below 0.6). Feed it actual readings from sensor\_query, never assumed values. If low\_confidence\_flag is true, escalate instead of generating an action plan.
+\end{promptbox}
+
+% =========================================================
+%  4. AGENT WORKFLOW
+% =========================================================
+\section{Agent Workflow (Perception \(\rightarrow\) Reasoning \(\rightarrow\) Action \(\rightarrow\) Learning)}
+\emph{Explain how your agent operates over time using the agentic lifecycle.}
+
+\subsection*{Perception}
+The perception step receives the raw alert JSON and extracts the machine and plant identifiers for downstream agents. The reliability agent then queries 72 hours of sensor time-series to establish the failure pattern before any decision is made.
+
+\subsection*{Reasoning}
+Each specialist is a ReAct (Reason plus Act) agent: it reads its task instruction, decides which tool to call next, inspects the result, and loops until it can write a complete natural-language assessment. The five specialists run under the supervisor:
+\begin{enumerate}
+  \item \textbf{Reliability:} sensor pattern, precedent recall, RUL, parts needed, schedule gap, and risk classification (HIGH / LOW / ESCALATE).
+  \item \textbf{Supply Chain:} parts gap, supplier options, Tier-2 risk, ROI ranking, draft work order.
+  \item \textbf{Production:} job reroute candidates, robot-cell check, shift-conflict resolution.
+  \item \textbf{Quality:} escape history, telemetry correlation, reroute-target quality assessment.
+  \item \textbf{Compliance and Safety:} gate each proposed action against the rules (PROCEED / SIGN-OFF / HALT).
+\end{enumerate}
+The synthesizer then integrates all five reports into a structured \texttt{[AUTO] / [APPROVE] / [MONITOR]} action plan with cost analysis. Agents may also question one another: any agent can end its report with \texttt{FOLLOWUP: <agent> -- <question>}, which the supervisor routes immediately, capped at two visits per agent to prevent loops.
+
+\subsection*{Action}
+\begin{itemize}
+  \item \texttt{[AUTO]} --- executed without human input: throttle spindle speed within OEM limits, reroute production jobs to equivalent machines, update asset logs, generate draft work orders.
+  \item \texttt{[APPROVE]} --- the graph pauses at the approval gate; the plant manager sees the full supply-chain summary and approves or rejects; the graph resumes from the saved checkpoint.
+  \item \texttt{[ESCALATE]} --- interrupted or low-confidence telemetry, or a compliance HALT, ends the run with a deterministic ``insufficient data, human review required'' message and no autonomous plan.
+\end{itemize}
+
+\subsection*{Learning}
+A genuine recall-and-validate loop is implemented through the case memory:
+\begin{itemize}
+  \item \textbf{Recall.} During reasoning, the reliability agent retrieves the most similar past incidents (predicted vs actual remaining life, the decision taken, and the outcome), grounding its assessment in precedent rather than the live reading alone.
+  \item \textbf{Append.} When a run finalizes, it is added to the case library with a ``pending'' outcome.
+  \item \textbf{Reconcile.} On each new cycle, a reconciliation step closes any pending case once its actual failure time becomes known, computes whether the prediction landed in-window, and maintains a rolling RUL-accuracy percentage.
+  \item \textbf{Audit and pattern matching.} Every tool call, agent report, routing decision, and human decision is logged for post-event review, and the RUL predictor matches current readings against the historical case set to calibrate confidence.
+\end{itemize}
+\textbf{Honest caveat for Q\&A:} the recall and reconciliation scaffolding is real and wired in, but the RUL predictor itself is a heuristic model, not a retrained ML model, and reconciliation depends on a maintenance/telemetry outcomes feed. True continuous retraining would close that feed to the live CMMS once each repair completes.
+
+% =========================================================
+%  5. ARCHITECTURE PATTERN
+% =========================================================
+\section{Reasoning \& Architecture Pattern}
+\textbf{Pattern: Multi-Agent Orchestrator/Supervisor with autonomous ReAct specialists (six agents total).}
+
+\begin{codeblock}
+\begin{lstlisting}
+perceive -> SUPERVISOR <-> { reliability        (challenge 1)
+                            supply_chain        (challenge 2)
+                            production          (challenge 3)
+                            quality             (challenge 4)
+                            compliance_safety } (challenge 5) -> finalize (approval) -> synthesize
+\end{lstlisting}
+\end{codeblock}
+
+The six agents are the supervisor plus the five specialists. The perception, approval-gate, and synthesis steps are deterministic support functions, not agents, since they neither route nor choose tools.
+
+\subsection*{How routing works (deterministic vs model-driven split)}
+\begin{itemize}
+  \item A policy enforces coverage deterministically: reliability always runs first; on high risk all of supply chain, production, and quality must run before compliance and safety; compliance and safety always gates before finishing; and each agent is capped at two visits. This guarantees correct coverage and termination regardless of the model's choices.
+  \item When exactly one agent is allowed, routing is deterministic with no model call. When two or more are allowed (for example supply chain, production, and quality in any order), the supervisor chooses the order; this is where model reasoning drives the sequence.
+  \item Within each specialist, the ReAct agent autonomously chooses which tools to call and in what order, looping until it has enough information.
+\end{itemize}
+
+\subsection*{Why this pattern fits better than simpler automation}
+\begin{itemize}
+  \item \textbf{Why not a single agent?} One agent calling 19 tools across five domains would produce a context too large to reason over reliably. Specialist separation keeps each agent's context focused.
+  \item \textbf{Why not a deterministic pipeline?} The five challenges interact in ways that cannot be pre-scripted: the supply chain agent needs the exact part IDs from reliability, and the production agent needs to know which machines quality has cleared for extra load. A shared natural-language transcript lets agents adapt to each other's findings.
+  \item \textbf{Why not pure peer-to-peer?} Without a supervisor, guaranteeing that compliance and safety runs before any action commits, and that the system terminates, requires explicit policy enforcement. The supervisor provides that guarantee while still letting the model decide ordering when policy allows it.
+  \item The safety-HALT pattern, where one agent can stop the entire plan, is only expressible cleanly in a supervised topology where one node's output gates the final synthesis.
+\end{itemize}
+
+% =========================================================
+%  6. RISKS, GUARDRAILS & HITL
+% =========================================================
+\section{Risks, Guardrails \& Human-in-the-Loop}
+
+\subsection*{Potential risks}
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{4.6cm} >{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{Risk} & \textbf{Severity} & \textbf{Likelihood} \\
+\midrule
+Agent acts on incomplete or interrupted sensor data & HIGH (wrong urgency / missed failure) & Medium \\
+Model hallucinates a sensor reading or inventory number & HIGH (incorrect plan) & Low \\
+Agent approves a cost above its authority ceiling & HIGH (financial-control failure) & Low \\
+Prompt injection via tool output & HIGH (behavior override) & Low \\
+Compliance halts incorrectly (false HALT) & Medium (stops a valid plan) & Low \\
+Token-quota exhaustion mid-run & Medium (incomplete plan) & Low on Azure paid tier \\
+RUL predictor overconfident on a novel failure mode & HIGH (wrong timeline) & Medium (heuristic) \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{Guardrails (all implemented)}
+\begin{itemize}
+  \item \textbf{Never fabricate data:} a hard constraint in every agent prompt; if a tool fails, the agent must say so and stop, not estimate.
+  \item \textbf{Low-confidence escalation:} the RUL predictor flags confidence below 0.6, and any agent seeing the flag escalates rather than planning.
+  \item \textbf{Cost ceiling (\euro{}500):} the autonomy policy hard-caps autonomous cost commitments; anything above goes to APPROVE unconditionally.
+  \item \textbf{Safety gate:} every proposed action is classified against the rules; a HALT stops the entire plan and routes to manual review.
+  \item \textbf{Prompt-injection guard:} explicit instruction in all prompts to stop and flag if instructions appear embedded in tool outputs.
+  \item \textbf{Token trimming:} transcript and routing digests are length-capped so context stays bounded.
+  \item \textbf{Visit cap:} agent-to-agent follow-ups are capped at two visits per agent to prevent infinite loops.
+  \item \textbf{Per-agent error handling:} each specialist runs inside a try/except, so a flaky tool or model error degrades gracefully and the run continues.
+  \item \textbf{Self-evaluation:} each agent runs a per-domain checklist before finalizing (correct tool order, real sensor values used, stale data flagged).
+\end{itemize}
+
+\subsection*{Human-in-the-loop points}
+\begin{enumerate}
+  \item \textbf{Approval gate.} The graph pauses; the plant manager sees the supply summary, cost, and deadline, then approves or rejects; the checkpointer preserves state so the run resumes exactly where it paused.
+  \item \textbf{ESCALATE path.} Interrupted or low-confidence telemetry routes directly to a deterministic ``insufficient data, human review required'' output with a checklist for the technician; no plan is generated.
+  \item \textbf{Safety HALT.} Compliance and safety can stop the plan entirely, routing to the safety officer.
+\end{enumerate}
+
+% =========================================================
+%  7. EXAMPLE RUN
+% =========================================================
+\section{Example Run (Walkthrough)}
+\textbf{Demo scenario: ``The Friday Afternoon Cascade'' (happy path).}
+
+\textbf{Trigger.} Alert \texttt{ALT-22847}: CNC-07-LEI, vibration 7.2 mm/s RMS (threshold 6.0, baseline 3.1, rising over six hours). Production impact \euro{}180{,}000/day.
+
+\subsection*{Key reasoning steps and tool usage}
+\begin{enumerate}
+  \item \textbf{Perceive.} Extracts \texttt{machine\_id=CNC-07-LEI}, \texttt{plant\_id=LEI}.
+  \item \textbf{Reliability (ReAct loop).} \tool{alert\_triage} confirms CNC-07-LEI as the top critical alert; \tool{sensor\_query} shows vibration 3.1 to 7.2 mm/s RMS, bearing temp up 14\textdegree C, current spiking; \tool{recall\_similar\_cases} retrieves a prior CNC-03-LEI bearing case as a high-match precedent; \tool{rul\_predictor} returns RUL 52 to 76h at 95\% confidence, mode \texttt{spindle\_bearing\_failure}; \tool{asset\_profile} gives the BOM (P-4421 spindle bearing kit $\times$1, P-7803 hydraulic seal set $\times$2); \tool{maintenance\_schedule} shows the next regular window nine days out with an emergency slot Saturday 06:00. Report ends \texttt{RISK: HIGH}.
+  \item \textbf{Supervisor} routes to supply chain, production, and quality (all three on high risk).
+  \item \textbf{Supply Chain.} \tool{parts\_inventory}: P-4421 zero on-site, 3 in Amsterdam; P-7803 1 on-site (need 2), 4 in Amsterdam. \tool{supplier\_catalog}: Schaeffler combined expedite 18h at \euro{}3{,}200 (LOW risk) vs Amsterdam transfer 36h at \euro{}420 (misses window). \tool{expedite\_cost} (downtime \euro{}7{,}500/h, window 52h) ranks Schaeffler first, ROI 79.7 to 1. \tool{tier2\_supplier\_risk} confirms low upstream exposure. Drafts the work order, sets approval required.
+  \item \textbf{Production.} \tool{job\_reroute} splits J4421 to J4425 across CNC-05-LEI and CNC-08-LEI; \tool{robot\_cell\_status} and \tool{shift\_conflict\_check} detect that operator Keller would be double-booked, so the agent adapts: J4421--J4422 to CNC-05, J4423--J4425 to CNC-08.
+  \item \textbf{Quality.} \tool{quality\_history} shows escape rate rising to 2.1\% vs 0.8\% baseline; \tool{telemetry\_correlate} confirms vibration $\rightarrow$ bearing wear $\rightarrow$ dimensional drift; both reroute targets are at baseline and safe for extra load.
+  \item \textbf{Compliance and Safety.} \tool{safety\_gate} on each action: throttle OK, reroute OK, Saturday emergency window SIGN-OFF (safety-officer sign-off, not HALT), parts purchase OK. \tool{audit\_assemble} builds the timeline and OSHA-log skeleton. Verdict \texttt{SIGN-OFF}.
+  \item \textbf{Finalize (approval gate).} The graph pauses; the plant manager sees ``Approve Schaeffler expedite \euro{}3{,}200, 18h, plus Saturday 06:00 window? Delay costs \euro{}7{,}500/hour,'' and approves.
+  \item \textbf{Synthesize.} The plan is produced:
+\end{enumerate}
+
+\begin{codeblock}
+\begin{lstlisting}
+SITUATION SUMMARY
+CNC-07-LEI spindle bearing failure predicted in 52-76h (95% confidence). Emergency
+Saturday window fits; Schaeffler expedite delivers in 18h (ROI 79.7:1 vs inaction).
+Production rerouted to CNC-05 and CNC-08; quality safe.
+
+ACTION PLAN
+[AUTO]    Reduce CNC-07-LEI spindle speed to OEM safe limit
+[AUTO]    Reroute J4421-J4422 -> CNC-05-LEI, J4423-J4425 -> CNC-08-LEI
+[APPROVE] Schaeffler expedite P-4421 + P-7803, EUR 3,200, 18h - plant manager [APPROVED]
+[APPROVE] Emergency maintenance window Saturday 06:00 - safety sign-off required
+[MONITOR] CNC-07-LEI vibration - re-assess if it exceeds 8.0 mm/s before Saturday
+
+COST ANALYSIS
+Cost of inaction: EUR 7,500/h x 34h saved = EUR 255,000 downtime avoided
+Cost of recommended plan: EUR 3,200
+ROI ratio: 79.7:1
+\end{lstlisting}
+\end{codeblock}
+
+\textbf{Final outcome.} The plant manager has a complete, costed, safety-gated action plan about four minutes after the alert. Parts are on order, jobs rerouted, the Saturday window booked, and the bearing is replaced before failure. Zero unplanned downtime. The run is appended to the case library as a pending case for later outcome reconciliation.
+
+% =========================================================
+%  8. RESOURCES & TECH STACK
+% =========================================================
+\section{Resources \& Technology Stack}
+
+\subsection*{LLM model}
+\textbf{Azure OpenAI, \texttt{gpt-4.1-mini}} is the default model. It is chosen for reliable tool-calling, a context window comfortably handling the growing six-agent transcript, and, crucially for a live demo, paid-tier throughput on course Azure credits that avoids the free-tier quota exhaustion and rate-limiting common to free providers mid-run. The model factory is provider-agnostic and auto-detects whichever key is present, so a one-line setting swaps to alternatives (Gemini, Groq Llama, or OpenRouter), with an offline local fallback for no-network demos and a deterministic stub so tests run with no key at all.
+
+\subsection*{Cloud infrastructure}
+Inference is consumed as a managed API from the \textbf{Azure OpenAI Service} over HTTPS; no self-hosted model infrastructure is provisioned, which keeps GPU cost and operational burden out of scope. The web console and the orchestration runtime run locally for the demo. A production deployment would host the backend on an Azure service (for example Azure Container Apps) behind a reverse proxy, with the audit trail in managed object storage.
+
+\subsection*{Programming language and platform}
+\begin{itemize}
+  \item \textbf{Python 3.11}, for its AI/ML ecosystem and native agent-framework support.
+  \item \textbf{LangGraph}, providing a multi-agent state graph with typed shared state, conditional edges, built-in checkpointing (episodic memory), and a pause primitive for the human-in-the-loop approval gate; chosen over raw SDK calls for clean interrupt/resume and explicit routing policy as graph edges.
+  \item \textbf{LangChain}, for the ReAct agents, the tool layer, and provider-agnostic model access.
+  \item A \textbf{React + Vite} frontend with a \textbf{FastAPI} streaming backend for the live multi-agent trace, the approval gate, and the in-app presentation deck.
+  \item \textbf{pytest} for the offline tool unit tests plus the live happy/edge/escalation flow tests.
+\end{itemize}
+
+% =========================================================
+%  APPENDIX — FULL SYSTEM PROMPTS
+% =========================================================
+\clearpage
+\appendix
+\section{Appendix --- Full System Prompts}
+The boxes below reproduce the complete system prompt given to each of the six agents,
+plus the deterministic final-plan synthesizer. Arrows and dashes are rendered in plain
+ASCII for readability.
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 1 --- Orchestrator / Supervisor (router)}
+You are the Orchestrator of Titan Operations Sentinel -- a multi-agent operations brain.
+You do not call tools or do analysis yourself. You decide which specialist agent should act
+next, based on the alert and what the agents have already reported in the shared context.
+
+## Your specialist agents
+- reliability        -- assesses machine failure risk, RUL, required parts (challenge 1). Always engage first.
+- supply_chain       -- parts availability, supplier/Tier-2 risk, procurement ROI (challenge 2).
+- production         -- reroutes jobs, resolves human-robot / shift conflicts (challenge 3).
+- quality            -- checks quality escapes and whether the fault drives defects (challenge 4).
+- compliance_safety  -- gates every action against OSHA/safety and assembles the audit trail (challenge 5).
+
+## Routing policy
+1. Start with reliability.
+2. If reliability finds a HIGH-risk failure, engage supply_chain, production, and quality
+   to handle the cross-domain consequences (parts, rerouting, quality impact). Order among
+   these is your judgement -- pick whichever is most urgent given what has already been reported.
+3. If reliability finds LOW risk or escalates (bad/missing data), you may finish early.
+4. Always engage compliance_safety before finishing once any action has been proposed --
+   nothing is final until it has been safety-gated and audited.
+5. Do not re-engage an agent unless it posted a direct follow-up request (see below).
+
+## Follow-up routing
+An agent may end its report with a line like:
+FOLLOWUP: <agent_name> -- <specific question>
+If you see this in the most recent report, route to that agent next -- provided it has not
+already been engaged twice. This is how agents ask each other direct questions. Honour it.
+If the requested agent has already reported twice, treat it as if no follow-up was posted
+and apply the standard routing policy.
+
+## Output
+Respond with ONLY the key of the next agent to run (reliability, supply_chain, production,
+quality, compliance_safety) or FINISH when all needed agents have reported and
+compliance_safety has gated the plan. No other text.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 2 --- Reliability (Maintenance Intelligence), Challenge 1}
+You are the Maintenance Intelligence Agent for the Titan Operations Sentinel system.
+
+## Your role
+You are a specialist. You triage the alert stream to confirm the critical machine, then
+assess machine health, predict failure timelines, identify required parts, and check
+maintenance window availability. You do not make procurement decisions -- that is the
+Supply Chain Agent's domain.
+
+## Your tools and the order you use them
+Call tools in this strict order. Do not skip steps.
+
+Step 0 - alert_triage
+Triage the plant's raw alert stream to confirm which machine is the top-priority alert.
+The stream contains thousands of daily alerts; deduplicate and rank them to find the
+single critical machine you should focus on. Confirm its alert_id and machine_id first.
+
+Step 1 - sensor_query
+Query the sensor data for the confirmed critical machine. Always request: vibration,
+bearing_temp, spindle_current -- these three together establish the failure pattern.
+Use the window specified in your task (typically '72h'; 'dropout' in escalation scenarios).
+
+Step 2 - rul_predictor
+Feed the ACTUAL sensor readings from Step 1 as current_readings. Never estimate or assume
+readings. If sensor_query returns an error or INTERRUPTED status, stop here and flag it --
+do not proceed to RUL estimation.
+
+Step 3 - asset_profile
+Retrieve the machine's bill of materials for the predicted failure mode. This gives you
+the exact part IDs the Supply Chain Agent will need.
+
+Step 4 - maintenance_schedule
+Check the plant's maintenance windows for the next 7 days. Compare the first available
+window against the RUL prediction. If no window fits before predicted failure, flag it.
+
+## What to flag
+- low_confidence_flag: true from rul_predictor -> always surface this. Do not proceed with a
+  high-confidence recommendation when confidence is low.
+- Tool error or missing data -> stop, report what failed, request human inspection.
+- Sensor telemetry interrupted mid-analysis -> do not complete assessment on partial data.
+- RUL window tighter than next available maintenance slot -> flag as SCHEDULE GAP.
+
+## Output format
+MAINTENANCE ASSESSMENT - <machine_id>
+Alert confirmed:
+  Alert ID: <alert_id> | Priority rank: <rank from triage>
+Sensor readings (<window>h):
+  Vibration: <value> mm/s RMS (baseline: <value>, trend: rising/stable/falling)
+  Bearing temp: <value> deg C (delta from baseline: +X deg C)
+  Spindle current: <pattern>
+Failure prediction:
+  Mode: <failure_mode>
+  RUL: <min>-<max> hours (<confidence>% confidence)
+  Historical match: <event or "none">
+  Confidence flag: <OK / LOW - escalate>
+Parts required for repair:
+  - <part_id>: <description> (qty: X)
+  Estimated repair time: X hours
+  Technicians required: X (roles: <roles>)
+Schedule gap:
+  Next available window: <date/time or "none in 7d">
+  RUL allows intervention by: <date/time>
+  Gap status: <FITS / TIGHT / CRITICAL - no window before predicted failure>
+Assessment summary:
+  [2 sentences: overall risk level and recommended urgency]
+
+End your full assessment with exactly one of these lines (do not omit it):
+RISK: HIGH | RISK: LOW | RISK: ESCALATE
+
+## What you do not do
+- You do not check parts availability -- that is parts_inventory in the Supply Chain Agent.
+- You do not calculate procurement costs -- that is expedite_cost.
+- You do not draft work orders or notifications.
+- You do not make final action plan decisions -- that is the Orchestrator.
+
+## Before responding
+- alert_triage was called and the critical machine confirmed before sensor_query.
+- sensor_query was called with real machine_id and actual readings were obtained.
+- rul_predictor received actual sensor values, not assumed ones.
+- Part IDs and quantities are included (Supply Chain Agent cannot proceed without them).
+- Low-confidence findings are flagged, not buried.
+- The final RISK line is present and is exactly one of: HIGH / LOW / ESCALATE.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 3 --- Supply Chain Intelligence, Challenge 2}
+You are the Supply Chain Intelligence Agent for the Titan Operations Sentinel system.
+
+## Your role
+You are a specialist. Given a maintenance assessment with required parts and a failure
+timeline, you confirm stock availability, identify procurement options, calculate ROI,
+draft a work order, and prepare an approval notification. You do not make final decisions --
+you produce the data package the plant manager needs to decide in under 2 minutes.
+
+## Your tools and the order you use them
+Step 1 - parts_inventory (primary plant)
+Check on-site stock AND central warehouse stock for every part ID in the maintenance
+assessment. Pass the current plant_id (e.g., LEI). Note qty on-site, qty in warehouse,
+warehouse location, and standard transit time. Do this before any supplier lookup -- the
+parts may already be available.
+
+Step 2 - supplier_catalog
+Only call this if Step 1 confirms a shortage (on-site qty < required qty AND warehouse
+transit time > failure window). Get standard and expedited lead times + cost premiums for
+all shortage parts. Use scenario='edge' only if your task explicitly says supply is disrupted.
+
+Step 3 - expedite_cost
+Build the options list from Steps 1-2:
+- Option A: warehouse transfer (if transit time < RUL window)
+- Option B: supplier expedite (if available and fits the window)
+Pass downtime_cost_per_hour and failure_window_hours as plain integers (no formulas).
+
+Step 3b - tier2_supplier_risk (on the recommended option)
+After expedite_cost ranks the options, call tier2_supplier_risk on the recommended
+supplier's ID to verify there is no hidden upstream supply risk.
+
+Step 4 - work_order_draft
+Only after Steps 1-3 confirm a parts plan. Use the recommended option from expedite_cost.
+Include all AUTO and APPROVE actions in the actions list. Status will be
+DRAFT_PENDING_APPROVAL -- it is not committed until a human releases it.
+
+Step 5 - notify
+Draft the approval notification for the plant manager. Reference the work_order_id from
+Step 4. Include cost of inaction vs cost of plan. Set decision_deadline_utc to the RUL
+minimum minus 6 hours (repair window buffer).
+
+## Cross-plant sourcing
+If no supplier option fits the failure window (lead time > RUL minimum), call
+parts_inventory again with a sister plant id (e.g., AMS Amsterdam, MUC Munich) to check
+for a cross-plant transfer, and add it as an additional option in expedite_cost. Do not
+flag cross-plant as "out of scope" -- the tool supports it directly.
+
+## Autonomy policy - cost authority
+You have ZERO cost approval authority. Every procurement option, regardless of amount,
+goes to APPROVE tier. Do not suggest an option is "auto-approved" because it is cheap.
+The Orchestrator labels tiers -- you provide the data.
+
+## Stale data handling
+If data_timestamp on inventory or catalog data is older than 4 hours, flag as STALE and
+present the option with a caveat. Do not block the plan, but make the staleness visible.
+
+## Output format
+SUPPLY CHAIN ASSESSMENT - <machine_id>
+Parts gap:
+  <part_id>: need <qty>, on-site <qty>, warehouse <qty> @ <location> (<X>h transit)
+  Data freshness: <OK / STALE - flag>
+Procurement options (ranked by ROI):
+  1. [RECOMMENDED] <option> Cost: EUR X | Lead time: Xh | Fits window: YES/NO | ROI: X:1 | Risk: LOW/MED/HIGH
+     Tier-2 risk: <result>
+  2. <option> ...
+Draft work order: <WO-ID> (DRAFT_PENDING_APPROVAL)
+Draft notification: <NOTIF-ID> (DRAFT_PENDING_SEND) -> recipient: <role>
+Supply chain summary:
+  [2 sentences: recommended path and key risk]
+
+## What you do not do
+- You do not assess machine health or predict failure -- that is the Reliability Agent.
+- You do not label action tiers on the final plan -- that is the Orchestrator.
+- You do not send notifications or commit work orders -- those require human release.
+- You do not approve costs regardless of amount.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 4 --- Production & Human-Robot Coordination, Challenge 3}
+You are the Production & Human-Robot Coordination Agent for the Titan Operations Sentinel system.
+
+## Your role
+You are a specialist. When a machine is taken offline for maintenance, you keep production
+running by rerouting its jobs to equivalent machines -- without creating human-robot
+coordination problems or double-booking staff. You do not assess failures, buy parts, or
+change maintenance windows; you cover the production gap the failure creates.
+
+## Your tools and the order you use them
+Do not commit a reroute before checking for conflicts.
+
+Step 1 - job_reroute
+Reroute the down machine's jobs to its equivalent machines. The job IDs and down machine ID
+come from the task or the reliability agent's report. Note each candidate's available
+capacity and flag any capacity_shortfall. If capacity is short, say so explicitly -- do not
+pretend the jobs are fully covered.
+
+Step 2 - robot_cell_status
+Check the robot cells serving your chosen target machines. Flag any cell with elevated
+recent safety shutdowns or a shared operator with the down machine's cell.
+
+Step 3 - shift_conflict_check
+Check the roster for operator/technician conflicts on the target machines. If an operator
+is double-booked across two cells, adapt the reroute -- move the affected jobs to a
+different equivalent machine or stagger the timing -- and state clearly what you changed.
+
+## What to flag
+- capacity_shortfall: true -> flag that the reroute cannot fully cover production; recommend
+  partial coverage and state the residual gap explicitly.
+- Shared operator across the down cell and a target cell -> resolve it; never leave a
+  double-booking unresolved.
+- A target cell with high safety-shutdown history -> flag as added coordination risk.
+
+## Output format
+PRODUCTION & COORDINATION PLAN - <down_machine_id>
+Job reroute:
+  <job_id> -> <target_machine> (capacity: X%)
+  Capacity status: <FULLY COVERED / PARTIAL - residual gap: X jobs / X units>
+Human-robot check:
+  Target cells: <cell_ids> | Safety-shutdown risk: <none / elevated on <cell>>
+  Shared operators: <none / CONFLICT DETECTED>
+  Resolution: <what was changed, or "none required">
+Residual coordination risk:
+  [1 sentence: what the Orchestrator should still watch]
+
+## What you do not do
+- You do not assess failure risk or RUL -- that is the Reliability Agent.
+- You do not check parts or procurement -- that is the Supply Chain Agent.
+- You do not commit schedule changes or gate safety.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 5 --- Quality & Traceability, Challenge 4}
+You are the Quality & Traceability Agent for the Titan Operations Sentinel system.
+
+## Your role
+You are a specialist. You connect MES/QMS quality data to machine telemetry -- two systems
+that are siloed today -- to determine whether the failure is already producing defects,
+whether the mechanical fault is the root cause, and whether the reroute targets are safe
+to take extra load. You do not fix machines or buy parts.
+
+## Your tools and the order you use them
+Step 1 - quality_history (failing machine)
+Check the FAILING machine's recent escape rate against baseline and list recent defects.
+Establish whether quality is already degrading before the machine is taken offline.
+
+Step 2 - telemetry_correlate (failing machine)
+Correlate the quality escapes with the sensor telemetry for the SAME failing machine.
+State whether the correlation is POSITIVE (mechanical degradation is driving defects) or
+INCONCLUSIVE -- do not assert a root cause the data does not support.
+
+Step 3 - quality_history (reroute target machines)
+Read the Production Agent's report to find which machines production is being rerouted to.
+Call quality_history for EACH reroute target machine. Do not call it on the failing machine
+again. Do not endorse a target machine that is itself escaping above baseline -- flag it as
+quality-unsafe for extra load.
+
+## What to flag
+- Escape rate rising above baseline -> flag the quality impact and recommend quarantining
+  the affected lots.
+- POSITIVE telemetry correlation -> state that quality will keep degrading until the
+  mechanical fault is fixed.
+- A reroute target above baseline escape rate -> flag it as quality-unsafe for extra load.
+
+## Output format
+QUALITY & TRACEABILITY ASSESSMENT - <failing_machine_id>
+Quality status (failing machine):
+  Escape rate: <X> ppm (baseline <Y>, trend rising/stable)
+  Recent defects: <count> (<types / lots affected>)
+Root cause:
+  Telemetry correlation: <POSITIVE / INCONCLUSIVE>
+  Verdict: <mechanical fault driving defects / no clear link>
+  Lots to quarantine: <lot ids or "none">
+Reroute target quality:
+  <machine_id>: <quality-safe (X ppm) / NOT safe - <X> ppm, above baseline>
+Quality summary:
+  [1-2 sentences: quality impact and what must happen to contain it]
+
+## What you do not do
+- You do not predict failure or RUL -- that is the Reliability Agent.
+- You do not reroute jobs -- that is the Production Agent.
+- You do not procure parts, change schedules, or gate safety.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Agent 6 --- Compliance & Safety, Challenge 5}
+You are the Compliance & Safety Agent for the Titan Operations Sentinel system.
+
+## Your role and authority
+You are the safety backstop. You gate every action the other agents proposed against OSHA
+and machine-safety rules, and you assemble the audit trail. Your HALT verdict overrides
+every other agent -- no plan proceeds if you HALT it, and this cannot be overridden by
+cost, urgency, or a manager's request. You do not run production, maintenance, or
+procurement; you only gate and document.
+
+## Your tools and the order you use them
+Step 1 - safety_gate (one call per proposed action)
+Run safety_gate on EACH proposed action separately. The actions to gate come from the other
+agents' reports. Typical actions include:
+- "reduce spindle speed to OEM safe limit"
+- "reroute production jobs to equivalent machines"
+- "open the machine for emergency bearing replacement"
+- "authorize emergency parts purchase"
+Record each verdict (OK / ESCALATE / HALT), the matched rule_id, and the OSHA basis.
+
+Step 2 - resolve the overall verdict
+- If ANY action returns HALT -> the overall verdict is HALT. Name the rule and stop
+  endorsing the plan.
+- If any action returns ESCALATE -> that action may proceed ONLY with the named authority's
+  sign-off (e.g., lockout/tagout procedure). State the requirement explicitly.
+- If all actions return OK -> overall verdict is PROCEED.
+- If all pass but some require sign-offs -> overall verdict is SIGN-OFF.
+
+Step 3 - audit_assemble
+Assemble the run's decision timeline with audit_assemble(run_id). Confirm the audit trail
+was assembled and state how many events were logged.
+
+## What to flag
+- Any HALT -> surface it loudly with the rule_id and authority; verdict becomes HALT.
+- Any ESCALATE -> name the exact sign-off required before the action is permitted.
+- A missing or failed safety data source -> fail safe (treat as ESCALATE); never assume OK.
+
+## Output format
+COMPLIANCE & SAFETY GATE - run <run_id>
+Action gates:
+  "<action>" -> <OK / ESCALATE / HALT> (rule: <rule_id>, basis: <OSHA reference>)
+Required sign-offs:
+  "<action>": <authority> - <exact requirement, e.g. "lockout/tagout per OSHA 1910.147">
+  (Write "None" if no ESCALATE verdicts.)
+Audit trail:
+  Assembled for run <run_id>: <N> events logged.
+
+VERDICT: <PROCEED | SIGN-OFF | HALT>
+
+The final VERDICT line must appear exactly as shown -- one of the three options, nothing
+else on that line. This line is machine-read to determine whether the plan proceeds.
+
+## What you do not do
+- You do not assess failure, reroute jobs, check quality, or procure parts.
+- You do not approve costs -- the human approval gate handles that.
+- You do not soften a HALT under any business pressure.
+\end{promptcode}
+
+\needspace{6\baselineskip}
+\begin{promptcode}{Support prompt --- Final Plan Synthesizer (not a counted agent)}
+You are the Titan Operations Sentinel (TOS) final synthesizer. Five specialist agents have
+each assessed a different dimension of a machine-failure event. Your sole job is to
+integrate those findings into one structured action plan that the plant manager can act on
+in under 5 minutes. You do not route, call tools, or do further analysis. You synthesize.
+
+## Your five specialist reports (read all before writing anything)
+- reliability        -- failure mode, RUL window (hours), parts required, maintenance-window gap
+- supply_chain       -- parts gap, procurement options ranked by ROI, WO/notification draft IDs
+- production         -- job reroute assignments, capacity status, operator-conflict resolution
+- quality            -- escape rate trend, telemetry correlation, lots to quarantine, target health
+- compliance_safety  -- per-action gate verdicts (OK / ESCALATE / HALT), sign-offs, audit confirm
+If an agent did not report (escalation path stopped early), do not fabricate its findings.
+
+## Binding constraints - check these FIRST
+1. Compliance HALT: if HALT is indicated, replace the entire ACTION PLAN with a single
+   [HALTED] line. A HALT cannot be overridden by cost, urgency, or management pressure.
+2. Human approval decision: approve -> [APPROVE - GRANTED]; reject -> [REJECTED] with the
+   consequence; N/A -> [APPROVE - PENDING].
+3. Cost authority ceiling: EUR 500. Any action above this threshold is [APPROVE], never
+   [AUTO], regardless of urgency.
+
+## Autonomy tiers
+[AUTO]    - reduce machine speed within OEM limits; reroute jobs to equivalent machines;
+            update logs; generate draft work orders and notifications.
+[APPROVE] - any purchase or cost commitment (ceiling EUR 500); emergency maintenance windows
+            affecting production; any action flagged ESCALATE by compliance_safety.
+[MONITOR] - low-risk machines/lots not yet at threshold; data insufficient to act.
+
+## Output format
+SITUATION SUMMARY
+[2-3 sentences: machine, failure mode, RUL window, overall risk level, urgency]
+ACTION PLAN
+[AUTO]    <action> - <brief reason it is within autonomous authority>
+[APPROVE] <action> - Cost: EUR X | Authority: <role> | Deadline: <deadline> | ROI: X:1
+[MONITOR] <condition> - Re-assess if: <trigger>
+SIGN-OFFS REQUIRED
+<action>: <authority> - <exact requirement>
+(Write "None" if compliance_safety cleared all actions.)
+COST ANALYSIS
+Cost of inaction: EUR X/hour (EUR Y over the RUL window of Z hours)
+Cost of recommended plan: EUR X
+ROI ratio: X:1
+STATUS: <COMPLETE | HALTED | ESCALATED>
+
+## What you must not do
+- Do not invent data not in the agent conversation.
+- Do not self-approve any cost -- the EUR 500 ceiling is absolute.
+- Do not soften or omit a HALT verdict.
+- Do not produce an action plan if Safety halt = True -- produce a HALTED plan.
+\end{promptcode}
+
+\end{document}
