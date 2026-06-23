@@ -1,7 +1,6 @@
 # Agentic AI Group Assignment — Project Planning Brief
 
-> **Use this file with Claude Code to generate a full project plan, architecture design, prompt pack, and slide outline.**
-> Feed it as context and say: *"Using this brief, help me build the full deliverable plan for our group project."*
+> A planning brief for the group project: the full plan, architecture design, prompt pack, and slide outline.
 
 ---
 
@@ -135,7 +134,7 @@ The demo or demo flow must trace:
 
 ## 8. Tools specification template
 
-For each tool, Claude Code should generate a spec like this:
+For each tool, write a spec like this:
 
 ```
 Tool name:
@@ -155,7 +154,7 @@ Target 3–6 tools. Fewer well-justified tools > many vague ones.
 
 ## 9. Prompt pack — what to generate
 
-Claude Code must produce all four prompt types:
+The prompt pack must include all four prompt types:
 
 ### A. System prompt
 - Role definition
@@ -191,7 +190,7 @@ Claude Code must produce all four prompt types:
 
 ## 10. Risk matrix — minimum coverage
 
-Claude Code should generate a table with at least these risks:
+Include a table with at least these risks:
 
 | Risk | Why it matters | Mitigation |
 |---|---|---|
@@ -210,7 +209,7 @@ Low-risk actions    → fully autonomous
 Medium-risk actions → confirm with user before executing
 High-risk actions   → escalate to human approver
 ```
-Claude Code should label each tool action in the tool catalog with its risk tier.
+Label each tool action in the tool catalog with its risk tier.
 
 ---
 
@@ -229,7 +228,7 @@ Avoid generic claims. Use the format: "[Metric] reduced/improved by [estimate] b
 
 ## 12. Evaluation metrics — three layers
 
-Claude Code should suggest metrics across:
+Suggest metrics across:
 
 **Product metrics:** task completion rate, time saved per interaction, user satisfaction, adoption rate  
 **Agent performance:** tool selection accuracy, plan success rate, escalation rate, hallucination/error rate  
@@ -239,7 +238,7 @@ Claude Code should suggest metrics across:
 
 ## 13. Slide outline to generate
 
-Claude Code should produce a slide-by-slide content plan:
+Produce a slide-by-slide content plan:
 
 ```
 Slide 1: Title + one-line pitch (what problem + for whom + using what)
@@ -266,7 +265,7 @@ Slide 9: Next steps / roadmap — MVP vs V2 vs V3
 
 - Use **free-tier LLMs** for any MVP: Groq (LLaMA), Gemini free tier, or equivalent
 - No paid API keys in the demo
-- MVP is optional but recommended — even a simulated flow in Claude/Gemini with screenshots counts
+- MVP is optional but recommended — even a simulated flow in a free-tier LLM (Gemini or Groq) with screenshots counts
 - The professor said to use AI intentionally, not just decoratively
 
 ---
@@ -315,22 +314,7 @@ Every team member must be able to answer:
 
 ---
 
-## 17. Claude Code instructions
-
-When using this brief, ask Claude Code to:
-
-1. `Generate the full problem statement for [chosen industry + challenge]`
-2. `Design the architecture with all components listed in section 6`
-3. `Write the full prompt pack (system, task, guardrail, self-eval) for this agent`
-4. `Produce the tool catalog with specs for each tool (section 8 format)`
-5. `Generate the risk matrix with mitigations (section 10 format)`
-6. `Write the slide-by-slide content plan (section 13 format)`
-7. `Draft the agent loop walkthrough for the demo flow (three paths: happy, edge, escalation)`
-8. `Produce a Q&A cheat sheet per team member based on their assigned section`
-
----
-
-## 18. Group fill-in section
+## 17. Group fill-in section
 
 ```
 Group members:
@@ -350,4 +334,4 @@ LLM platform for MVP: [Groq / Gemini free tier / other]
 
 ---
 
-*Generated as a Claude Code planning brief for IE Agentic AI for IT — Session 11 group assignment.*
+*Planning brief for IE Agentic AI for IT, Session 11 group assignment.*

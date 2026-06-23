@@ -117,7 +117,7 @@ All agents use direct Anthropic SDK `tool_use` loop. Chain-of-thought exposed vi
 | `prompts/self_eval.md` | Per-agent checklist before each response |
 
 ### Supporting files ✅
-- `CLAUDE.md` — project context for all Claude Code sessions (read this first)
+- `CLAUDE.md` — project context and conventions (read this first)
 - `demo_scenario.py` — terminal runner for the Friday Cascade
 - `app.py` — Streamlit placeholder
 - `requirements.txt`, `.env.example`, `.gitignore`
@@ -178,7 +178,7 @@ demo_scenario.py
         │     tools: parts_inventory → supplier_catalog → expedite_cost → work_order_draft → notify
         │     returns: supply chain plan text
         │
-        └── _synthesize_action_plan()      # final Claude call, no tools
+        └── _synthesize_action_plan()      # final synthesis call, no tools
               returns: structured [AUTO]/[APPROVE]/[MONITOR] plan
 ```
 

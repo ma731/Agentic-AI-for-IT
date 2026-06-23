@@ -570,40 +570,7 @@ Don't hide the risks — the professor explicitly scores this.
 
 ---
 
-## 10. Instructions for Claude Code
-
-Feed this file + the assignment brief together as context. Then use these specific prompts:
-
-```
-# Generate tool function stubs
-"Using the architecture in titan_project_brainstorm.md, generate the 8 tool 
-functions in the tools/ directory with realistic simulated data returns. 
-Each tool should have a docstring matching the tool catalog format from the brief."
-
-# Generate the orchestrator
-"Build orchestrator.py using the Anthropic SDK tool_use pattern shown in 
-section 4 of titan_project_brainstorm.md. Include the full agent loop, 
-tool dispatch, and result synthesis logic."
-
-# Generate the system prompts
-"Write the full system prompts for orchestrator, maintenance agent, and 
-supply chain agent based on section 5 of titan_project_brainstorm.md. 
-Include all four prompt types: system, task, guardrail, self-eval."
-
-# Generate the Streamlit demo
-"Build app.py as a Streamlit interface that runs the Friday Afternoon Cascade 
-demo scenario from section 3, showing the agent's chain of thought, each tool 
-call, and the final action plan in real time."
-
-# Generate the simulated data
-"Create the JSON files in data/ for the Friday Afternoon Cascade scenario: 
-CNC-07-LEI sensor readings (72h, showing the anomaly pattern), asset profiles, 
-parts inventory with the shortage scenario, and supplier catalog with expedite options."
-```
-
----
-
-## 11. What makes this above and beyond
+## 10. What makes this above and beyond
 
 Against the grading rubric:
 
@@ -621,4 +588,4 @@ Against the grading rubric:
 
 ---
 
-*This document is the source of truth for the group project. Update section 9 with actual member names and section 10 as Claude Code tasks get completed.*
+*This document is the source of truth for the group project. Update section 9 with actual member names as the project progresses.*
