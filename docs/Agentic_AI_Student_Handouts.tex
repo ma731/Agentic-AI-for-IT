@@ -43,9 +43,9 @@
 
 % keep headings from landing at the very bottom of a page
 \let\oldsection\section
-\renewcommand{\section}{\needspace{6\baselineskip}\oldsection}
+\renewcommand{\section}{\needspace{7\baselineskip}\oldsection}
 \let\oldsubsection\subsection
-\renewcommand{\subsection}{\needspace{4.5\baselineskip}\oldsubsection}
+\renewcommand{\subsection}{\needspace{5\baselineskip}\oldsubsection}
 
 % ---------- Tables ----------
 \usepackage{booktabs}
@@ -198,19 +198,10 @@ A structured machine alert (JSON) pushed when a sensor crosses its threshold, fo
 \end{itemize}
 
 \subsection*{Context sources}
-\begin{itemize}
-  \item \textbf{Shared transcript (blackboard).} Every specialist appends its full natural-language report to a growing transcript that every later agent reads in full. This is the primary inter-agent communication channel.
-  \item \textbf{Latest-report lookup.} A running summary holds the most recent report from each agent for quick reference by the synthesizer.
-  \item \textbf{Episodic memory (within a run).} A checkpointer persists the full graph state across the approval pause, so the human decision resumes the exact same run.
-  \item \textbf{Case memory (across runs).} A persistent case library of past incidents that the reliability agent can recall, that grows as runs finalize, and whose predictions are validated as real outcomes arrive.
-  \item \textbf{Audit trail.} An append-only event stream of every tool call, agent report, routing decision, and human decision, available for post-incident reconstruction.
-\end{itemize}
+The agents share four context sources. The primary one is a shared transcript (a blackboard) to which every specialist appends its full natural-language report and which every later agent reads in full, complemented by a running latest-report summary for quick reference by the synthesizer. Within a run, a checkpointer provides episodic memory by persisting the full graph state across the approval pause, so the human decision resumes the exact same run. Across runs, a persistent case library of past incidents (which the reliability agent can recall, which grows as runs finalize, and whose predictions are validated as outcomes arrive) gives longer-term memory. Finally, an append-only audit trail records every tool call, agent report, routing decision, and human decision for post-incident reconstruction.
 
 \subsection*{What changes over time vs what stays static}
-\begin{itemize}
-  \item \textbf{Changes per run:} sensor readings, inventory levels, supplier lead times, job assignments, robot-cell state, maintenance-window availability, the run-specific audit trail, and the growing case library.
-  \item \textbf{Stays static within a scenario:} asset profiles (bill of materials, specs, equivalent machines), the safety rules referenced by the safety gate, the autonomy tiers, and the \euro{}500 cost ceiling.
-\end{itemize}
+What changes per run are the sensor readings, inventory levels, supplier lead times, job assignments, robot-cell state, maintenance-window availability, the run-specific audit trail, and the growing case library. What stays static within a scenario are the asset profiles (bill of materials, specs, equivalent machines), the safety rules referenced by the safety gate, the autonomy tiers, and the \euro{}500 cost ceiling.
 
 % =========================================================
 %  3. POTENTIAL TOOLS & ACTIONS
@@ -257,10 +248,7 @@ A structured machine alert (JSON) pushed when a sensor crosses its threshold, fo
 \normalsize
 
 \subsection*{Actions that require human approval}
-\begin{itemize}
-  \item \textbf{APPROVE tier:} any cost commitment above \euro{}500; an emergency maintenance window affecting a production commitment; any schedule change requiring crew reassignment; releasing a work-order draft for execution.
-  \item \textbf{ESCALATE tier:} any action touching plant safety systems; a safety shutdown that has occurred or is imminent (\tool{safety\_gate} returns HALT, stopping the whole plan).
-\end{itemize}
+The \textbf{APPROVE tier} covers any cost commitment above \euro{}500, an emergency maintenance window affecting a production commitment, any schedule change requiring crew reassignment, and the release of a work-order draft for execution. The \textbf{ESCALATE tier} covers any action touching plant safety systems and any safety shutdown that has occurred or is imminent (when \tool{safety\_gate} returns HALT, stopping the whole plan).
 
 \subsection*{What would be the tool description? (example, \tool{rul\_predictor})}
 \begin{promptbox}
@@ -318,11 +306,7 @@ perceive -> SUPERVISOR <-> { reliability        (challenge 1)
 The six agents are the supervisor plus the five specialists. The perception, approval-gate, and synthesis steps are deterministic support functions, not agents, since they neither route nor choose tools.
 
 \subsection*{How routing works (deterministic vs model-driven split)}
-\begin{itemize}
-  \item A policy enforces coverage deterministically: reliability always runs first; on high risk all of supply chain, production, and quality must run before compliance and safety; compliance and safety always gates before finishing; and each agent is capped at two visits. This guarantees correct coverage and termination regardless of the model's choices.
-  \item When exactly one agent is allowed, routing is deterministic with no model call. When two or more are allowed (for example supply chain, production, and quality in any order), the supervisor chooses the order; this is where model reasoning drives the sequence.
-  \item Within each specialist, the ReAct agent autonomously chooses which tools to call and in what order, looping until it has enough information.
-\end{itemize}
+A deterministic policy enforces coverage and termination: reliability always runs first, on high risk all of supply chain, production, and quality must run before compliance and safety, compliance and safety always gates before finishing, and each agent is capped at two visits, so coverage is guaranteed regardless of the model's choices. The model-driven part is the ordering: when exactly one agent is allowed routing is deterministic with no model call, but when two or more are allowed (for example supply chain, production, and quality in any order) the supervisor chooses the sequence. Within each specialist, the ReAct agent then autonomously chooses which tools to call and in what order, looping until it has enough information.
 
 \subsection*{Why this pattern fits better than simpler automation}
 A single agent juggling 19 tools across five domains would carry a context too large to reason over reliably, so splitting it into focused specialists yields better tool choices. A deterministic pipeline does not fit either, because the five challenges interact in ways that cannot be pre-scripted: supply chain needs the exact part IDs from reliability, and production needs to know which machines quality has cleared for extra load, so a shared natural-language transcript lets the agents adapt to each other. Pure peer-to-peer would not guarantee that compliance and safety runs before any action commits, nor that the system terminates; the supervisor provides those guarantees while still letting the model choose ordering when policy allows. Finally, the safety-HALT pattern, where one agent can stop the entire plan, is only expressible cleanly in a supervised topology where one node's output gates the final synthesis.
