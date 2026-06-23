@@ -325,12 +325,7 @@ The six agents are the supervisor plus the five specialists. The perception, app
 \end{itemize}
 
 \subsection*{Why this pattern fits better than simpler automation}
-\begin{itemize}
-  \item \textbf{Why not a single agent?} One agent calling 19 tools across five domains would produce a context too large to reason over reliably. Specialist separation keeps each agent's context focused.
-  \item \textbf{Why not a deterministic pipeline?} The five challenges interact in ways that cannot be pre-scripted: the supply chain agent needs the exact part IDs from reliability, and the production agent needs to know which machines quality has cleared for extra load. A shared natural-language transcript lets agents adapt to each other's findings.
-  \item \textbf{Why not pure peer-to-peer?} Without a supervisor, guaranteeing that compliance and safety runs before any action commits, and that the system terminates, requires explicit policy enforcement. The supervisor provides that guarantee while still letting the model decide ordering when policy allows it.
-  \item The safety-HALT pattern, where one agent can stop the entire plan, is only expressible cleanly in a supervised topology where one node's output gates the final synthesis.
-\end{itemize}
+A single agent juggling 19 tools across five domains would carry a context too large to reason over reliably, so splitting it into focused specialists yields better tool choices. A deterministic pipeline does not fit either, because the five challenges interact in ways that cannot be pre-scripted: supply chain needs the exact part IDs from reliability, and production needs to know which machines quality has cleared for extra load, so a shared natural-language transcript lets the agents adapt to each other. Pure peer-to-peer would not guarantee that compliance and safety runs before any action commits, nor that the system terminates; the supervisor provides those guarantees while still letting the model choose ordering when policy allows. Finally, the safety-HALT pattern, where one agent can stop the entire plan, is only expressible cleanly in a supervised topology where one node's output gates the final synthesis.
 
 % =========================================================
 %  6. RISKS, GUARDRAILS & HITL
@@ -365,11 +360,7 @@ RUL predictor overconfident on a novel failure mode & HIGH (wrong timeline) & Me
 \end{itemize}
 
 \subsection*{Human-in-the-loop points}
-\begin{enumerate}
-  \item \textbf{Approval gate.} The graph pauses; the plant manager sees the supply summary, cost, and deadline, then approves or rejects; the checkpointer preserves state so the run resumes exactly where it paused.
-  \item \textbf{ESCALATE path.} Interrupted or low-confidence telemetry routes directly to a deterministic ``insufficient data, human review required'' output with a checklist for the technician; no plan is generated.
-  \item \textbf{Safety HALT.} Compliance and safety can stop the plan entirely, routing to the safety officer.
-\end{enumerate}
+The system pauses for a human at three points. At the \textbf{approval gate} the graph halts and the plant manager sees the supply summary, cost, and deadline before approving or rejecting; the checkpointer preserves state so the run resumes exactly where it paused. On the \textbf{escalate path}, interrupted or low-confidence telemetry produces a deterministic ``insufficient data, human review required'' output with a checklist for the technician and no autonomous plan. On a \textbf{safety HALT}, compliance and safety stops the plan entirely and routes it to the safety officer.
 
 % =========================================================
 %  7. EXAMPLE RUN
