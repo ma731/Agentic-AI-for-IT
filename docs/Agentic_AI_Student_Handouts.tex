@@ -202,7 +202,7 @@ A structured machine alert (JSON) pushed when a sensor crosses its threshold, fo
   \item \textbf{Shared transcript (blackboard).} Every specialist appends its full natural-language report to a growing transcript that every later agent reads in full. This is the primary inter-agent communication channel.
   \item \textbf{Latest-report lookup.} A running summary holds the most recent report from each agent for quick reference by the synthesizer.
   \item \textbf{Episodic memory (within a run).} A checkpointer persists the full graph state across the approval pause, so the human decision resumes the exact same run.
-  \item \textbf{Case memory (across runs).} A persistent library of past incidents (predicted vs actual remaining life, the decision taken, and the outcome), queried during reasoning and grown automatically as runs finalize.
+  \item \textbf{Case memory (across runs).} A persistent case library of past incidents that the reliability agent can recall, that grows as runs finalize, and whose predictions are validated as real outcomes arrive.
   \item \textbf{Audit trail.} An append-only event stream of every tool call, agent report, routing decision, and human decision, available for post-incident reconstruction.
 \end{itemize}
 
@@ -295,14 +295,9 @@ The synthesizer then integrates all five reports into a structured \texttt{[AUTO
 \end{itemize}
 
 \subsection*{Learning}
-A genuine recall-and-validate loop is implemented through the case memory:
-\begin{itemize}
-  \item \textbf{Recall.} During reasoning, the reliability agent retrieves the most similar past incidents (predicted vs actual remaining life, the decision taken, and the outcome), grounding its assessment in precedent rather than the live reading alone.
-  \item \textbf{Append.} When a run finalizes, it is added to the case library with a ``pending'' outcome.
-  \item \textbf{Reconcile.} On each new cycle, a reconciliation step closes any pending case once its actual failure time becomes known, computes whether the prediction landed in-window, and maintains a rolling RUL-accuracy percentage.
-  \item \textbf{Audit and pattern matching.} Every tool call, agent report, routing decision, and human decision is logged for post-event review, and the RUL predictor matches current readings against the historical case set to calibrate confidence.
-\end{itemize}
-\textbf{Honest caveat for Q\&A:} the recall and reconciliation scaffolding is real and wired in, but the RUL predictor itself is a heuristic model, not a retrained ML model, and reconciliation depends on a maintenance/telemetry outcomes feed. True continuous retraining would close that feed to the live CMMS once each repair completes.
+The system improves from experience through a case memory rather than by retraining. The reliability agent recalls the closest past incident (predicted vs actual remaining life and the decision taken) into its context; every finished run is written back to a persistent case library with its outcome left pending; and a reconcile step closes a pending case once the real failure time is known, updating a running RUL-accuracy figure. Every step is recorded in the audit trail.
+
+\textbf{Honest framing for Q\&A:} recall and write-back run live and are covered by unit tests; the reconcile step runs each cycle but only acts when an outcome is supplied (today a seed feed), so otherwise it is a safe no-op. The RUL predictor is a transparent heuristic plus a historical pattern-match, not a trained model, and the accuracy figure is measured over the seeded case library. A trained estimator and a live production outcomes feed are the named next-version items.
 
 % =========================================================
 %  5. ARCHITECTURE PATTERN
@@ -361,15 +356,12 @@ RUL predictor overconfident on a novel failure mode & HIGH (wrong timeline) & Me
 
 \subsection*{Guardrails (all implemented)}
 \begin{itemize}
-  \item \textbf{Never fabricate data:} a hard constraint in every agent prompt; if a tool fails, the agent must say so and stop, not estimate.
-  \item \textbf{Low-confidence escalation:} the RUL predictor flags confidence below 0.6, and any agent seeing the flag escalates rather than planning.
-  \item \textbf{Cost ceiling (\euro{}500):} the autonomy policy hard-caps autonomous cost commitments; anything above goes to APPROVE unconditionally.
-  \item \textbf{Safety gate:} every proposed action is classified against the rules; a HALT stops the entire plan and routes to manual review.
-  \item \textbf{Prompt-injection guard:} explicit instruction in all prompts to stop and flag if instructions appear embedded in tool outputs.
-  \item \textbf{Token trimming:} transcript and routing digests are length-capped so context stays bounded.
-  \item \textbf{Visit cap:} agent-to-agent follow-ups are capped at two visits per agent to prevent infinite loops.
-  \item \textbf{Per-agent error handling:} each specialist runs inside a try/except, so a flaky tool or model error degrades gracefully and the run continues.
-  \item \textbf{Self-evaluation:} each agent runs a per-domain checklist before finalizing (correct tool order, real sensor values used, stale data flagged).
+  \item \textbf{Never fabricate data:} if a tool fails, the agent says so and stops; on low confidence (RUL below 0.6) it escalates rather than planning.
+  \item \textbf{Cost ceiling (\euro{}500):} autonomous spend is hard-capped; anything above the ceiling, or that misses the failure window, routes to APPROVE.
+  \item \textbf{Safety gate:} every proposed action is rule-checked, and a HALT stops the entire plan and routes to manual review.
+  \item \textbf{Bounded loops and context:} agent-to-agent follow-ups are capped at two visits each, and transcripts and routing digests are length-trimmed.
+  \item \textbf{Fail-safe execution:} prompt-injection in tool outputs is flagged, and any tool or model error is caught so the run degrades gracefully instead of crashing.
+  \item \textbf{Self-check:} each agent runs a short pre-finalize checklist (correct tool order, real readings used, stale data flagged).
 \end{itemize}
 
 \subsection*{Human-in-the-loop points}
