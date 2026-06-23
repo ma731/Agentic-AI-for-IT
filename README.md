@@ -327,7 +327,7 @@ scripts/            CLI entrypoints: run_demo.py, view_run.py
 webapp/             web console (React/Vite frontend, FastAPI SSE backend); public/deck.html is the slide deck
 tests/              tool tests (offline) and multi-agent flow tests (need a key)
 docs/               brief, brainstorm, case study, tool_catalog, architecture.mmd, and docs/appendix/*
-CLAUDE.md           project guide and conventions for contributors (read first)
+CLAUDE.md           project guide for contributors and Claude Code (read first)
 ```
 
 ---
