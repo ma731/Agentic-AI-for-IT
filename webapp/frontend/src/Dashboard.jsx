@@ -122,7 +122,7 @@ export default function Dashboard(props) {
           ) : nav === 'chat' ? (
             <ChatView timeline={timeline} running={running} onCommand={onCommand} runStatus={runStatus} doneCount={doneCount} mode={mode} />
           ) : nav === 'cost' ? (
-            <CostView doneCount={doneCount} />
+            <CostView mode={mode} />
           ) : nav === 'audit' ? (
             <AuditView timeline={timeline} />
           ) : nav === 'plan' ? (
@@ -880,16 +880,25 @@ const COST_ROWS = [
   { who: 'Compliance', tok: '3.1k', tint: 'red' },
   { who: 'Final synthesis', tok: '1.2k', tint: 'blue' },
 ]
-function CostView() {
+function CostView({ mode = 'replay' }) {
+  const live = mode === 'live'
   return (
     <>
       <div className="dash-h">Cost & Feasibility</div>
       <p style={{ color: 'var(--ink-2)', fontSize: 14, marginBottom: 18, maxWidth: '62ch' }}>
-        A full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim). That runs for <b>€0</b> on free tiers, or fractions of a cent paid.
+        {live ? (
+          <>A full 6-agent run is roughly <b>~18k tokens</b> — about <b>~€0.005</b> on a paid model, or <b>free quota</b> on a free tier (it still uses your daily allowance, so it isn't truly €0).</>
+        ) : (
+          <>A full 6-agent run is roughly <b>~18k tokens</b> (after a ~62% transcript trim). This is a <b>recorded replay</b>, so it makes <b>no API calls and costs €0</b>.</>
+        )}
       </p>
       <div className="stat-row" style={{ marginBottom: 16 }}>
         <Stat lbl="Tokens / run" chip="blue" ic="◉" val="~18k" sub="after token-trim (−62%)" />
-        <Stat lbl="Free-tier cost" chip="green" ic="€" val="€0" sub="Gemini / OpenRouter free" deltaUp />
+        {live ? (
+          <Stat lbl="Cost this run" chip="purple" ic="€" val="~€0.005" sub="paid model · free tier uses quota" />
+        ) : (
+          <Stat lbl="Replay cost" chip="green" ic="€" val="€0" sub="recorded · no API calls" deltaUp />
+        )}
         <Stat lbl="Pay-as-you-go" chip="purple" ic="€" val="~€0.005" sub="Flash-Lite, per full run" />
         <Stat lbl="Rehearse 50×" chip="orange" ic="↻" val="< €1" sub="a week of practice runs" />
       </div>
