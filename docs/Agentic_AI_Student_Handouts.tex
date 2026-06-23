@@ -333,11 +333,11 @@ A single agent juggling 19 tools across five domains would carry a context too l
 \section{Risks, Guardrails \& Human-in-the-Loop}
 
 \subsection*{Potential risks}
-\begin{center}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{4.6cm} >{\raggedright\arraybackslash}p{2.6cm}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{8.0cm} >{\raggedright\arraybackslash}p{4.4cm} >{\raggedright\arraybackslash}p{2.4cm}}
 \toprule
 \textbf{Risk} & \textbf{Severity} & \textbf{Likelihood} \\
 \midrule
+\endhead
 Agent acts on incomplete or interrupted sensor data & HIGH (wrong urgency / missed failure) & Medium \\
 Model hallucinates a sensor reading or inventory number & HIGH (incorrect plan) & Low \\
 Agent approves a cost above its authority ceiling & HIGH (financial-control failure) & Low \\
@@ -346,8 +346,7 @@ Compliance halts incorrectly (false HALT) & Medium (stops a valid plan) & Low \\
 Token-quota exhaustion mid-run & Medium (incomplete plan) & Low on Azure paid tier \\
 RUL predictor overconfident on a novel failure mode & HIGH (wrong timeline) & Medium (heuristic) \\
 \bottomrule
-\end{tabularx}
-\end{center}
+\end{longtable}
 
 \subsection*{Guardrails (all implemented)}
 \begin{itemize}
